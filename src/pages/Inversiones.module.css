@@ -1,0 +1,232 @@
+.header {
+  margin-bottom: 1.25rem;
+}
+.header h1 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+.header p {
+  font-size: 13px;
+  color: var(--tx2);
+  margin-top: 2px;
+}
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 1.25rem;
+}
+.kpi {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 14px 16px;
+}
+.kpiLabel {
+  font-size: 11px;
+  color: var(--tx2);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 6px;
+}
+.kpiValue {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 1.25rem;
+}
+@media (max-width: 760px) {
+  .charts {
+    grid-template-columns: 1fr;
+  }
+}
+.chartBox {
+  height: 220px;
+}
+
+.cardBlock {
+  margin-bottom: 1.25rem;
+}
+.tabs {
+  display: inline-flex;
+  background: var(--bg2);
+  border-radius: var(--r-md);
+  padding: 3px;
+  gap: 3px;
+  margin-bottom: 1rem;
+}
+.tab {
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  background: transparent;
+  color: var(--tx2);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tabActive {
+  background: var(--card-bg);
+  color: var(--tx1);
+  box-shadow: 0 1px 3px var(--shadow);
+}
+.cardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--tx2);
+  margin-bottom: 5px;
+}
+.field input,
+.field select {
+  width: 100%;
+  padding: 9px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--input-bg);
+  color: var(--tx1);
+  border: 1px solid var(--border2);
+  border-radius: var(--r-md);
+}
+.field input:focus,
+.field select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(47, 129, 247, 0.15);
+}
+.field input[aria-invalid='true'] {
+  border-color: var(--down);
+}
+.field input[aria-invalid='true']:focus {
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15);
+}
+.fieldError {
+  margin-top: 5px;
+  font-size: 12px;
+  color: var(--down);
+}
+
+.btn {
+  padding: 9px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.btn:hover {
+  opacity: 0.88;
+}
+.btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.btnGhost {
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--bg2);
+  color: var(--tx1);
+  border: 1px solid var(--border2);
+  border-radius: var(--r-md);
+  cursor: pointer;
+}
+.btnGhost:hover {
+  background: var(--bg3);
+}
+.btnSm {
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--bg2);
+  color: var(--tx1);
+  border: 1px solid var(--border2);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+.btnSm:hover {
+  background: var(--bg3);
+}
+
+.aporteRow {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.aporteRow input {
+  width: 110px;
+  padding: 5px 8px;
+  font-size: 12px;
+  background: var(--input-bg);
+  color: var(--tx1);
+  border: 1px solid var(--border2);
+  border-radius: var(--r-sm);
+}
+
+.error {
+  color: var(--down);
+  font-size: 12px;
+  margin-top: 8px;
+}
+.hint {
+  color: var(--tx2);
+  font-size: 12px;
+  margin-top: 8px;
+}
+.right {
+  text-align: right;
+}
+.center {
+  text-align: center;
+}
+/* Mayor especificidad que la regla global `.tbl th` (que fuerza left) */
+.table th.center,
+.table td.center {
+  text-align: center;
+}
+.table tbody tr {
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.table tbody tr:hover {
+  background: var(--bg2);
+}
+.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+.sortable:hover {
+  color: var(--tx1);
+}
+.sortArrow {
+  display: inline-block;
+  width: 14px;
+  margin-left: 4px;
+  text-align: center;
+  font-size: 10px;
+  color: var(--accent);
+}

@@ -1,0 +1,55 @@
+.title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -0.2px;
+  margin-bottom: 6px;
+}
+.message {
+  color: var(--tx1);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.cancel {
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--bg2);
+  color: var(--tx1);
+  border: 1px solid var(--border2);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.cancel:hover {
+  background: var(--bg3);
+}
+.confirm {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.confirm:hover {
+  opacity: 0.88;
+}
+.danger {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--down);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.danger:hover {
+  opacity: 0.88;
+}

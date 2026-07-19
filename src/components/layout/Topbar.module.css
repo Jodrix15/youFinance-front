@@ -1,0 +1,186 @@
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--header-bg);
+  border-bottom: 1px solid var(--border);
+}
+.inner {
+  max-width: var(--app-width);
+  margin: 0 auto;
+  padding: 0 1rem;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: var(--tx1);
+  flex-shrink: 0;
+}
+.brand .brandText {
+  color: var(--tx1);
+}
+.brand span {
+  color: var(--accent);
+}
+.brandIcon {
+  width: 26px;
+  height: 26px;
+  background: var(--accent);
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.brandIcon svg {
+  width: 15px;
+  height: 15px;
+  fill: #fff;
+}
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  overflow-x: auto;
+  flex: 1;
+}
+.navBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--tx2);
+  background: transparent;
+  border: none;
+  border-radius: var(--r-md);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.navIcon {
+  width: 15px;
+  height: 15px;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+.navBtn:hover {
+  color: var(--tx1);
+  background: var(--bg2);
+}
+.navActive {
+  color: var(--tx1);
+  background: var(--bg2);
+}
+.right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.iconBtn {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  color: var(--tx2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.iconBtn:hover {
+  color: var(--tx1);
+  background: var(--bg2);
+}
+.iconBtn svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+.avatarWrap {
+  position: relative;
+}
+.avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+  overflow: hidden;
+  padding: 0;
+}
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: 220px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: 0 8px 32px var(--shadow);
+  overflow: hidden;
+  z-index: 200;
+}
+.menuHead {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.menuName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tx1);
+}
+.menuSub {
+  font-size: 12px;
+  color: var(--tx2);
+}
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--tx1);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.menuItem:hover {
+  background: var(--bg2);
+}
+.menuIcon {
+  width: 15px;
+  height: 15px;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+.danger {
+  color: var(--down);
+}

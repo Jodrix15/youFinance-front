@@ -1,0 +1,113 @@
+@import './tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  min-height: 100vh;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg0);
+  color: var(--tx1);
+  font-size: 14px;
+  line-height: 1.5;
+  transition: background 0.2s, color 0.2s;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+}
+
+/* Scrollbar sutil acorde al tema */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border2) transparent;
+}
+
+/* ── Elementos reutilizables ── */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 1rem 1.1rem;
+}
+
+.sec-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tx1);
+  margin-bottom: 12px;
+}
+
+.tbl {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.tbl th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--tx2);
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+}
+.tbl td {
+  padding: 7px 8px;
+  border-bottom: 1px solid var(--border);
+  color: var(--tx1);
+}
+.tbl tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.up {
+  color: var(--up);
+}
+.down {
+  color: var(--down);
+}
+
+/* ── react-grid-layout overrides para encajar con el tema ── */
+.react-grid-item.react-grid-placeholder {
+  background: var(--accent);
+  opacity: 0.15;
+  border-radius: var(--r-lg);
+}
+/* Tirador de redimensión (esquina inferior derecha) siempre visible */
+.react-grid-item > .react-resizable-handle {
+  opacity: 0.35;
+  transition: opacity 0.15s;
+}
+.react-grid-item:hover > .react-resizable-handle {
+  opacity: 1;
+}
+.react-grid-item > .react-resizable-handle::after {
+  content: '';
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid var(--tx2);
+  border-bottom: 2px solid var(--tx2);
+}
+/* El drag de RGL usa transform; evita que la transición “pelee” con el arrastre */
+.react-grid-item.react-draggable-dragging,
+.react-grid-item.resizing {
+  transition: none;
+  z-index: 3;
+}

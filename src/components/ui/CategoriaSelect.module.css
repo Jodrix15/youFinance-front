@@ -1,0 +1,49 @@
+.createRow {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+}
+.input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--input-bg);
+  color: var(--tx1);
+  border: 1px solid var(--border2);
+  border-radius: var(--r-md);
+}
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(47, 129, 247, 0.15);
+}
+.input[aria-invalid='true'] {
+  border-color: var(--down);
+}
+.input[aria-invalid='true']:focus {
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15);
+}
+.backBtn {
+  flex-shrink: 0;
+  width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg2);
+  color: var(--tx2);
+  border: 1px solid var(--border2);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.backBtn:hover {
+  background: var(--bg3);
+  color: var(--tx1);
+}
+.backBtn svg {
+  width: 15px;
+  height: 15px;
+  fill: currentColor;
+}

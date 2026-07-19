@@ -1,0 +1,57 @@
+.header { margin-bottom: 1.25rem; }
+.header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.4px; }
+.header p { font-size: 13px; color: var(--tx2); margin-top: 2px; }
+
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 1.25rem; }
+.kpi { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 14px 16px; }
+.kpiLabel { font-size: 11px; color: var(--tx2); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 6px; }
+.kpiValue { font-size: 22px; font-weight: 700; }
+
+.charts { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 1.25rem; }
+.chartBox { height: 240px; }
+.chartHead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 12px; }
+.lupaBtn { flex-shrink: 0; padding: 6px 12px; font-size: 12px; font-weight: 500; background: var(--bg2); color: var(--tx1); border: 1px solid var(--border2); border-radius: var(--r-md); cursor: pointer; transition: all 0.15s; }
+.lupaBtn:hover { background: var(--bg3); }
+.detailBox { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+.detailChart { height: 200px; }
+
+.cardBlock { margin-bottom: 1.25rem; }
+.tabs { display: inline-flex; background: var(--bg2); border-radius: var(--r-md); padding: 3px; gap: 3px; margin-bottom: 1rem; }
+.tab { padding: 7px 16px; font-size: 13px; font-weight: 500; border: none; background: transparent; color: var(--tx2); border-radius: var(--r-sm); cursor: pointer; transition: all 0.15s; }
+.tabActive { background: var(--card-bg); color: var(--tx1); box-shadow: 0 1px 3px var(--shadow); }
+
+.row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 12px; }
+.field label { display: block; font-size: 12px; font-weight: 500; color: var(--tx2); margin-bottom: 5px; }
+.field input, .field select { width: 100%; padding: 9px 12px; font-size: 14px; font-family: inherit; background: var(--input-bg); color: var(--tx1); border: 1px solid var(--border2); border-radius: var(--r-md); }
+.field input:focus, .field select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(47, 129, 247, 0.15); }
+.field input[aria-invalid='true'] { border-color: var(--down); }
+.field input[aria-invalid='true']:focus { box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15); }
+.fieldError { margin-top: 5px; font-size: 12px; color: var(--down); }
+
+.btn { padding: 9px 16px; font-size: 14px; font-weight: 600; background: var(--accent); color: #fff; border: none; border-radius: var(--r-md); cursor: pointer; transition: opacity 0.15s; }
+.btn:hover { opacity: 0.88; }
+.btn:disabled { opacity: 0.55; cursor: default; }
+
+.cardDeleteBtn { margin-top: 12px; width: 100%; padding: 7px 12px; font-size: 12px; font-weight: 600; background: transparent; color: var(--down); border: 1px solid var(--down); border-radius: var(--r-md); cursor: pointer; transition: all 0.15s; }
+.cardDeleteBtn:hover { background: var(--down); color: #fff; }
+.cardDeleteBtn:disabled { opacity: 0.55; cursor: default; }
+
+.error { color: var(--down); font-size: 12px; margin-top: 8px; }
+.hint { color: var(--tx2); font-size: 12px; margin-top: 8px; }
+.center { text-align: center; }
+.table th.center, .table td.center { text-align: center; }
+
+/* ── Tarjetas de deuda con barra de progreso ── */
+.debtGrid { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; cursor: grab; scroll-snap-type: x proximity; }
+.debtGrid.dragging { cursor: grabbing; user-select: none; scroll-snap-type: none; }
+.debtGrid.dragging .debtCard { pointer-events: none; }
+.debtCard { flex: 0 0 340px; scroll-snap-align: start; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 16px 18px; }
+.debtTop { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.debtName { font-size: 15px; font-weight: 700; color: var(--tx1); }
+.debtAcreedor { font-size: 12px; color: var(--tx2); margin-top: 2px; }
+.badge { flex-shrink: 0; font-size: 11px; font-weight: 600; color: var(--amber); background: rgba(210, 153, 34, 0.15); border: 1px solid rgba(210, 153, 34, 0.35); padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+.debtAmount { font-size: 24px; font-weight: 700; color: var(--coral); letter-spacing: -0.5px; }
+.debtMeta { font-size: 12px; color: var(--tx2); margin-top: 2px; margin-bottom: 12px; }
+.progressTrack { height: 8px; background: var(--bg3); border-radius: 999px; overflow: hidden; }
+.progressFill { height: 100%; background: linear-gradient(90deg, var(--amber), var(--coral)); border-radius: 999px; transition: width 0.3s ease; }
+.debtFooter { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; font-size: 11px; color: var(--tx2); }
