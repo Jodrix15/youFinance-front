@@ -1,0 +1,9 @@
+.shell {
+  min-height: 100vh;
+  background: var(--bg0);
+}
+.main {
+  max-width: var(--app-width);
+  margin: 0 auto;
+  padding: 1.25rem 1rem 3rem;
+}

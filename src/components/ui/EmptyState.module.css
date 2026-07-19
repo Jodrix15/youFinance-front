@@ -1,0 +1,41 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+  padding: 28px 16px;
+}
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--tx3);
+}
+.icon svg {
+  width: 40px;
+  height: 40px;
+  fill: currentColor;
+  opacity: 0.6;
+}
+.msg {
+  color: var(--tx2);
+  font-size: 13px;
+  max-width: 380px;
+  line-height: 1.5;
+}
+.btn {
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.btn:hover {
+  opacity: 0.88;
+}

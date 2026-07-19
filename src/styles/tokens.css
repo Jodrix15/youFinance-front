@@ -1,0 +1,61 @@
+/* ============================================================
+   Design tokens — portados del dashboard HTML (v10)
+   El tema se controla con  <html data-theme="dark|light">
+   ============================================================ */
+
+[data-theme='dark'] {
+  --bg0: #0d1117;
+  --bg1: #161b22;
+  --bg2: #1c2230;
+  --bg3: #21293a;
+  --border: #30384a;
+  --border2: #3d4d66;
+  --tx1: #e6edf3;
+  --tx2: #8b949e;
+  --tx3: #484f58;
+  --card-bg: #161b22;
+  --header-bg: #0d1117;
+  --input-bg: #1c2230;
+  --shadow: rgba(0, 0, 0, 0.4);
+  --grid-line: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme='light'] {
+  --bg0: #f0f2f5;
+  --bg1: #ffffff;
+  --bg2: #f6f8fa;
+  --bg3: #eaecef;
+  --border: #d0d7de;
+  --border2: #b1bac4;
+  --tx1: #1a1e26;
+  --tx2: #57606a;
+  --tx3: #8c959f;
+  --card-bg: #ffffff;
+  --header-bg: #ffffff;
+  --input-bg: #f6f8fa;
+  --shadow: rgba(0, 0, 0, 0.08);
+  --grid-line: rgba(0, 0, 0, 0.07);
+}
+
+/* Brand colors (iguales en ambos modos) */
+:root {
+  --blue: #2f81f7;
+  --teal: #1d9e75;
+  --amber: #d29922;
+  --coral: #d85a30;
+  --purple: #8b7ec8;
+  --pink: #d4537e;
+  --red: #f85149;
+  --gray: #6e7681;
+  --dark-red: #b22222;
+  --up: #1d9e75;
+  --down: #f85149;
+  --accent: #2f81f7;
+
+  --r-sm: 6px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+
+  --app-width: 1200px;
+}

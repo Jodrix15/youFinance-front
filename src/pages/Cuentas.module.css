@@ -1,0 +1,53 @@
+.header { margin-bottom: 1.25rem; }
+.header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.4px; }
+.header p { font-size: 13px; color: var(--tx2); margin-top: 2px; }
+
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 1.25rem; }
+.kpi { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 14px 16px; }
+.kpiLabel { font-size: 11px; color: var(--tx2); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 6px; }
+.kpiValue { font-size: 22px; font-weight: 700; }
+
+.cardBlock { margin-bottom: 1.25rem; }
+
+.filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.25rem; }
+.filters select { padding: 8px 10px; font-size: 13px; font-family: inherit; background: var(--input-bg); color: var(--tx1); border: 1px solid var(--border2); border-radius: var(--r-md); }
+.filterSelect { width: 160px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.cuentaCard {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 18px 18px 16px;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cuentaCard:hover { border-color: var(--accent); transform: translateY(-2px); }
+.cuentaTop { display: flex; align-items: center; gap: 10px; }
+.cuentaIcon {
+  width: 34px; height: 34px; flex-shrink: 0;
+  background: var(--accent); border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+}
+.cuentaIcon svg { width: 18px; height: 18px; fill: #fff; }
+.cuentaName { font-size: 15px; font-weight: 700; color: var(--tx1); }
+.cuentaSaldo { font-size: 24px; font-weight: 700; color: var(--tx1); letter-spacing: -0.5px; }
+.cuentaLink { font-size: 11px; color: var(--tx3); margin-top: 2px; }
+
+.row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 12px; }
+.field label { display: block; font-size: 12px; font-weight: 500; color: var(--tx2); margin-bottom: 5px; }
+.field input { width: 100%; padding: 9px 12px; font-size: 14px; font-family: inherit; background: var(--input-bg); color: var(--tx1); border: 1px solid var(--border2); border-radius: var(--r-md); }
+.field input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(47, 129, 247, 0.15); }
+.field input[aria-invalid='true'] { border-color: var(--down); }
+.field input[aria-invalid='true']:focus { box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15); }
+.fieldError { margin-top: 5px; font-size: 12px; color: var(--down); }
+
+.btn { padding: 9px 16px; font-size: 14px; font-weight: 600; background: var(--accent); color: #fff; border: none; border-radius: var(--r-md); cursor: pointer; transition: opacity 0.15s; }
+.btn:hover { opacity: 0.88; }
+.btn:disabled { opacity: 0.55; cursor: default; }
+.error { color: var(--down); font-size: 12px; margin-top: 8px; }
+.hint { color: var(--tx2); font-size: 12px; margin-top: 8px; }
+.empty { color: var(--tx3); font-size: 13px; }
