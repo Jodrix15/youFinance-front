@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { authApi, userApi } from '@/lib/finance'
 import { clearToken, getToken, setToken } from '@/lib/api'
 import type {
@@ -62,6 +63,7 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(loadUser)
+  const queryClient = useQueryClient()
 
   const store = useCallback((u: SessionUser) => {
     localStorage.setItem(USER_KEY, JSON.stringify(u))
@@ -98,6 +100,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(
     async (body: LoginRequest) => {
       const res = await authApi.login(body)
+      // Descarta cualquier dato cacheado del usuario anterior antes de montar
+      // las vistas del nuevo, para no mostrar datos ajenos mientras revalida.
+      queryClient.clear()
       persist({ username: res.username, role: res.role }, res.token)
       try {
         const p = await userApi.me()
@@ -106,22 +111,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         /* si falla, quedan los valores por defecto */
       }
     },
-    [persist, store],
+    [persist, store, queryClient],
   )
 
   const register = useCallback(
     async (body: RegisterRequest) => {
       const res = await authApi.register(body)
+      queryClient.clear()
       persist({ username: res.username, role: res.role }, res.token)
     },
-    [persist],
+    [persist, queryClient],
   )
 
   const logout = useCallback(() => {
     clearToken()
     localStorage.removeItem(USER_KEY)
     setUser(null)
-  }, [])
+    // Sin esto, el siguiente usuario vería los datos cacheados del anterior.
+    queryClient.clear()
+  }, [queryClient])
 
   const applyProfile = useCallback(
     (profile: UserProfile) => {

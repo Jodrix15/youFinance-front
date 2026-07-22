@@ -241,3 +241,10 @@ export interface PatrimonioSnapshot {
   inversiones: number
   deudas: number
 }
+
+// Config personal del dashboard persistida por usuario en el backend.
+// `layout` son items de react-grid-layout; se tipa laxo para no acoplar el DTO.
+export interface DashboardConfig {
+  layout: unknown[]
+  visible: string[]
+}

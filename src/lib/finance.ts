@@ -31,6 +31,7 @@ import type {
   UpdateProfileRequest,
   ChangePasswordRequest,
   UpdatePreferencesRequest,
+  DashboardConfig,
 } from '@/types/api'
 
 // ── Auth ──
@@ -50,6 +51,14 @@ export const userApi = {
     api.put<void>('/api/user/me/password', body).then((r) => r.data),
   updatePreferences: (body: UpdatePreferencesRequest) =>
     api.put<UserProfile>('/api/user/me/preferences', body).then((r) => r.data),
+  // Config del dashboard. El backend devuelve cuerpo vacío si el usuario no tiene
+  // config guardada; lo normalizamos a null para que el front use los defaults.
+  getDashboard: () =>
+    api
+      .get<DashboardConfig | ''>('/api/user/me/dashboard')
+      .then((r) => (r.data ? (r.data as DashboardConfig) : null)),
+  updateDashboard: (body: DashboardConfig) =>
+    api.put<DashboardConfig>('/api/user/me/dashboard', body).then((r) => r.data),
 }
 
 // ── Recursos ──

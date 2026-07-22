@@ -1,3 +1,11 @@
+/* Sin animación de entrada/recolocación de los widgets al montar o navegar.
+   (react-grid-layout aplica una transición que hace que "entren" desde una
+   esquina cada vez que se monta el dashboard). */
+:global(.react-grid-item),
+:global(.react-grid-item.cssTransforms) {
+  transition: none !important;
+}
+
 .header {
   display: flex;
   align-items: center;

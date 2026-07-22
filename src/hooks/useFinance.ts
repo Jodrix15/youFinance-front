@@ -4,13 +4,14 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query'
-import { financeApi } from '@/lib/finance'
+import { financeApi, userApi } from '@/lib/finance'
 import type {
   ActualizarGasto,
   ActualizarInversionDTO,
   CrearCategoria,
   CrearGasto,
   CuentaDTO,
+  DashboardConfig,
   DeudaDTO,
   DeudaResponse,
   GastoRecurrenteResponse,
@@ -75,6 +76,23 @@ export function useRecurrentes() {
 
 export function useCategorias() {
   return useQuery({ queryKey: ['categorias'], queryFn: financeApi.categorias })
+}
+
+// Config del dashboard del usuario autenticado. Se namespacea por username para
+// que al cambiar de sesión no se reutilice la config cacheada de otro usuario.
+export function useDashboardConfig(username?: string) {
+  return useQuery({
+    queryKey: ['dashboardConfig', username ?? null],
+    queryFn: userApi.getDashboard,
+    // No consultamos hasta conocer al usuario autenticado.
+    enabled: !!username,
+  })
+}
+
+export function useGuardarDashboardConfig() {
+  return useMutation({
+    mutationFn: (body: DashboardConfig) => userApi.updateDashboard(body),
+  })
 }
 
 export function useMovimientos() {

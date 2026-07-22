@@ -119,6 +119,9 @@ export default function PatrimonioEvolucionWidget() {
           options={{
             responsive: true,
             maintainAspectRatio: false,
+            // Sin animación: el punto/curva aparece ya en su sitio, sin el
+            // pequeño movimiento de entrada al abrir la sección.
+            animation: false,
             plugins: {
               legend: { display: false },
               tooltip: { callbacks: { label: (c) => ` ${formatEur(Number(c.parsed.y))}` } },
