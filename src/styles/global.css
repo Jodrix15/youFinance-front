@@ -32,6 +32,30 @@ button {
   font-family: inherit;
 }
 
+/* ── Accesibilidad: foco visible ──
+   Anillo de foco consistente y de alto contraste para navegación por teclado.
+   Solo con :focus-visible para no molestar al usar el ratón. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[role='button']:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* En inputs con anillo propio (box-shadow) reforzamos también el borde. */
+input:focus-visible,
+textarea:focus-visible {
+  border-color: var(--accent);
+}
+
 /* Scrollbar sutil acorde al tema */
 * {
   scrollbar-width: thin;

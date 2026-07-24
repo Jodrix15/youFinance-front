@@ -18,6 +18,7 @@ import type {
   InversionDTO,
   InversionResponse,
   NuevoPrecioRequest,
+  PresupuestoDTO,
   TipoPago,
   TransaccionDTO,
 } from '@/types/api'
@@ -63,6 +64,9 @@ export function useResumenCuenta(anio?: number, mes?: number) {
   return useQuery({
     queryKey: ['cuentaResumen', anio ?? null, mes ?? null],
     queryFn: () => financeApi.cuentaResumen({ anio, mes }),
+    // Al cambiar de mes/año mantiene el resumen anterior mientras carga el nuevo,
+    // así isLoading solo es true en la primera carga (no parpadea al filtrar).
+    placeholderData: keepPreviousData,
   })
 }
 
@@ -123,6 +127,36 @@ export function usePatrimonioHistorico() {
   })
 }
 
+// ── Presupuestos ──
+export function usePresupuestos() {
+  return useQuery({ queryKey: ['presupuestos'], queryFn: financeApi.presupuestos })
+}
+
+export function useCrearPresupuesto() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: PresupuestoDTO) => financeApi.crearPresupuesto(body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['presupuestos'] }),
+  })
+}
+
+export function useActualizarPresupuesto() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...body }: { id: number } & PresupuestoDTO) =>
+      financeApi.actualizarPresupuesto(id, body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['presupuestos'] }),
+  })
+}
+
+export function useEliminarPresupuesto() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => financeApi.eliminarPresupuesto(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['presupuestos'] }),
+  })
+}
+
 export function useTransacciones(cuentaId: number) {
   return useQuery({
     queryKey: ['transacciones', cuentaId],
@@ -135,6 +169,17 @@ export function useCrearCuenta() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (body: CuentaDTO) => financeApi.crearCuenta(body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['cuentas'] })
+      qc.invalidateQueries({ queryKey: ['cuentaResumen'] })
+    },
+  })
+}
+
+export function useEliminarCuenta() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => financeApi.eliminarCuenta(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['cuentas'] })
       qc.invalidateQueries({ queryKey: ['cuentaResumen'] })

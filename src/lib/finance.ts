@@ -18,6 +18,8 @@ import type {
   MovimientosPage,
   NuevoPrecioRequest,
   PatrimonioSnapshot,
+  PresupuestoDTO,
+  PresupuestoResponse,
   RecurrentePrecioResponse,
   RegisterRequest,
   ResumenCuenta,
@@ -40,6 +42,8 @@ export const authApi = {
     api.post<LoginResponse>('/api/auth/login', body).then((r) => r.data),
   register: (body: RegisterRequest) =>
     api.post<LoginResponse>('/api/auth/register', body).then((r) => r.data),
+  // Borra la cookie de sesión en el servidor (el JS no puede borrar una httpOnly).
+  logout: () => api.post<void>('/api/auth/logout').then((r) => r.data),
 }
 
 // ── Perfil / ajustes ──
@@ -70,6 +74,8 @@ export const financeApi = {
     api.post<CuentaResponse>('/api/cuenta', body).then((r) => r.data),
   actualizarCuenta: (id: number, body: CuentaDTO) =>
     api.put<CuentaResponse>(`/api/cuenta/${id}`, body).then((r) => r.data),
+  eliminarCuenta: (id: number) =>
+    api.delete<void>(`/api/cuenta/${id}`).then((r) => r.data),
   transacciones: (cuentaId: number) =>
     api
       .get<TransaccionResponse[]>(`/api/cuenta/${cuentaId}/transacciones`)
@@ -146,4 +152,12 @@ export const financeApi = {
     api
       .get<PatrimonioSnapshot[]>('/api/dashboard/patrimonio/historico')
       .then((r) => r.data),
+  presupuestos: () =>
+    api.get<PresupuestoResponse[]>('/api/presupuesto').then((r) => r.data),
+  crearPresupuesto: (body: PresupuestoDTO) =>
+    api.post<PresupuestoResponse>('/api/presupuesto', body).then((r) => r.data),
+  actualizarPresupuesto: (id: number, body: PresupuestoDTO) =>
+    api.put<PresupuestoResponse>(`/api/presupuesto/${id}`, body).then((r) => r.data),
+  eliminarPresupuesto: (id: number) =>
+    api.delete<void>(`/api/presupuesto/${id}`).then((r) => r.data),
 }

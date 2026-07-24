@@ -12,6 +12,7 @@ import { notifyOk, notifyError } from '@/lib/notify'
 import { formatEur } from '@/lib/format'
 import { apiErrorMessage } from '@/lib/api'
 import Select from '@/components/ui/Select'
+import MoneyInput from '@/components/ui/MoneyInput'
 import CategoriaSelect from '@/components/ui/CategoriaSelect'
 import type { Movimiento, TipoMovimiento } from '@/types/api'
 import s from './Movimientos.module.css'
@@ -368,9 +369,8 @@ export default function Movimientos() {
           </div>
           <div className={s.row}>
             <div className={s.field}>
-              <label>Importe (€)</label>
-              <input
-                type="number"
+              <label>Importe</label>
+              <MoneyInput
                 step="0.01"
                 min="0"
                 placeholder="0,00"

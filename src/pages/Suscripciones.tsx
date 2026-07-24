@@ -17,9 +17,10 @@ import Skeleton from '@/components/ui/Skeleton'
 import EmptyState from '@/components/ui/EmptyState'
 import { notifyOk, notifyError } from '@/lib/notify'
 import { chartTheme } from '@/lib/chartSetup'
-import { formatEur } from '@/lib/format'
+import { formatEur, currencySymbol } from '@/lib/format'
 import { apiErrorMessage } from '@/lib/api'
 import Select from '@/components/ui/Select'
+import MoneyInput from '@/components/ui/MoneyInput'
 import CategoriaSelect from '@/components/ui/CategoriaSelect'
 import type { Frecuencia, GastoRecurrenteResponse } from '@/types/api'
 import s from './Suscripciones.module.css'
@@ -42,7 +43,7 @@ export default function Suscripciones() {
   const { theme } = useTheme()
   const confirm = useConfirm()
   const { data: recurrentes, isLoading, isError, error } = useRecurrentes()
-  const { data: resumen } = useResumenRecurrente('SUSCRIPCION')
+  const { data: resumen, isLoading: resumenLoading } = useResumenRecurrente('SUSCRIPCION')
   const { data: categorias } = useCategorias()
 
   const crearRecurrente = useCrearRecurrente()
@@ -74,7 +75,7 @@ export default function Suscripciones() {
     )
   }
 
-  if (isLoading) {
+  if (isLoading || resumenLoading) {
     return (
       <div>
         <div className={s.header}>
@@ -239,7 +240,7 @@ export default function Suscripciones() {
     labels: hist.map((h) => h.fechaVariacionImporte),
     datasets: [
       {
-        label: 'Precio (€)',
+        label: `Precio (${currencySymbol()})`,
         data: hist.map((h) => Number(h.importe || 0)),
         borderColor: '#2f81f7',
         backgroundColor: 'rgba(47, 129, 247, 0.15)',
@@ -405,9 +406,8 @@ export default function Suscripciones() {
                   />
                 </div>
                 <div className={s.field}>
-                  <label>Importe (€)</label>
-                  <input
-                    type="number"
+                  <label>Importe</label>
+                  <MoneyInput
                     step="0.01"
                     min="0"
                     placeholder="0,00"

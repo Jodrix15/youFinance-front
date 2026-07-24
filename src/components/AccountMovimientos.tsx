@@ -13,6 +13,7 @@ import { notifyOk, notifyError } from '@/lib/notify'
 import { formatEur } from '@/lib/format'
 import { apiErrorMessage } from '@/lib/api'
 import Select from '@/components/ui/Select'
+import MoneyInput from '@/components/ui/MoneyInput'
 import CategoriaSelect from '@/components/ui/CategoriaSelect'
 import type { CuentaResponse, Movimiento, TipoMovimiento } from '@/types/api'
 import s from '@/pages/Movimientos.module.css'
@@ -376,7 +377,7 @@ export default function AccountMovimientos({ cuenta, onBack }: Props) {
                 </div>
               </div>
               <div className={s.row}>
-                <div className={s.field}><label>Importe (€)</label><input type="number" step="0.01" min="0" placeholder="0,00" value={form.importe} aria-invalid={err?.field === 'importe'} onChange={(e) => set('importe', e.target.value)} />{fieldErr('importe')}</div>
+                <div className={s.field}><label>Importe</label><MoneyInput step="0.01" min="0" placeholder="0,00" value={form.importe} aria-invalid={err?.field === 'importe'} onChange={(e) => set('importe', e.target.value)} />{fieldErr('importe')}</div>
                 <div className={s.field}><label>Fecha</label><input type="date" value={form.fecha} aria-invalid={err?.field === 'fecha'} onChange={(e) => set('fecha', e.target.value)} />{fieldErr('fecha')}</div>
                 <div className={s.field}><label>Descripción</label><input type="text" placeholder="Opcional" value={form.descripcion} onChange={(e) => set('descripcion', e.target.value)} /></div>
               </div>

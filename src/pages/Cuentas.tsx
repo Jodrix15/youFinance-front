@@ -1,12 +1,14 @@
 import { useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useCrearCuenta, useCuentas, useResumenCuenta } from '@/hooks/useFinance'
+import { useCrearCuenta, useCuentas, useEliminarCuenta, useResumenCuenta } from '@/hooks/useFinance'
 import Skeleton from '@/components/ui/Skeleton'
 import EmptyState from '@/components/ui/EmptyState'
+import { useConfirm } from '@/components/ui/ConfirmProvider'
 import { notifyOk, notifyError } from '@/lib/notify'
 import { formatEur } from '@/lib/format'
 import { apiErrorMessage } from '@/lib/api'
 import Select from '@/components/ui/Select'
+import MoneyInput from '@/components/ui/MoneyInput'
 import s from './Cuentas.module.css'
 
 const num = (v: string) => (v.trim() === '' ? NaN : Number(v.replace(',', '.')))
@@ -21,10 +23,12 @@ export default function Cuentas() {
   const navigate = useNavigate()
   const { data: cuentas, isLoading, isError, error } = useCuentas()
   const crearCuenta = useCrearCuenta()
+  const eliminarCuenta = useEliminarCuenta()
+  const confirm = useConfirm()
 
   const [fMes, setFMes] = useState(CUR_MES)
   const [fAnio, setFAnio] = useState(CUR_ANIO)
-  const { data: resumen } = useResumenCuenta(
+  const { data: resumen, isLoading: resumenLoading } = useResumenCuenta(
     fAnio === '' ? undefined : Number(fAnio),
     fMes === '' ? undefined : Number(fMes),
   )
@@ -43,7 +47,7 @@ export default function Cuentas() {
     )
   }
 
-  if (isLoading) {
+  if (isLoading || resumenLoading) {
     return (
       <div>
         <div className={s.header}>
@@ -92,6 +96,23 @@ export default function Cuentas() {
       setNombre('')
       setImporte('')
     } catch (error) {
+      notifyError(error)
+    }
+  }
+
+  async function handleDelete(id: number, nombre: string) {
+    const ok = await confirm({
+      title: 'Eliminar cuenta',
+      message: `¿Seguro que quieres eliminar la cuenta "${nombre}"? Esta acción no se puede deshacer.`,
+      confirmText: 'Eliminar',
+      variant: 'danger',
+    })
+    if (!ok) return
+    try {
+      await eliminarCuenta.mutateAsync(id)
+      notifyOk('Cuenta eliminada')
+    } catch (error) {
+      // El backend responde 409 si la cuenta tiene transacciones asociadas.
       notifyError(error)
     }
   }
@@ -154,6 +175,16 @@ export default function Cuentas() {
                 <div className={s.cuentaTop}>
                   <div className={s.cuentaIcon}><svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h11A1.5 1.5 0 0 1 15 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5zm10.5 5a1 1 0 1 0 0 2 1 1 0 0 0 0-2M2 5h12V4H2z" /></svg></div>
                   <div className={s.cuentaName}>{c.nombreCuenta}</div>
+                  <button
+                    type="button"
+                    className={s.deleteBtn}
+                    aria-label={`Eliminar cuenta ${c.nombreCuenta}`}
+                    title="Eliminar cuenta"
+                    onClick={(e) => { e.stopPropagation(); handleDelete(c.id, c.nombreCuenta) }}
+                    onKeyDown={(e) => e.stopPropagation()}
+                  >
+                    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" /><path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" /></svg>
+                  </button>
                 </div>
                 <div className={s.cuentaSaldo}>{formatEur(c.importe)}</div>
                 <div className={s.cuentaLink}>Ver movimientos →</div>
@@ -167,7 +198,7 @@ export default function Cuentas() {
         <div className="sec-title">Añadir cuenta</div>
         <div className={s.row}>
           <div className={s.field}><label>Nombre</label><input type="text" placeholder="Ej: Cuenta corriente" value={nombre} aria-invalid={err?.field === 'nombre'} onChange={(e) => { setNombre(e.target.value); setErr(null) }} />{fieldErr('nombre')}</div>
-          <div className={s.field}><label>Saldo inicial (€)</label><input type="number" step="0.01" placeholder="0,00" value={importe} aria-invalid={err?.field === 'importe'} onChange={(e) => { setImporte(e.target.value); setErr(null) }} />{fieldErr('importe')}</div>
+          <div className={s.field}><label>Saldo inicial</label><MoneyInput step="0.01" min="0" placeholder="0,00" value={importe} aria-invalid={err?.field === 'importe'} onChange={(e) => { setImporte(e.target.value); setErr(null) }} />{fieldErr('importe')}</div>
         </div>
         <button className={s.btn} type="submit" disabled={crearCuenta.isPending} style={{ marginTop: 4 }}>{crearCuenta.isPending ? 'Guardando…' : 'Añadir cuenta'}</button>
       </form>

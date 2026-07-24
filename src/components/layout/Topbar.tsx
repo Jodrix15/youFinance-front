@@ -30,6 +30,12 @@ const ICONS = {
   inversiones: (
     <path d="M0 0h1v15h15v1H0zm10 3.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0V4.9l-3.613 4.417a.5.5 0 0 1-.74.037L7.06 6.767l-3.656 5.027a.5.5 0 0 1-.808-.588l4-5.5a.5.5 0 0 1 .758-.06l2.609 2.61L13.445 4H10.5a.5.5 0 0 1-.5-.5" />
   ),
+  presupuestos: (
+    <>
+      <path d="M0 3a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v1h14V3a1 1 0 0 0-1-1zM1 5v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V5z" />
+      <path d="M3 8.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5" />
+    </>
+  ),
 }
 
 const NAV = [
@@ -39,6 +45,7 @@ const NAV = [
   { to: '/suscripciones', label: 'Suscripciones', icon: ICONS.suscripciones },
   { to: '/deudas', label: 'Deudas', icon: ICONS.deudas },
   { to: '/inversiones', label: 'Inversiones', icon: ICONS.inversiones },
+  { to: '/presupuestos', label: 'Presupuestos', icon: ICONS.presupuestos },
 ]
 
 export default function Topbar() {

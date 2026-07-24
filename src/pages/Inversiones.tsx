@@ -15,9 +15,10 @@ import Skeleton from '@/components/ui/Skeleton'
 import EmptyState from '@/components/ui/EmptyState'
 import { notifyOk, notifyError } from '@/lib/notify'
 import { PALETTE, chartTheme } from '@/lib/chartSetup'
-import { formatEur, formatPct } from '@/lib/format'
+import { formatEur, formatPct, currencySymbol } from '@/lib/format'
 import { apiErrorMessage } from '@/lib/api'
 import Select from '@/components/ui/Select'
+import MoneyInput from '@/components/ui/MoneyInput'
 import CategoriaSelect from '@/components/ui/CategoriaSelect'
 import s from './Inversiones.module.css'
 
@@ -36,6 +37,7 @@ export default function Inversiones() {
     aportadoTotal: totalAportado,
     plusvaliaTotal,
     porcentajeTotal: rentabilidad,
+    isLoading: totalesLoading,
   } = useInversionTotales()
 
   const crearInversion = useCrearInversion()
@@ -93,7 +95,7 @@ export default function Inversiones() {
     )
   }
 
-  if (isLoading) {
+  if (isLoading || totalesLoading) {
     return (
       <div>
         <div className={s.header}>
@@ -169,7 +171,7 @@ export default function Inversiones() {
     labels: list.map((i) => i.categoriaNombre ?? `#${i.id}`),
     datasets: [
       {
-        label: 'Plusvalía (€)',
+        label: `Plusvalía (${currencySymbol()})`,
         data: list.map((i) => Number(i.plusvalia || 0)),
         backgroundColor: list.map((i) =>
           Number(i.plusvalia || 0) >= 0 ? '#1d9e75' : '#f85149',
@@ -482,9 +484,8 @@ export default function Inversiones() {
                 {fieldErr('catName')}
               </div>
               <div className={s.field}>
-                <label>Capital aportado (€)</label>
-                <input
-                  type="number"
+                <label>Capital aportado</label>
+                <MoneyInput
                   step="0.01"
                   min="0"
                   placeholder="0,00"
@@ -498,9 +499,8 @@ export default function Inversiones() {
                 {fieldErr('aportado')}
               </div>
               <div className={s.field}>
-                <label>Valor actual (€)</label>
-                <input
-                  type="number"
+                <label>Valor actual</label>
+                <MoneyInput
                   step="0.01"
                   min="0"
                   placeholder="0,00"
@@ -546,9 +546,8 @@ export default function Inversiones() {
                     {fieldErr('updId')}
                   </div>
                   <div className={s.field}>
-                    <label>Nueva aportación (€)</label>
-                    <input
-                      type="number"
+                    <label>Nueva aportación</label>
+                    <MoneyInput
                       step="0.01"
                       min="0"
                       placeholder="Opcional"
@@ -562,9 +561,8 @@ export default function Inversiones() {
                     {fieldErr('updAportacion')}
                   </div>
                   <div className={s.field}>
-                    <label>Valor actual (€)</label>
-                    <input
-                      type="number"
+                    <label>Valor actual</label>
+                    <MoneyInput
                       step="0.01"
                       min="0"
                       placeholder="0,00"

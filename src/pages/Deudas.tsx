@@ -22,6 +22,7 @@ import { PALETTE, chartTheme } from '@/lib/chartSetup'
 import { formatEur, formatPct } from '@/lib/format'
 import { apiErrorMessage } from '@/lib/api'
 import Select from '@/components/ui/Select'
+import MoneyInput from '@/components/ui/MoneyInput'
 import type { DeudaResponse, Frecuencia } from '@/types/api'
 import s from './Deudas.module.css'
 
@@ -44,7 +45,7 @@ export default function Deudas() {
   const { theme } = useTheme()
   const confirm = useConfirm()
   const { data: deudas, isLoading, isError, error } = useDeudas()
-  const { data: resumen } = useResumenDeuda()
+  const { data: resumen, isLoading: resumenLoading } = useResumenDeuda()
   const crearDeuda = useCrearDeuda()
   const actualizarDeuda = useActualizarDeuda()
   const eliminarDeuda = useEliminarDeuda()
@@ -104,7 +105,7 @@ export default function Deudas() {
     }
   }, [selId, mode, deudas])
 
-  if (isLoading) {
+  if (isLoading || resumenLoading) {
     return (
       <div>
         <div className={s.header}>
@@ -434,9 +435,8 @@ export default function Deudas() {
               </div>
               <div className={s.row}>
                 <div className={s.field}>
-                  <label>Importe (€)</label>
-                  <input
-                    type="number"
+                  <label>Importe</label>
+                  <MoneyInput
                     step="0.01"
                     min="0"
                     placeholder="0,00"
@@ -458,9 +458,8 @@ export default function Deudas() {
                   />
                 </div>
                 <div className={s.field}>
-                  <label>Cantidad pagada (€)</label>
-                  <input
-                    type="number"
+                  <label>Cantidad pagada</label>
+                  <MoneyInput
                     step="0.01"
                     min="0"
                     placeholder="0,00"
@@ -479,9 +478,8 @@ export default function Deudas() {
               </div>
               <div className={s.row}>
                 <div className={s.field}>
-                  <label>Cuota (€)</label>
-                  <input
-                    type="number"
+                  <label>Cuota</label>
+                  <MoneyInput
                     step="0.01"
                     min="0"
                     placeholder="0,00"

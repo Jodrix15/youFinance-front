@@ -248,3 +248,45 @@ export interface DashboardConfig {
   layout: unknown[]
   visible: string[]
 }
+
+// ── Presupuestos ──
+export type PeriodoPresupuesto = 'MENSUAL' | 'SEMANAL'
+
+export interface PartidaResponse {
+  id: number
+  categoriaId: number | null
+  categoriaNombre: string | null
+  nombre: string | null
+  importe: number
+}
+
+export interface PresupuestoResponse {
+  id: number
+  nombre: string
+  periodo: PeriodoPresupuesto
+  anio: number
+  mes: number
+  semana: number | null
+  cantidadBase: number
+  descontarGastosFijos: boolean
+  totalPresupuestado: number
+  fechaCreacion: string
+  partidas: PartidaResponse[]
+}
+
+export interface PartidaDTO {
+  categoriaId?: number | null
+  nombre?: string | null
+  importe: number
+}
+
+export interface PresupuestoDTO {
+  nombre: string
+  periodo: PeriodoPresupuesto
+  anio: number
+  mes: number
+  semana?: number | null
+  cantidadBase: number
+  descontarGastosFijos: boolean
+  partidas: PartidaDTO[]
+}

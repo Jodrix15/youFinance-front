@@ -1,0 +1,25 @@
+.wrap {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+/* Símbolo de moneda dentro del campo, alineado a la izquierda y sin capturar
+   clics para no estorbar la edición. */
+.symbol {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--tx2);
+  font-weight: 600;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* El input hereda el estilo (borde, fondo, tamaño) de la página que lo usa
+   vía sus selectores `.field input`; aquí solo garantizamos el hueco para el
+   símbolo mediante padding en línea desde el componente. */
+.input {
+  width: 100%;
+}
