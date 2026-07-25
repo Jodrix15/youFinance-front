@@ -7,6 +7,7 @@ import type {
   CrearGasto,
   CuentaDTO,
   CuentaResponse,
+  DistribucionPatrimonioResponse,
   DeudaDTO,
   DeudaResponse,
   GastoRecurrenteResponse,
@@ -152,6 +153,18 @@ export const financeApi = {
     api
       .get<PatrimonioSnapshot[]>('/api/dashboard/patrimonio/historico')
       .then((r) => r.data),
+  distribucionPatrimonio: () =>
+    api
+      .get<DistribucionPatrimonioResponse[]>('/api/dashboard/distribucion-patrimonio')
+      .then((r) => r.data),
+  patrimonioNeto: () =>
+    api.get<number>('/api/dashboard/patrimonio-neto').then((r) => r.data),
+  capitalCuentas: () =>
+    api.get<number>('/api/dashboard/capital-cuentas').then((r) => r.data),
+  capitalInversion: () =>
+    api.get<number>('/api/dashboard/capital-inversion').then((r) => r.data),
+  capitalDeuda: () =>
+    api.get<number>('/api/dashboard/capital-deuda').then((r) => r.data),
   presupuestos: () =>
     api.get<PresupuestoResponse[]>('/api/presupuesto').then((r) => r.data),
   crearPresupuesto: (body: PresupuestoDTO) =>

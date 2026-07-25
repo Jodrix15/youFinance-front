@@ -1,17 +1,20 @@
-import { useDeudas } from '@/hooks/useFinance'
+import { useDeudas, useResumenDeuda } from '@/hooks/useFinance'
 import { formatEur } from '@/lib/format'
 import { WidgetEmpty, WidgetError, WidgetLoading } from './WidgetState'
 
-const sum = (arr: number[]) => arr.reduce((a, b) => a + Number(b || 0), 0)
-
 export default function DeudasWidget() {
   const { data, isLoading, isError } = useDeudas()
+  const resumen = useResumenDeuda()
 
-  if (isLoading) return <WidgetLoading />
-  if (isError) return <WidgetError />
+  if (isLoading || resumen.isLoading) return <WidgetLoading />
+  if (isError || resumen.isError) return <WidgetError />
   if (!data || data.length === 0) return <WidgetEmpty message="Sin deudas activas. 🎉" />
 
-  const total = sum(data.map((d) => d.cantidadPendiente))
+  // Total pendiente y progreso global calculados en el backend (resumen de deudas).
+  const total = resumen.data?.totalPendiente ?? 0
+  const pagado = Number(resumen.data?.totalPagado ?? 0)
+  const totalConIntereses = Number(resumen.data?.totalConIntereses ?? 0)
+  const pct = totalConIntereses > 0 ? Math.min(100, (pagado / totalConIntereses) * 100) : 0
 
   return (
     <>
@@ -35,8 +38,39 @@ export default function DeudasWidget() {
           ))}
         </tbody>
       </table>
-      <div style={{ marginTop: 8, fontSize: 11, color: 'var(--tx2)' }}>
-        Total: <strong className="down">{formatEur(total, true)}</strong>
+      <div style={{ marginTop: 20 }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            marginBottom: 6,
+            fontSize: 11,
+            color: 'var(--tx2)',
+          }}
+        >
+          <span>
+            Total: <strong className="down">{formatEur(total, true)}</strong>
+          </span>
+          <span>Pagado {Math.round(pct)}%</span>
+        </div>
+        <div
+          style={{
+            height: 8,
+            background: 'var(--bg3)',
+            borderRadius: 999,
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              height: '100%',
+              width: `${pct}%`,
+              background: 'linear-gradient(90deg, var(--amber), var(--coral))',
+              borderRadius: 999,
+              transition: 'width 0.3s ease',
+            }}
+          />
+        </div>
       </div>
     </>
   )

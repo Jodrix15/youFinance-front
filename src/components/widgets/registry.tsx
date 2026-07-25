@@ -2,13 +2,14 @@ import type { ComponentType } from 'react'
 import type { Layout } from 'react-grid-layout'
 import MetricsWidget from './MetricsWidget'
 import PatrimonioWidget from './PatrimonioWidget'
-import InversionesWidget from './InversionesWidget'
 import DeudasWidget from './DeudasWidget'
 import CuentasWidget from './CuentasWidget'
 import RecurrentesWidget from './RecurrentesWidget'
 import GastosFijosWidget from './GastosFijosWidget'
 import PatrimonioEvolucionWidget from './PatrimonioEvolucionWidget'
 import GastosCategoriaWidget from './GastosCategoriaWidget'
+import TopMesesGastoWidget from './TopMesesGastoWidget'
+import FlujoCajaWidget from './FlujoCajaWidget'
 
 export interface WidgetDef {
   id: string
@@ -30,12 +31,6 @@ export const WIDGETS: WidgetDef[] = [
     title: 'Distribución del patrimonio',
     component: PatrimonioWidget,
     default: { x: 0, y: 4, w: 4, h: 9, minW: 3, minH: 6 },
-  },
-  {
-    id: 'inversiones',
-    title: 'Inversiones por categoría',
-    component: InversionesWidget,
-    default: { x: 4, y: 4, w: 4, h: 9, minW: 3, minH: 6 },
   },
   {
     id: 'recurrentes',
@@ -72,6 +67,18 @@ export const WIDGETS: WidgetDef[] = [
     title: 'Gastos por categoría',
     component: GastosCategoriaWidget,
     default: { x: 8, y: 28, w: 4, h: 9, minW: 3, minH: 6 },
+  },
+  {
+    id: 'top-meses-gasto',
+    title: 'Top 5 meses con más gasto',
+    component: TopMesesGastoWidget,
+    default: { x: 0, y: 37, w: 4, h: 8, minW: 3, minH: 5 },
+  },
+  {
+    id: 'flujo-caja',
+    title: 'Flujo de caja',
+    component: FlujoCajaWidget,
+    default: { x: 4, y: 37, w: 8, h: 9, minW: 4, minH: 6 },
   },
 ]
 

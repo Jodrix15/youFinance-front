@@ -127,6 +127,45 @@ export function usePatrimonioHistorico() {
   })
 }
 
+// Reparto del patrimonio (cuentas + inversiones por categoría, sin deudas),
+// calculado en el backend.
+export function useDistribucionPatrimonio() {
+  return useQuery({
+    queryKey: ['dashboard', 'distribucionPatrimonio'],
+    queryFn: financeApi.distribucionPatrimonio,
+  })
+}
+
+// KPIs del dashboard calculados en el backend (una query por métrica, todas
+// namespaceadas bajo ['dashboard'] para invalidarlas juntas).
+export function useResumenDashboard() {
+  const neto = useQuery({
+    queryKey: ['dashboard', 'patrimonioNeto'],
+    queryFn: financeApi.patrimonioNeto,
+  })
+  const cuentas = useQuery({
+    queryKey: ['dashboard', 'capitalCuentas'],
+    queryFn: financeApi.capitalCuentas,
+  })
+  const inversion = useQuery({
+    queryKey: ['dashboard', 'capitalInversion'],
+    queryFn: financeApi.capitalInversion,
+  })
+  const deuda = useQuery({
+    queryKey: ['dashboard', 'capitalDeuda'],
+    queryFn: financeApi.capitalDeuda,
+  })
+  return {
+    patrimonioNeto: neto.data ?? 0,
+    capitalCuentas: cuentas.data ?? 0,
+    capitalInversion: inversion.data ?? 0,
+    capitalDeuda: deuda.data ?? 0,
+    isLoading:
+      neto.isLoading || cuentas.isLoading || inversion.isLoading || deuda.isLoading,
+    isError: neto.isError || cuentas.isError || inversion.isError || deuda.isError,
+  }
+}
+
 // ── Presupuestos ──
 export function usePresupuestos() {
   return useQuery({ queryKey: ['presupuestos'], queryFn: financeApi.presupuestos })
@@ -172,6 +211,7 @@ export function useCrearCuenta() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['cuentas'] })
       qc.invalidateQueries({ queryKey: ['cuentaResumen'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
@@ -183,6 +223,7 @@ export function useEliminarCuenta() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['cuentas'] })
       qc.invalidateQueries({ queryKey: ['cuentaResumen'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
@@ -199,6 +240,7 @@ export function useCrearTransaccion() {
       qc.invalidateQueries({ queryKey: ['transacciones'] })
       qc.invalidateQueries({ queryKey: ['cuentas'] })
       qc.invalidateQueries({ queryKey: ['cuentaResumen'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
@@ -214,6 +256,7 @@ export function useEliminarTransaccion() {
       qc.invalidateQueries({ queryKey: ['transacciones'] })
       qc.invalidateQueries({ queryKey: ['cuentas'] })
       qc.invalidateQueries({ queryKey: ['cuentaResumen'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
@@ -229,6 +272,7 @@ export function useActualizarTransaccion() {
       qc.invalidateQueries({ queryKey: ['transacciones'] })
       qc.invalidateQueries({ queryKey: ['cuentas'] })
       qc.invalidateQueries({ queryKey: ['cuentaResumen'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
@@ -239,6 +283,7 @@ export function useCrearInversion() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['inversiones'] })
       qc.invalidateQueries({ queryKey: ['inversionResumen'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
@@ -251,6 +296,7 @@ export function useActualizarInversion() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['inversiones'] })
       qc.invalidateQueries({ queryKey: ['inversionResumen'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
@@ -275,6 +321,7 @@ export function useEliminarInversion() {
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ['inversiones'] })
       qc.invalidateQueries({ queryKey: ['inversionResumen'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
@@ -317,6 +364,7 @@ export function useCrearDeuda() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['deudas'] })
       qc.invalidateQueries({ queryKey: ['deudaResumen'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
@@ -329,6 +377,7 @@ export function useActualizarDeuda() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['deudas'] })
       qc.invalidateQueries({ queryKey: ['deudaResumen'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
@@ -353,6 +402,7 @@ export function useEliminarDeuda() {
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ['deudas'] })
       qc.invalidateQueries({ queryKey: ['deudaResumen'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }

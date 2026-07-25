@@ -16,6 +16,25 @@ export const api = axios.create({
   xsrfHeaderName: 'X-XSRF-TOKEN',
 })
 
+function readCookie(name: string): string | null {
+  const escaped = name.replace(/([.*+?^${}()|[\]\\])/g, '\\$1')
+  const match = document.cookie.match(new RegExp('(?:^|; )' + escaped + '=([^;]*)'))
+  return match ? decodeURIComponent(match[1]) : null
+}
+
+// CSRF: en las peticiones que mutan estado (no GET/HEAD/OPTIONS) mandamos la
+// cabecera X-XSRF-TOKEN leída de la cookie XSRF-TOKEN. Lo hacemos de forma
+// explícita para no depender del comportamiento automático de axios (que a veces
+// no la enviaba y provocaba 403 al añadir datos).
+api.interceptors.request.use((config) => {
+  const method = (config.method ?? 'get').toUpperCase()
+  if (method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') {
+    const token = readCookie('XSRF-TOKEN')
+    if (token) config.headers.set('X-XSRF-TOKEN', token)
+  }
+  return config
+})
+
 // Si la sesión caduca / no autorizado, redirigimos al login.
 api.interceptors.response.use(
   (res) => res,

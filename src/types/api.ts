@@ -242,6 +242,14 @@ export interface PatrimonioSnapshot {
   deudas: number
 }
 
+// Reparto del patrimonio para el widget de distribución: cuentas + cada
+// categoría de inversión (sin deudas). El porcentaje va sobre el total.
+export interface DistribucionPatrimonioResponse {
+  concepto: string
+  importe: number
+  porcentaje: number
+}
+
 // Config personal del dashboard persistida por usuario en el backend.
 // `layout` son items de react-grid-layout; se tipa laxo para no acoplar el DTO.
 export interface DashboardConfig {

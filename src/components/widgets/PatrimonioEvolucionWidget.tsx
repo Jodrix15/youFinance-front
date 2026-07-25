@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Chart as ChartJS } from 'chart.js'
 import { Line } from 'react-chartjs-2'
 import { usePatrimonioHistorico } from '@/hooks/useFinance'
 import { useTheme } from '@/context/ThemeContext'
@@ -89,7 +90,7 @@ export default function PatrimonioEvolucionWidget() {
   }
 
   const labels = filtered.map((s) => `${s.mes.slice(5, 7)}/${s.mes.slice(2, 4)}`)
-  const values = filtered.map((s) => s.patrimonioNeto)
+  const puntos = filtered.length <= 2 ? 4 : 0
 
   const t = chartTheme()
   const data = {
@@ -97,13 +98,35 @@ export default function PatrimonioEvolucionWidget() {
     datasets: [
       {
         label: 'Patrimonio',
-        data: values,
+        data: filtered.map((s) => s.patrimonioNeto),
         borderColor: '#2f81f7',
         backgroundColor: 'rgba(47, 129, 247, 0.12)',
         fill: true,
         tension: 0.25,
-        pointRadius: filtered.length <= 2 ? 4 : 0,
+        pointRadius: puntos,
         pointBackgroundColor: '#2f81f7',
+        borderWidth: 2,
+      },
+      {
+        label: 'Inversiones',
+        data: filtered.map((s) => s.inversiones),
+        borderColor: '#1d9e75',
+        backgroundColor: '#1d9e75',
+        fill: false,
+        tension: 0.25,
+        pointRadius: puntos,
+        pointBackgroundColor: '#1d9e75',
+        borderWidth: 2,
+      },
+      {
+        label: 'Ahorros',
+        data: filtered.map((s) => s.cuentas),
+        borderColor: '#d29922',
+        backgroundColor: '#d29922',
+        fill: false,
+        tension: 0.25,
+        pointRadius: puntos,
+        pointBackgroundColor: '#d29922',
         borderWidth: 2,
       },
     ],
@@ -123,8 +146,29 @@ export default function PatrimonioEvolucionWidget() {
             // pequeño movimiento de entrada al abrir la sección.
             animation: false,
             plugins: {
-              legend: { display: false },
-              tooltip: { callbacks: { label: (c) => ` ${formatEur(Number(c.parsed.y))}` } },
+              legend: {
+                display: true,
+                position: 'bottom',
+                labels: {
+                  color: t.tick,
+                  boxWidth: 12,
+                  font: { size: 11 },
+                  // Recuadro sólido: usa el color de línea también como relleno,
+                  // para que Patrimonio no se vea bicolor por su área translúcida.
+                  generateLabels: (chart) => {
+                    const items = ChartJS.defaults.plugins.legend.labels.generateLabels(chart)
+                    items.forEach((it) => {
+                      it.fillStyle = it.strokeStyle as string
+                    })
+                    return items
+                  },
+                },
+              },
+              tooltip: {
+                callbacks: {
+                  label: (c) => ` ${c.dataset.label}: ${formatEur(Number(c.parsed.y))}`,
+                },
+              },
             },
             scales: {
               x: {
