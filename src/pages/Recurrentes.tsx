@@ -23,6 +23,7 @@ import Select from '@/components/ui/Select'
 import MoneyInput from '@/components/ui/MoneyInput'
 import CategoriaSelect from '@/components/ui/CategoriaSelect'
 import type { Frecuencia, GastoRecurrenteResponse } from '@/types/api'
+import { StatCard, StatGrid } from '@/components/ui/StatCard'
 import s from './Recurrentes.module.css'
 
 const num = (v: string) => (v.trim() === '' ? NaN : Number(v.replace(',', '.')))
@@ -287,24 +288,12 @@ export default function Recurrentes() {
         <p>Tus gastos fijos mensuales y anuales</p>
       </div>
 
-      <div className={s.kpis}>
-        <div className={s.kpi}>
-          <div className={s.kpiLabel}>Gasto mensual</div>
-          <div className={s.kpiValue}>{formatEur(gastoMensual, true)}</div>
-        </div>
-        <div className={s.kpi}>
-          <div className={s.kpiLabel}>Gasto anual</div>
-          <div className={s.kpiValue}>{formatEur(gastoAnual)}</div>
-        </div>
-        <div className={s.kpi}>
-          <div className={s.kpiLabel}>Activos</div>
-          <div className={s.kpiValue}>{numActivos}</div>
-        </div>
-        <div className={s.kpi}>
-          <div className={s.kpiLabel}>Total</div>
-          <div className={s.kpiValue}>{numTotal}</div>
-        </div>
-      </div>
+      <StatGrid>
+        <StatCard label="Gasto mensual" value={formatEur(gastoMensual, true)} />
+        <StatCard label="Gasto anual" value={formatEur(gastoAnual)} />
+        <StatCard label="Activos" value={numActivos} />
+        <StatCard label="Total" value={numTotal} />
+      </StatGrid>
 
       {activos.length > 0 && (
         <div className={s.charts}>

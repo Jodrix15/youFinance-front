@@ -5,6 +5,7 @@ import { usePatrimonioHistorico } from '@/hooks/useFinance'
 import { useTheme } from '@/context/ThemeContext'
 import { chartTheme } from '@/lib/chartSetup'
 import { formatEur } from '@/lib/format'
+import { Tabs } from '@/components/ui/Tabs'
 import { WidgetError, WidgetLoading } from './WidgetState'
 
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -43,26 +44,12 @@ export default function PatrimonioEvolucionWidget() {
   const filtered = snaps.filter((s) => !cutoff || s.mes >= cutoff)
 
   const rangeButtons = (
-    <div style={{ display: 'flex', gap: 4, marginBottom: 8, flexShrink: 0 }}>
-      {RANGES.map(([r, label]) => (
-        <button
-          key={r}
-          type="button"
-          onClick={() => setRange(r)}
-          style={{
-            padding: '4px 10px',
-            fontSize: 12,
-            fontWeight: 500,
-            cursor: 'pointer',
-            border: '1px solid var(--border2)',
-            borderRadius: 'var(--r-sm)',
-            background: range === r ? 'var(--accent)' : 'var(--bg2)',
-            color: range === r ? '#fff' : 'var(--tx2)',
-          }}
-        >
-          {label}
-        </button>
-      ))}
+    <div style={{ marginBottom: 8, flexShrink: 0 }}>
+      <Tabs
+        options={RANGES.map(([value, label]) => ({ value, label }))}
+        value={range}
+        onChange={setRange}
+      />
     </div>
   )
 

@@ -1,5 +1,6 @@
 import { useDeudas, useResumenDeuda } from '@/hooks/useFinance'
 import { formatEur } from '@/lib/format'
+import { ProgressBar } from '@/components/ui/ProgressBar'
 import { WidgetEmpty, WidgetError, WidgetLoading } from './WidgetState'
 
 export default function DeudasWidget() {
@@ -53,24 +54,7 @@ export default function DeudasWidget() {
           </span>
           <span>Pagado {Math.round(pct)}%</span>
         </div>
-        <div
-          style={{
-            height: 8,
-            background: 'var(--bg3)',
-            borderRadius: 999,
-            overflow: 'hidden',
-          }}
-        >
-          <div
-            style={{
-              height: '100%',
-              width: `${pct}%`,
-              background: 'linear-gradient(90deg, var(--amber), var(--coral))',
-              borderRadius: 999,
-              transition: 'width 0.3s ease',
-            }}
-          />
-        </div>
+        <ProgressBar value={pct} />
       </div>
     </>
   )

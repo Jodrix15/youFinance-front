@@ -1,5 +1,7 @@
+import { useMemo } from 'react'
 import { useMovimientos } from '@/hooks/useFinance'
 import { formatEur } from '@/lib/format'
+import { ProgressBar } from '@/components/ui/ProgressBar'
 import { WidgetEmpty, WidgetError, WidgetLoading } from './WidgetState'
 
 const MESES = [
@@ -7,29 +9,29 @@ const MESES = [
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ]
 
+const anio = new Date().getFullYear() - 1
+
 export default function TopMesesGastoWidget() {
   const { data: movs, isLoading, isError } = useMovimientos()
 
+  // Top 5 meses con más gasto del año anterior.
+  const top = useMemo(() => {
+    const porMes = new Array(12).fill(0)
+    ;(movs ?? [])
+      .filter((m) => m.tipoMovimiento === 'GASTO' && m.fechaTransaccion?.slice(0, 4) === String(anio))
+      .forEach((m) => {
+        const mes = Number(m.fechaTransaccion.slice(5, 7)) - 1
+        if (mes >= 0 && mes < 12) porMes[mes] += Math.abs(Number(m.importe || 0))
+      })
+    return porMes
+      .map((total, mes) => ({ mes, total }))
+      .filter((x) => x.total > 0)
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5)
+  }, [movs])
+
   if (isLoading) return <WidgetLoading />
   if (isError) return <WidgetError />
-
-  const anio = new Date().getFullYear() - 1
-
-  // Suma de gastos por mes del año anterior.
-  const porMes = new Array(12).fill(0)
-  ;(movs ?? [])
-    .filter((m) => m.tipoMovimiento === 'GASTO' && m.fechaTransaccion?.slice(0, 4) === String(anio))
-    .forEach((m) => {
-      const mes = Number(m.fechaTransaccion.slice(5, 7)) - 1
-      if (mes >= 0 && mes < 12) porMes[mes] += Math.abs(Number(m.importe || 0))
-    })
-
-  const top = porMes
-    .map((total, mes) => ({ mes, total }))
-    .filter((x) => x.total > 0)
-    .sort((a, b) => b.total - a.total)
-    .slice(0, 5)
-
   if (top.length === 0)
     return <WidgetEmpty message={`Sin gastos registrados en ${anio}.`} />
 
@@ -58,24 +60,7 @@ export default function TopMesesGastoWidget() {
               </span>
               <span style={{ fontWeight: 600, color: 'var(--tx1)' }}>{formatEur(x.total, true)}</span>
             </div>
-            <div
-              style={{
-                height: 8,
-                background: 'var(--bg3)',
-                borderRadius: 999,
-                overflow: 'hidden',
-              }}
-            >
-              <div
-                style={{
-                  height: '100%',
-                  width: `${max > 0 ? (x.total / max) * 100 : 0}%`,
-                  background: 'linear-gradient(90deg, var(--amber), var(--coral))',
-                  borderRadius: 999,
-                  transition: 'width 0.3s ease',
-                }}
-              />
-            </div>
+            <ProgressBar value={max > 0 ? (x.total / max) * 100 : 0} />
           </div>
         ))}
       </div>

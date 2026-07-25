@@ -20,6 +20,7 @@ import { apiErrorMessage } from '@/lib/api'
 import Select from '@/components/ui/Select'
 import MoneyInput from '@/components/ui/MoneyInput'
 import CategoriaSelect from '@/components/ui/CategoriaSelect'
+import { StatCard, StatGrid } from '@/components/ui/StatCard'
 import s from './Inversiones.module.css'
 
 const num = (v: string) => (v.trim() === '' ? NaN : Number(v.replace(',', '.')))
@@ -294,34 +295,20 @@ export default function Inversiones() {
         <p>Controla en qué categorías estás invirtiendo y su rentabilidad</p>
       </div>
 
-      <div className={s.kpis}>
-        <div className={s.kpi}>
-          <div className={s.kpiLabel}>Total invertido</div>
-          <div className={s.kpiValue}>{formatEur(totalInvertido)}</div>
-        </div>
-        <div className={s.kpi}>
-          <div className={s.kpiLabel}>Capital aportado</div>
-          <div className={s.kpiValue}>{formatEur(totalAportado)}</div>
-        </div>
-        <div className={s.kpi}>
-          <div className={s.kpiLabel}>Plusvalía total</div>
-          <div
-            className={s.kpiValue}
-            style={{ color: plusvaliaTotal >= 0 ? 'var(--up)' : 'var(--down)' }}
-          >
-            {formatEur(plusvaliaTotal)}
-          </div>
-        </div>
-        <div className={s.kpi}>
-          <div className={s.kpiLabel}>Rentabilidad media</div>
-          <div
-            className={s.kpiValue}
-            style={{ color: rentabilidad >= 0 ? 'var(--up)' : 'var(--down)' }}
-          >
-            {formatPct(rentabilidad)}
-          </div>
-        </div>
-      </div>
+      <StatGrid>
+        <StatCard label="Total invertido" value={formatEur(totalInvertido)} />
+        <StatCard label="Capital aportado" value={formatEur(totalAportado)} />
+        <StatCard
+          label="Plusvalía total"
+          value={formatEur(plusvaliaTotal)}
+          color={plusvaliaTotal >= 0 ? 'var(--up)' : 'var(--down)'}
+        />
+        <StatCard
+          label="Rentabilidad media"
+          value={formatPct(rentabilidad)}
+          color={rentabilidad >= 0 ? 'var(--up)' : 'var(--down)'}
+        />
+      </StatGrid>
 
       {list.length > 0 && (
         <div className={s.charts}>

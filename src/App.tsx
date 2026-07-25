@@ -1,20 +1,23 @@
+import { lazy, type ReactElement } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { setActiveCurrency } from '@/lib/format'
 import AppShell from '@/components/layout/AppShell'
 import Login from '@/pages/Login'
 import Dashboard from '@/pages/Dashboard'
-import Inversiones from '@/pages/Inversiones'
-import Deudas from '@/pages/Deudas'
-import Suscripciones from '@/pages/Suscripciones'
-import Recurrentes from '@/pages/Recurrentes'
-import Cuentas from '@/pages/Cuentas'
-import CuentaMovimientos from '@/pages/CuentaMovimientos'
-import Presupuestos from '@/pages/Presupuestos'
-import Ajustes from '@/pages/Ajustes'
-import Incidencias from '@/pages/Incidencias'
-import Placeholder from '@/pages/Placeholder'
-import type { ReactElement } from 'react'
+
+// Páginas secundarias cargadas bajo demanda (code-splitting): reducen el bundle
+// inicial; el Suspense/ErrorBoundary del AppShell cubre su carga.
+const Inversiones = lazy(() => import('@/pages/Inversiones'))
+const Deudas = lazy(() => import('@/pages/Deudas'))
+const Suscripciones = lazy(() => import('@/pages/Suscripciones'))
+const Recurrentes = lazy(() => import('@/pages/Recurrentes'))
+const Cuentas = lazy(() => import('@/pages/Cuentas'))
+const CuentaMovimientos = lazy(() => import('@/pages/CuentaMovimientos'))
+const Presupuestos = lazy(() => import('@/pages/Presupuestos'))
+const Ajustes = lazy(() => import('@/pages/Ajustes'))
+const Incidencias = lazy(() => import('@/pages/Incidencias'))
+const Placeholder = lazy(() => import('@/pages/Placeholder'))
 
 function RequireAuth({ children }: { children: ReactElement }) {
   const { isAuthenticated } = useAuth()

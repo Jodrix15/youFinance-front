@@ -9,6 +9,7 @@ import { formatEur } from '@/lib/format'
 import { apiErrorMessage } from '@/lib/api'
 import Select from '@/components/ui/Select'
 import MoneyInput from '@/components/ui/MoneyInput'
+import { StatCard, StatGrid } from '@/components/ui/StatCard'
 import s from './Cuentas.module.css'
 
 const num = (v: string) => (v.trim() === '' ? NaN : Number(v.replace(',', '.')))
@@ -152,13 +153,17 @@ export default function Cuentas() {
         </div>
       </div>
 
-      <div className={s.kpis}>
-        <div className={s.kpi}><div className={s.kpiLabel}>Total en cuentas</div><div className={s.kpiValue}>{formatEur(total)}</div></div>
-        <div className={s.kpi}><div className={s.kpiLabel}>Ingresos</div><div className={s.kpiValue} style={{ color: 'var(--up)' }}>{formatEur(ingresos)}</div></div>
-        <div className={s.kpi}><div className={s.kpiLabel}>Gastos</div><div className={s.kpiValue} style={{ color: 'var(--down)' }}>{formatEur(gastos)}</div></div>
-        <div className={s.kpi}><div className={s.kpiLabel}>Diferencia</div><div className={s.kpiValue} style={{ color: diferencia >= 0 ? 'var(--up)' : 'var(--down)' }}>{formatEur(diferencia)}</div></div>
-        <div className={s.kpi}><div className={s.kpiLabel}>Nº de cuentas</div><div className={s.kpiValue}>{numeroCuentas}</div></div>
-      </div>
+      <StatGrid>
+        <StatCard label="Total en cuentas" value={formatEur(total)} />
+        <StatCard label="Ingresos" value={formatEur(ingresos)} color="var(--up)" />
+        <StatCard label="Gastos" value={formatEur(gastos)} color="var(--down)" />
+        <StatCard
+          label="Diferencia"
+          value={formatEur(diferencia)}
+          color={diferencia >= 0 ? 'var(--up)' : 'var(--down)'}
+        />
+        <StatCard label="Nº de cuentas" value={numeroCuentas} />
+      </StatGrid>
 
       <div className={`card ${s.cardBlock}`}>
         <div className="sec-title">Mis cuentas</div>

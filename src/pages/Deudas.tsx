@@ -24,6 +24,7 @@ import { apiErrorMessage } from '@/lib/api'
 import Select from '@/components/ui/Select'
 import MoneyInput from '@/components/ui/MoneyInput'
 import type { DeudaResponse, Frecuencia } from '@/types/api'
+import { StatCard, StatGrid } from '@/components/ui/StatCard'
 import s from './Deudas.module.css'
 
 const num = (v: string) => (v.trim() === '' ? NaN : Number(v.replace(',', '.')))
@@ -244,32 +245,13 @@ export default function Deudas() {
         <p>Controla lo que debes, a quién y cuánto te queda por pagar</p>
       </div>
 
-      <div className={s.kpis}>
-        <div className={s.kpi}>
-          <div className={s.kpiLabel}>Deuda pendiente</div>
-          <div className={s.kpiValue} style={{ color: 'var(--down)' }}>
-            {formatEur(totalPendiente)}
-          </div>
-        </div>
-        <div className={s.kpi}>
-          <div className={s.kpiLabel}>Total pagado</div>
-          <div className={s.kpiValue} style={{ color: 'var(--up)' }}>
-            {formatEur(totalPagado)}
-          </div>
-        </div>
-        <div className={s.kpi}>
-          <div className={s.kpiLabel}>Total con intereses</div>
-          <div className={s.kpiValue}>{formatEur(totalConIntereses)}</div>
-        </div>
-        <div className={s.kpi}>
-          <div className={s.kpiLabel}>Gasto mensual estimado</div>
-          <div className={s.kpiValue}>{formatEur(gastoMensual)}</div>
-        </div>
-        <div className={s.kpi}>
-          <div className={s.kpiLabel}>Nº de deudas</div>
-          <div className={s.kpiValue}>{numeroDeudas}</div>
-        </div>
-      </div>
+      <StatGrid>
+        <StatCard label="Deuda pendiente" value={formatEur(totalPendiente)} color="var(--down)" />
+        <StatCard label="Total pagado" value={formatEur(totalPagado)} color="var(--up)" />
+        <StatCard label="Total con intereses" value={formatEur(totalConIntereses)} />
+        <StatCard label="Gasto mensual estimado" value={formatEur(gastoMensual)} />
+        <StatCard label="Nº de deudas" value={numeroDeudas} />
+      </StatGrid>
 
       {list.length > 0 && (
         <div className={s.charts}>

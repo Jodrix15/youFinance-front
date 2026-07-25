@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useActualizarEstadoFeedback, useFeedbackList } from '@/hooks/useFinance'
+import { Tabs } from '@/components/ui/Tabs'
 import type { FeedbackCategoria, FeedbackEstado } from '@/types/api'
 
 const CAT_LABEL: Record<FeedbackCategoria, string> = {
@@ -49,26 +50,15 @@ export default function Incidencias() {
         Feedback enviado por los usuarios. {pendientes} pendiente{pendientes === 1 ? '' : 's'}.
       </p>
 
-      <div style={{ display: 'flex', gap: 6, margin: '14px 0' }}>
-        {(['TODAS', 'PENDIENTE', 'RESUELTA', 'DESCARTADA'] as Filtro[]).map((f) => (
-          <button
-            key={f}
-            type="button"
-            onClick={() => setFiltro(f)}
-            style={{
-              padding: '5px 12px',
-              fontSize: 12,
-              fontWeight: 500,
-              cursor: 'pointer',
-              borderRadius: 'var(--r-sm)',
-              border: '1px solid var(--border2)',
-              background: filtro === f ? 'var(--accent)' : 'var(--bg2)',
-              color: filtro === f ? '#fff' : 'var(--tx2)',
-            }}
-          >
-            {f === 'TODAS' ? 'Todas' : ESTADOS.find((e) => e.value === f)?.label}
-          </button>
-        ))}
+      <div style={{ margin: '14px 0' }}>
+        <Tabs<Filtro>
+          value={filtro}
+          onChange={setFiltro}
+          options={[
+            { value: 'TODAS', label: 'Todas' },
+            ...ESTADOS.map((e) => ({ value: e.value as Filtro, label: e.label })),
+          ]}
+        />
       </div>
 
       {isLoading ? (

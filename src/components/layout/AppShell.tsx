@@ -1,7 +1,8 @@
-import { useEffect } from 'react'
+import { Suspense, useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { financeApi } from '@/lib/finance'
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import Topbar from './Topbar'
 import s from './AppShell.module.css'
 
@@ -53,7 +54,11 @@ export default function AppShell() {
     <div className={s.shell}>
       <Topbar />
       <main className={s.main}>
-        <Outlet />
+        <ErrorBoundary>
+          <Suspense fallback={<div style={{ padding: 24, color: 'var(--tx2)' }}>Cargando…</div>}>
+            <Outlet />
+          </Suspense>
+        </ErrorBoundary>
       </main>
     </div>
   )

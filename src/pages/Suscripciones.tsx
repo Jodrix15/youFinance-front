@@ -23,6 +23,7 @@ import Select from '@/components/ui/Select'
 import MoneyInput from '@/components/ui/MoneyInput'
 import CategoriaSelect from '@/components/ui/CategoriaSelect'
 import type { Frecuencia, GastoRecurrenteResponse } from '@/types/api'
+import { StatCard, StatGrid } from '@/components/ui/StatCard'
 import s from './Suscripciones.module.css'
 
 const num = (v: string) => (v.trim() === '' ? NaN : Number(v.replace(',', '.')))
@@ -259,24 +260,12 @@ export default function Suscripciones() {
         <p>Controla tus suscripciones activas y cuánto te cuestan al mes</p>
       </div>
 
-      <div className={s.kpis}>
-        <div className={s.kpi}>
-          <div className={s.kpiLabel}>Gasto mensual</div>
-          <div className={s.kpiValue}>{formatEur(gastoMensual, true)}</div>
-        </div>
-        <div className={s.kpi}>
-          <div className={s.kpiLabel}>Gasto anual</div>
-          <div className={s.kpiValue}>{formatEur(gastoAnual)}</div>
-        </div>
-        <div className={s.kpi}>
-          <div className={s.kpiLabel}>Activas</div>
-          <div className={s.kpiValue}>{numActivas}</div>
-        </div>
-        <div className={s.kpi}>
-          <div className={s.kpiLabel}>Total</div>
-          <div className={s.kpiValue}>{numTotal}</div>
-        </div>
-      </div>
+      <StatGrid>
+        <StatCard label="Gasto mensual" value={formatEur(gastoMensual, true)} />
+        <StatCard label="Gasto anual" value={formatEur(gastoAnual)} />
+        <StatCard label="Activas" value={numActivas} />
+        <StatCard label="Total" value={numTotal} />
+      </StatGrid>
 
       <div className={`card ${s.cardBlock}`}>
         <div className="sec-title">Mis suscripciones</div>
