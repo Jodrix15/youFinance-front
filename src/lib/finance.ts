@@ -7,6 +7,13 @@ import type {
   CrearGasto,
   CuentaDTO,
   CuentaResponse,
+  DistribucionPatrimonioResponse,
+  FlujoCajaMesResponse,
+  GastoCategoriaResponse,
+  GastosFijosMesResponse,
+  FeedbackDTO,
+  FeedbackEstado,
+  FeedbackResponse,
   DeudaDTO,
   DeudaResponse,
   GastoRecurrenteResponse,
@@ -18,6 +25,8 @@ import type {
   MovimientosPage,
   NuevoPrecioRequest,
   PatrimonioSnapshot,
+  PresupuestoDTO,
+  PresupuestoResponse,
   RecurrentePrecioResponse,
   RegisterRequest,
   ResumenCuenta,
@@ -31,6 +40,7 @@ import type {
   UpdateProfileRequest,
   ChangePasswordRequest,
   UpdatePreferencesRequest,
+  DashboardConfig,
 } from '@/types/api'
 
 // ── Auth ──
@@ -39,6 +49,8 @@ export const authApi = {
     api.post<LoginResponse>('/api/auth/login', body).then((r) => r.data),
   register: (body: RegisterRequest) =>
     api.post<LoginResponse>('/api/auth/register', body).then((r) => r.data),
+  // Borra la cookie de sesión en el servidor (el JS no puede borrar una httpOnly).
+  logout: () => api.post<void>('/api/auth/logout').then((r) => r.data),
 }
 
 // ── Perfil / ajustes ──
@@ -50,6 +62,14 @@ export const userApi = {
     api.put<void>('/api/user/me/password', body).then((r) => r.data),
   updatePreferences: (body: UpdatePreferencesRequest) =>
     api.put<UserProfile>('/api/user/me/preferences', body).then((r) => r.data),
+  // Config del dashboard. El backend devuelve cuerpo vacío si el usuario no tiene
+  // config guardada; lo normalizamos a null para que el front use los defaults.
+  getDashboard: () =>
+    api
+      .get<DashboardConfig | ''>('/api/user/me/dashboard')
+      .then((r) => (r.data ? (r.data as DashboardConfig) : null)),
+  updateDashboard: (body: DashboardConfig) =>
+    api.put<DashboardConfig>('/api/user/me/dashboard', body).then((r) => r.data),
 }
 
 // ── Recursos ──
@@ -61,6 +81,8 @@ export const financeApi = {
     api.post<CuentaResponse>('/api/cuenta', body).then((r) => r.data),
   actualizarCuenta: (id: number, body: CuentaDTO) =>
     api.put<CuentaResponse>(`/api/cuenta/${id}`, body).then((r) => r.data),
+  eliminarCuenta: (id: number) =>
+    api.delete<void>(`/api/cuenta/${id}`).then((r) => r.data),
   transacciones: (cuentaId: number) =>
     api
       .get<TransaccionResponse[]>(`/api/cuenta/${cuentaId}/transacciones`)
@@ -137,4 +159,45 @@ export const financeApi = {
     api
       .get<PatrimonioSnapshot[]>('/api/dashboard/patrimonio/historico')
       .then((r) => r.data),
+  distribucionPatrimonio: () =>
+    api
+      .get<DistribucionPatrimonioResponse[]>('/api/dashboard/distribucion-patrimonio')
+      .then((r) => r.data),
+  patrimonioNeto: () =>
+    api.get<number>('/api/dashboard/patrimonio-neto').then((r) => r.data),
+  capitalCuentas: () =>
+    api.get<number>('/api/dashboard/capital-cuentas').then((r) => r.data),
+  capitalInversion: () =>
+    api.get<number>('/api/dashboard/capital-inversion').then((r) => r.data),
+  capitalDeuda: () =>
+    api.get<number>('/api/dashboard/capital-deuda').then((r) => r.data),
+  flujoCaja: (anio: number) =>
+    api
+      .get<FlujoCajaMesResponse[]>('/api/dashboard/flujo-caja', { params: { anio } })
+      .then((r) => r.data),
+  gastosCategoria: () =>
+    api
+      .get<GastoCategoriaResponse[]>('/api/dashboard/gastos-categoria')
+      .then((r) => r.data),
+  gastosFijosMes: (anio: number, mes: number) =>
+    api
+      .get<GastosFijosMesResponse>('/api/dashboard/gastos-fijos', { params: { anio, mes } })
+      .then((r) => r.data),
+  enviarFeedback: (body: FeedbackDTO) =>
+    api.post<FeedbackResponse>('/api/feedback', body).then((r) => r.data),
+  // Gestión (admin)
+  listarFeedback: () =>
+    api.get<FeedbackResponse[]>('/api/feedback').then((r) => r.data),
+  actualizarEstadoFeedback: (id: number, estado: FeedbackEstado) =>
+    api
+      .patch<FeedbackResponse>(`/api/feedback/${id}/estado`, { estado })
+      .then((r) => r.data),
+  presupuestos: () =>
+    api.get<PresupuestoResponse[]>('/api/presupuesto').then((r) => r.data),
+  crearPresupuesto: (body: PresupuestoDTO) =>
+    api.post<PresupuestoResponse>('/api/presupuesto', body).then((r) => r.data),
+  actualizarPresupuesto: (id: number, body: PresupuestoDTO) =>
+    api.put<PresupuestoResponse>(`/api/presupuesto/${id}`, body).then((r) => r.data),
+  eliminarPresupuesto: (id: number) =>
+    api.delete<void>(`/api/presupuesto/${id}`).then((r) => r.data),
 }

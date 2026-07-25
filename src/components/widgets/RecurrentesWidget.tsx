@@ -1,4 +1,5 @@
 import { useRecurrentes } from '@/hooks/useFinance'
+import { formatEur } from '@/lib/format'
 import { WidgetEmpty, WidgetError, WidgetLoading } from './WidgetState'
 
 export default function RecurrentesWidget() {
@@ -15,6 +16,7 @@ export default function RecurrentesWidget() {
         <tr>
           <th>Nombre</th>
           <th>Frecuencia</th>
+          <th style={{ textAlign: 'right' }}>Importe</th>
           <th style={{ textAlign: 'right' }}>Próximo pago</th>
         </tr>
       </thead>
@@ -23,6 +25,9 @@ export default function RecurrentesWidget() {
           <tr key={r.id}>
             <td>{r.nombre}</td>
             <td style={{ textTransform: 'capitalize' }}>{r.frecuencia.toLowerCase()}</td>
+            <td style={{ textAlign: 'right' }}>
+              {r.importeActual != null ? formatEur(r.importeActual, true) : '—'}
+            </td>
             <td style={{ textAlign: 'right' }}>{r.fechaProximoPago ?? '—'}</td>
           </tr>
         ))}

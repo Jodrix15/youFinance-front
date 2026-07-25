@@ -241,3 +241,99 @@ export interface PatrimonioSnapshot {
   inversiones: number
   deudas: number
 }
+
+// Reparto del patrimonio para el widget de distribución: cuentas + cada
+// categoría de inversión (sin deudas). El porcentaje va sobre el total.
+export interface DistribucionPatrimonioResponse {
+  concepto: string
+  importe: number
+  porcentaje: number
+}
+
+// Ingresos y gastos de un mes (1-12) del año pedido (widget de flujo de caja).
+export interface FlujoCajaMesResponse {
+  mes: number
+  ingresos: number
+  gastos: number
+}
+
+// Total gastado por categoría (widget de gastos por categoría).
+export interface GastoCategoriaResponse {
+  categoria: string
+  total: number
+}
+
+// Desglose del gasto fijo que vence en un mes concreto.
+export interface GastosFijosMesResponse {
+  suscripciones: number
+  recurrentes: number
+  cuotasDeuda: number
+  total: number
+}
+
+// ── Feedback ──
+export type FeedbackCategoria = 'INCIDENCIA' | 'MEJORA' | 'PREGUNTA' | 'OTRO'
+export type FeedbackEstado = 'PENDIENTE' | 'RESUELTA' | 'DESCARTADA'
+
+export interface FeedbackDTO {
+  categoria: FeedbackCategoria
+  mensaje: string
+}
+
+export interface FeedbackResponse {
+  id: number
+  usuario: string | null
+  categoria: FeedbackCategoria
+  mensaje: string
+  estado: FeedbackEstado
+  fechaCreacion: string
+}
+
+// Config personal del dashboard persistida por usuario en el backend.
+// `layout` son items de react-grid-layout; se tipa laxo para no acoplar el DTO.
+export interface DashboardConfig {
+  layout: unknown[]
+  visible: string[]
+}
+
+// ── Presupuestos ──
+export type PeriodoPresupuesto = 'MENSUAL' | 'SEMANAL'
+
+export interface PartidaResponse {
+  id: number
+  categoriaId: number | null
+  categoriaNombre: string | null
+  nombre: string | null
+  importe: number
+}
+
+export interface PresupuestoResponse {
+  id: number
+  nombre: string
+  periodo: PeriodoPresupuesto
+  anio: number
+  mes: number
+  semana: number | null
+  cantidadBase: number
+  descontarGastosFijos: boolean
+  totalPresupuestado: number
+  fechaCreacion: string
+  partidas: PartidaResponse[]
+}
+
+export interface PartidaDTO {
+  categoriaId?: number | null
+  nombre?: string | null
+  importe: number
+}
+
+export interface PresupuestoDTO {
+  nombre: string
+  periodo: PeriodoPresupuesto
+  anio: number
+  mes: number
+  semana?: number | null
+  cantidadBase: number
+  descontarGastosFijos: boolean
+  partidas: PartidaDTO[]
+}

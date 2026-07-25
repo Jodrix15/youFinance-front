@@ -3,6 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { useTheme } from '@/context/ThemeContext'
 import { LogoIcon } from '@/components/ui/LogoIcon'
+import FeedbackModal from '@/components/ui/FeedbackModal'
 import s from './Topbar.module.css'
 
 const ICONS = {
@@ -30,6 +31,12 @@ const ICONS = {
   inversiones: (
     <path d="M0 0h1v15h15v1H0zm10 3.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0V4.9l-3.613 4.417a.5.5 0 0 1-.74.037L7.06 6.767l-3.656 5.027a.5.5 0 0 1-.808-.588l4-5.5a.5.5 0 0 1 .758-.06l2.609 2.61L13.445 4H10.5a.5.5 0 0 1-.5-.5" />
   ),
+  presupuestos: (
+    <>
+      <path d="M0 3a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v1h14V3a1 1 0 0 0-1-1zM1 5v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V5z" />
+      <path d="M3 8.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5" />
+    </>
+  ),
 }
 
 const NAV = [
@@ -39,6 +46,7 @@ const NAV = [
   { to: '/suscripciones', label: 'Suscripciones', icon: ICONS.suscripciones },
   { to: '/deudas', label: 'Deudas', icon: ICONS.deudas },
   { to: '/inversiones', label: 'Inversiones', icon: ICONS.inversiones },
+  { to: '/presupuestos', label: 'Presupuestos', icon: ICONS.presupuestos },
 ]
 
 export default function Topbar() {
@@ -46,6 +54,7 @@ export default function Topbar() {
   const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
   const wrapRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -137,6 +146,33 @@ export default function Topbar() {
                   </svg>
                   Ajustes
                 </button>
+                <button
+                  className={s.menuItem}
+                  onClick={() => {
+                    setMenuOpen(false)
+                    setFeedbackOpen(true)
+                  }}
+                >
+                  <svg className={s.menuIcon} viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M2.678 11.894a1 1 0 0 1 .287.801 11 11 0 0 1-.398 2c1.395-.323 2.247-.697 2.634-.893a1 1 0 0 1 .71-.074A8 8 0 0 0 8 14c3.996 0 7-2.807 7-6s-3.004-6-7-6-7 2.808-7 6c0 1.468.617 2.83 1.678 3.894m-.493 3.905a22 22 0 0 1-.713.129c-.2.032-.352-.176-.273-.362a10 10 0 0 0 .244-.637l.003-.01c.248-.72.45-1.548.524-2.319C.743 11.37 0 9.76 0 8c0-3.866 3.582-7 8-7s8 3.134 8 7-3.582 7-8 7a9 9 0 0 1-2.347-.306c-.52.263-1.639.742-3.468 1.105" />
+                  </svg>
+                  Enviar feedback
+                </button>
+                {user?.role === 'ROLE_ADMIN' && (
+                  <button
+                    className={s.menuItem}
+                    onClick={() => {
+                      setMenuOpen(false)
+                      navigate('/incidencias')
+                    }}
+                  >
+                    <svg className={s.menuIcon} viewBox="0 0 16 16" aria-hidden="true">
+                      <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.15.15 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.2.2 0 0 1-.054.06.1.1 0 0 1-.066.017H1.146a.1.1 0 0 1-.066-.017.2.2 0 0 1-.054-.06.18.18 0 0 1 .002-.183L7.884 2.073a.15.15 0 0 1 .054-.057m1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767z" />
+                      <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z" />
+                    </svg>
+                    Incidencias
+                  </button>
+                )}
                 <button className={s.menuItem} onClick={toggleTheme}>
                   <svg className={s.menuIcon} viewBox="0 0 16 16" aria-hidden="true">
                     {theme === 'dark' ? (
@@ -162,6 +198,8 @@ export default function Topbar() {
           </div>
         </div>
       </div>
+
+      {feedbackOpen && <FeedbackModal onClose={() => setFeedbackOpen(false)} />}
     </header>
   )
 }

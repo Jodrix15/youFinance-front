@@ -34,6 +34,20 @@
 }
 .cuentaIcon svg { width: 18px; height: 18px; fill: #fff; }
 .cuentaName { font-size: 15px; font-weight: 700; color: var(--tx1); }
+.deleteBtn {
+  margin-left: auto;
+  flex-shrink: 0;
+  width: 30px; height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border2);
+  border-radius: var(--r-md);
+  color: var(--tx2);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.deleteBtn svg { width: 15px; height: 15px; fill: currentColor; }
+.deleteBtn:hover { color: #fff; background: var(--down); border-color: var(--down); }
 .cuentaSaldo { font-size: 24px; font-weight: 700; color: var(--tx1); letter-spacing: -0.5px; }
 .cuentaLink { font-size: 11px; color: var(--tx3); margin-top: 2px; }
 

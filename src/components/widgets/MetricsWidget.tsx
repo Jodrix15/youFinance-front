@@ -1,29 +1,41 @@
-import { useCuentas, useDeudas, useInversiones } from '@/hooks/useFinance'
+import { useGastosFijosMes, useResumenDashboard } from '@/hooks/useFinance'
 import { formatEur } from '@/lib/format'
 import { WidgetError, WidgetLoading } from './WidgetState'
 import s from './MetricsWidget.module.css'
 
-const sum = (arr: number[]) => arr.reduce((a, b) => a + Number(b || 0), 0)
+// Próximo mes natural (constante durante la vida de la vista).
+const next = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1)
+const NEXT_YM = { year: next.getFullYear(), month: next.getMonth() + 1 }
 
 export default function MetricsWidget() {
-  const cuentas = useCuentas()
-  const inversiones = useInversiones()
-  const deudas = useDeudas()
+  const { patrimonioNeto, capitalCuentas, capitalInversion, capitalDeuda, isLoading, isError } =
+    useResumenDashboard()
+  // Gasto fijo del próximo mes, calculado en el backend.
+  const gastosFijos = useGastosFijosMes(NEXT_YM.year, NEXT_YM.month)
 
-  if (cuentas.isLoading || inversiones.isLoading || deudas.isLoading)
-    return <WidgetLoading />
-  if (cuentas.isError || inversiones.isError || deudas.isError) return <WidgetError />
+  if (isLoading || gastosFijos.isLoading) return <WidgetLoading />
+  if (isError || gastosFijos.isError) return <WidgetError />
 
-  const totalCuentas = sum((cuentas.data ?? []).map((c) => c.importe))
-  const totalInv = sum((inversiones.data ?? []).map((i) => i.capitalTotal))
-  const totalDeuda = sum((deudas.data ?? []).map((d) => d.cantidadPendiente))
-  const patrimonioNeto = totalCuentas + totalInv - totalDeuda
+  const pagoProximoMes = Number(gastosFijos.data?.total ?? 0)
 
   const metrics = [
-    { label: 'Patrimonio neto', value: formatEur(patrimonioNeto), color: undefined },
-    { label: 'Cuentas / ahorros', value: formatEur(totalCuentas), color: undefined },
-    { label: 'Inversiones', value: formatEur(totalInv), color: undefined },
-    { label: 'Deuda total', value: formatEur(totalDeuda), color: 'var(--down)' },
+    {
+      label: 'Patrimonio neto',
+      value: formatEur(patrimonioNeto),
+      color: patrimonioNeto >= 0 ? 'var(--up)' : 'var(--down)',
+    },
+    { label: 'Cuentas / ahorros', value: formatEur(capitalCuentas), color: undefined },
+    {
+      label: 'Inversiones',
+      value: formatEur(capitalInversion),
+      color: capitalInversion >= 0 ? 'var(--up)' : 'var(--down)',
+    },
+    { label: 'Deuda total', value: formatEur(capitalDeuda), color: 'var(--down)' },
+    {
+      label: 'Gasto fijo próximo mes',
+      value: formatEur(pagoProximoMes),
+      color: 'var(--amber)',
+    },
   ]
 
   return (

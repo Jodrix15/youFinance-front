@@ -1,48 +1,72 @@
-import { useDeudas, useRecurrentes } from '@/hooks/useFinance'
+import { useState } from 'react'
+import { useGastosFijosMes } from '@/hooks/useFinance'
 import { formatEur } from '@/lib/format'
 import { WidgetError, WidgetLoading } from './WidgetState'
-import type { DeudaResponse, GastoRecurrenteResponse } from '@/types/api'
 
-const sum = (arr: number[]) => arr.reduce((a, b) => a + Number(b || 0), 0)
-
-// Coste mensual de la cuota real de una deuda (anual → /12).
-function mensualDeuda(d: DeudaResponse): number {
-  const c = Number(d.cuota || 0)
-  return d.frecuencia === 'ANUAL' ? c / 12 : c
-}
-
-function mensual(g: GastoRecurrenteResponse): number {
-  const imp = Number(g.importeActual || 0)
-  return g.frecuencia === 'ANUAL' ? imp / 12 : imp
-}
+const MESES = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+]
 
 export default function GastosFijosWidget() {
-  const rec = useRecurrentes()
-  const deu = useDeudas()
+  // Offset en meses respecto al mes actual (0 = este mes).
+  const [offset, setOffset] = useState(0)
 
-  if (rec.isLoading || deu.isLoading) return <WidgetLoading />
-  if (rec.isError || deu.isError) return <WidgetError />
+  const now = new Date()
+  const sel = new Date(now.getFullYear(), now.getMonth() + offset, 1)
+  const ym = { year: sel.getFullYear(), month: sel.getMonth() + 1 }
+  // Desglose del mes calculado en el backend (keepPreviousData evita parpadeo al navegar).
+  const { data, isLoading, isError } = useGastosFijosMes(ym.year, ym.month)
 
-  const activos = (rec.data ?? []).filter((r) => r.active)
-  const suscripciones = sum(
-    activos.filter((r) => r.tipoPago === 'SUSCRIPCION').map(mensual),
-  )
-  const recMensuales = sum(
-    activos
-      .filter((r) => r.tipoPago === 'RECURRENTE' && r.frecuencia === 'MENSUAL')
-      .map((r) => Number(r.importeActual || 0)),
-  )
-  const cuotasDeuda = sum((deu.data ?? []).map(mensualDeuda))
-  const total = suscripciones + recMensuales + cuotasDeuda
+  if (isLoading) return <WidgetLoading />
+  if (isError) return <WidgetError />
+
+  const suscripciones = Number(data?.suscripciones ?? 0)
+  const recurrentes = Number(data?.recurrentes ?? 0)
+  const cuotasDeuda = Number(data?.cuotasDeuda ?? 0)
+  const total = Number(data?.total ?? 0)
 
   const rows: [string, number][] = [
     ['Suscripciones', suscripciones],
-    ['Recurrentes mensuales', recMensuales],
+    ['Recurrentes', recurrentes],
     ['Cuotas de deuda', cuotasDeuda],
   ]
 
+  const navBtn: React.CSSProperties = {
+    background: 'var(--bg3)',
+    color: 'var(--tx1)',
+    border: '1px solid var(--border)',
+    borderRadius: 6,
+    width: 24,
+    height: 24,
+    lineHeight: '22px',
+    cursor: 'pointer',
+    fontSize: 14,
+    padding: 0,
+  }
+
   return (
     <div>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 8,
+        }}
+      >
+        <button type="button" style={navBtn} onClick={() => setOffset((o) => o - 1)}
+          aria-label="Mes anterior">‹</button>
+        <span style={{ fontWeight: 600, fontSize: 13 }}>
+          {MESES[ym.month - 1]} {ym.year}
+          {offset === 0 && (
+            <span style={{ color: 'var(--tx2)', fontWeight: 400 }}> · actual</span>
+          )}
+        </span>
+        <button type="button" style={navBtn} onClick={() => setOffset((o) => o + 1)}
+          aria-label="Mes siguiente">›</button>
+      </div>
+
       {rows.map(([label, val]) => (
         <div
           key={label}
@@ -59,6 +83,7 @@ export default function GastosFijosWidget() {
           <span style={{ fontWeight: 600, color: 'var(--tx1)' }}>{formatEur(val, true)}</span>
         </div>
       ))}
+
       <div
         style={{
           display: 'flex',
@@ -69,7 +94,7 @@ export default function GastosFijosWidget() {
           fontSize: 14,
         }}
       >
-        <span style={{ fontWeight: 700, color: 'var(--tx1)' }}>Total fijo/mes</span>
+        <span style={{ fontWeight: 700, color: 'var(--tx1)' }}>Total {MESES[ym.month - 1]}</span>
         <span style={{ fontWeight: 700, color: 'var(--tx1)' }}>{formatEur(total, true)}</span>
       </div>
     </div>

@@ -7,8 +7,8 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { authApi, userApi } from '@/lib/finance'
-import { clearToken, getToken, setToken } from '@/lib/api'
 import type {
   LoginRequest,
   Moneda,
@@ -32,17 +32,16 @@ interface AuthContextValue {
   login: (body: LoginRequest) => Promise<void>
   register: (body: RegisterRequest) => Promise<void>
   logout: () => void
-  /**
-   * Fusiona un perfil devuelto por el backend en la sesión activa. Si el perfil
-   * trae un token nuevo (cambio de username), lo persiste para no perder sesión.
-   */
+  /** Fusiona un perfil devuelto por el backend en la sesión activa. */
   applyProfile: (profile: UserProfile) => void
 }
 
+// El JWT vive en una cookie httpOnly (no accesible desde JS). En localStorage
+// solo cacheamos datos NO sensibles del perfil para hidratar la UI al instante;
+// la fuente de verdad de la sesión es la cookie, que se valida con /me al arrancar.
 const USER_KEY = 'jodrix.user'
 
 function loadUser(): SessionUser | null {
-  if (!getToken()) return null
   const raw = localStorage.getItem(USER_KEY)
   return raw ? (JSON.parse(raw) as SessionUser) : null
 }
@@ -62,70 +61,63 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(loadUser)
+  const queryClient = useQueryClient()
 
   const store = useCallback((u: SessionUser) => {
     localStorage.setItem(USER_KEY, JSON.stringify(u))
     setUser(u)
   }, [])
 
-  const persist = useCallback(
-    (partial: Pick<SessionUser, 'username' | 'role'>, token: string) => {
-      setToken(token)
-      // Los campos de perfil se hidratan enseguida desde /me.
-      store({
-        email: null,
-        fotoPerfil: null,
-        moneda: 'EUR',
-        idioma: 'es',
-        ...partial,
-      })
-    },
-    [store],
-  )
+  const clearLocal = useCallback(() => {
+    localStorage.removeItem(USER_KEY)
+    setUser(null)
+  }, [])
 
-  // Al arrancar con sesión activa, refrescamos el perfil completo desde el backend.
+  // Al arrancar, si había sesión cacheada validamos la cookie con /me.
   useEffect(() => {
-    if (!getToken()) return
+    if (!localStorage.getItem(USER_KEY)) return
     userApi
       .me()
       .then((p) => store(profileToSession(p)))
       .catch(() => {
-        /* el interceptor 401 ya gestiona la expiración de sesión */
+        // Cookie ausente/expirada: limpiamos la sesión local.
+        clearLocal()
       })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const login = useCallback(
     async (body: LoginRequest) => {
-      const res = await authApi.login(body)
-      persist({ username: res.username, role: res.role }, res.token)
-      try {
-        const p = await userApi.me()
-        store(profileToSession(p))
-      } catch {
-        /* si falla, quedan los valores por defecto */
-      }
+      await authApi.login(body) // el backend fija la cookie httpOnly
+      // Descarta datos cacheados del usuario anterior antes de montar las vistas.
+      queryClient.clear()
+      const p = await userApi.me()
+      store(profileToSession(p))
     },
-    [persist, store],
+    [store, queryClient],
   )
 
   const register = useCallback(
     async (body: RegisterRequest) => {
-      const res = await authApi.register(body)
-      persist({ username: res.username, role: res.role }, res.token)
+      await authApi.register(body) // el backend fija la cookie httpOnly
+      queryClient.clear()
+      const p = await userApi.me()
+      store(profileToSession(p))
     },
-    [persist],
+    [store, queryClient],
   )
 
   const logout = useCallback(() => {
-    clearToken()
-    localStorage.removeItem(USER_KEY)
-    setUser(null)
-  }, [])
+    // Pedimos al backend que borre la cookie; pase lo que pase, limpiamos local.
+    authApi.logout().catch(() => {
+      /* la sesión se limpia igualmente en el cliente */
+    })
+    clearLocal()
+    queryClient.clear()
+  }, [clearLocal, queryClient])
 
   const applyProfile = useCallback(
     (profile: UserProfile) => {
-      if (profile.token) setToken(profile.token)
       store(profileToSession(profile))
     },
     [store],

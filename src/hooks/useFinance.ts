@@ -4,19 +4,23 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query'
-import { financeApi } from '@/lib/finance'
+import { financeApi, userApi } from '@/lib/finance'
 import type {
   ActualizarGasto,
   ActualizarInversionDTO,
   CrearCategoria,
   CrearGasto,
   CuentaDTO,
+  DashboardConfig,
+  FeedbackDTO,
+  FeedbackEstado,
   DeudaDTO,
   DeudaResponse,
   GastoRecurrenteResponse,
   InversionDTO,
   InversionResponse,
   NuevoPrecioRequest,
+  PresupuestoDTO,
   TipoPago,
   TransaccionDTO,
 } from '@/types/api'
@@ -62,6 +66,9 @@ export function useResumenCuenta(anio?: number, mes?: number) {
   return useQuery({
     queryKey: ['cuentaResumen', anio ?? null, mes ?? null],
     queryFn: () => financeApi.cuentaResumen({ anio, mes }),
+    // Al cambiar de mes/año mantiene el resumen anterior mientras carga el nuevo,
+    // así isLoading solo es true en la primera carga (no parpadea al filtrar).
+    placeholderData: keepPreviousData,
   })
 }
 
@@ -77,8 +84,45 @@ export function useCategorias() {
   return useQuery({ queryKey: ['categorias'], queryFn: financeApi.categorias })
 }
 
+// Config del dashboard del usuario autenticado. Se namespacea por username para
+// que al cambiar de sesión no se reutilice la config cacheada de otro usuario.
+export function useDashboardConfig(username?: string) {
+  return useQuery({
+    queryKey: ['dashboardConfig', username ?? null],
+    queryFn: userApi.getDashboard,
+    // No consultamos hasta conocer al usuario autenticado.
+    enabled: !!username,
+  })
+}
+
+export function useGuardarDashboardConfig() {
+  return useMutation({
+    mutationFn: (body: DashboardConfig) => userApi.updateDashboard(body),
+  })
+}
+
 export function useMovimientos() {
   return useQuery({ queryKey: ['movimientos'], queryFn: financeApi.movimientos })
+}
+
+export function useEnviarFeedback() {
+  return useMutation({
+    mutationFn: (body: FeedbackDTO) => financeApi.enviarFeedback(body),
+  })
+}
+
+// ── Gestión de feedback (admin) ──
+export function useFeedbackList() {
+  return useQuery({ queryKey: ['feedback'], queryFn: financeApi.listarFeedback })
+}
+
+export function useActualizarEstadoFeedback() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, estado }: { id: number; estado: FeedbackEstado }) =>
+      financeApi.actualizarEstadoFeedback(id, estado),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['feedback'] }),
+  })
 }
 
 export function useMovimientosPaginados(params: {
@@ -105,6 +149,101 @@ export function usePatrimonioHistorico() {
   })
 }
 
+// Reparto del patrimonio (cuentas + inversiones por categoría, sin deudas),
+// calculado en el backend.
+export function useDistribucionPatrimonio() {
+  return useQuery({
+    queryKey: ['dashboard', 'distribucionPatrimonio'],
+    queryFn: financeApi.distribucionPatrimonio,
+  })
+}
+
+// Flujo de caja mensual del año (ingresos/gastos por mes), del backend.
+export function useFlujoCaja(anio: number) {
+  return useQuery({
+    queryKey: ['dashboard', 'flujoCaja', anio],
+    queryFn: () => financeApi.flujoCaja(anio),
+    placeholderData: keepPreviousData,
+  })
+}
+
+// Total gastado por categoría, del backend.
+export function useGastosCategoria() {
+  return useQuery({
+    queryKey: ['dashboard', 'gastosCategoria'],
+    queryFn: financeApi.gastosCategoria,
+  })
+}
+
+// Gasto fijo que vence en un mes concreto, calculado en el backend.
+export function useGastosFijosMes(anio: number, mes: number) {
+  return useQuery({
+    queryKey: ['dashboard', 'gastosFijos', anio, mes],
+    queryFn: () => financeApi.gastosFijosMes(anio, mes),
+    placeholderData: keepPreviousData,
+  })
+}
+
+// KPIs del dashboard calculados en el backend (una query por métrica, todas
+// namespaceadas bajo ['dashboard'] para invalidarlas juntas).
+export function useResumenDashboard() {
+  const neto = useQuery({
+    queryKey: ['dashboard', 'patrimonioNeto'],
+    queryFn: financeApi.patrimonioNeto,
+  })
+  const cuentas = useQuery({
+    queryKey: ['dashboard', 'capitalCuentas'],
+    queryFn: financeApi.capitalCuentas,
+  })
+  const inversion = useQuery({
+    queryKey: ['dashboard', 'capitalInversion'],
+    queryFn: financeApi.capitalInversion,
+  })
+  const deuda = useQuery({
+    queryKey: ['dashboard', 'capitalDeuda'],
+    queryFn: financeApi.capitalDeuda,
+  })
+  return {
+    patrimonioNeto: neto.data ?? 0,
+    capitalCuentas: cuentas.data ?? 0,
+    capitalInversion: inversion.data ?? 0,
+    capitalDeuda: deuda.data ?? 0,
+    isLoading:
+      neto.isLoading || cuentas.isLoading || inversion.isLoading || deuda.isLoading,
+    isError: neto.isError || cuentas.isError || inversion.isError || deuda.isError,
+  }
+}
+
+// ── Presupuestos ──
+export function usePresupuestos() {
+  return useQuery({ queryKey: ['presupuestos'], queryFn: financeApi.presupuestos })
+}
+
+export function useCrearPresupuesto() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: PresupuestoDTO) => financeApi.crearPresupuesto(body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['presupuestos'] }),
+  })
+}
+
+export function useActualizarPresupuesto() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...body }: { id: number } & PresupuestoDTO) =>
+      financeApi.actualizarPresupuesto(id, body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['presupuestos'] }),
+  })
+}
+
+export function useEliminarPresupuesto() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => financeApi.eliminarPresupuesto(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['presupuestos'] }),
+  })
+}
+
 export function useTransacciones(cuentaId: number) {
   return useQuery({
     queryKey: ['transacciones', cuentaId],
@@ -120,6 +259,19 @@ export function useCrearCuenta() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['cuentas'] })
       qc.invalidateQueries({ queryKey: ['cuentaResumen'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+  })
+}
+
+export function useEliminarCuenta() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => financeApi.eliminarCuenta(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['cuentas'] })
+      qc.invalidateQueries({ queryKey: ['cuentaResumen'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
@@ -136,6 +288,7 @@ export function useCrearTransaccion() {
       qc.invalidateQueries({ queryKey: ['transacciones'] })
       qc.invalidateQueries({ queryKey: ['cuentas'] })
       qc.invalidateQueries({ queryKey: ['cuentaResumen'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
@@ -151,6 +304,7 @@ export function useEliminarTransaccion() {
       qc.invalidateQueries({ queryKey: ['transacciones'] })
       qc.invalidateQueries({ queryKey: ['cuentas'] })
       qc.invalidateQueries({ queryKey: ['cuentaResumen'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
@@ -166,6 +320,7 @@ export function useActualizarTransaccion() {
       qc.invalidateQueries({ queryKey: ['transacciones'] })
       qc.invalidateQueries({ queryKey: ['cuentas'] })
       qc.invalidateQueries({ queryKey: ['cuentaResumen'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
@@ -176,6 +331,7 @@ export function useCrearInversion() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['inversiones'] })
       qc.invalidateQueries({ queryKey: ['inversionResumen'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
@@ -188,6 +344,7 @@ export function useActualizarInversion() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['inversiones'] })
       qc.invalidateQueries({ queryKey: ['inversionResumen'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
@@ -212,6 +369,7 @@ export function useEliminarInversion() {
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ['inversiones'] })
       qc.invalidateQueries({ queryKey: ['inversionResumen'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
@@ -254,6 +412,7 @@ export function useCrearDeuda() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['deudas'] })
       qc.invalidateQueries({ queryKey: ['deudaResumen'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
@@ -266,6 +425,7 @@ export function useActualizarDeuda() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['deudas'] })
       qc.invalidateQueries({ queryKey: ['deudaResumen'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
@@ -290,6 +450,7 @@ export function useEliminarDeuda() {
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ['deudas'] })
       qc.invalidateQueries({ queryKey: ['deudaResumen'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
@@ -301,6 +462,7 @@ export function useCrearRecurrente() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['recurrentes'] })
       qc.invalidateQueries({ queryKey: ['recurrenteResumen'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
@@ -313,6 +475,7 @@ export function useActualizarRecurrente() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['recurrentes'] })
       qc.invalidateQueries({ queryKey: ['recurrenteResumen'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
@@ -325,6 +488,7 @@ export function useNuevoPrecioRecurrente() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['recurrentes'] })
       qc.invalidateQueries({ queryKey: ['recurrenteResumen'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
@@ -349,6 +513,7 @@ export function useEliminarRecurrente() {
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ['recurrentes'] })
       qc.invalidateQueries({ queryKey: ['recurrenteResumen'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
