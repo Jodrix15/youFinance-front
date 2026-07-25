@@ -250,6 +250,24 @@ export interface DistribucionPatrimonioResponse {
   porcentaje: number
 }
 
+// ── Feedback ──
+export type FeedbackCategoria = 'INCIDENCIA' | 'MEJORA' | 'PREGUNTA' | 'OTRO'
+export type FeedbackEstado = 'PENDIENTE' | 'RESUELTA' | 'DESCARTADA'
+
+export interface FeedbackDTO {
+  categoria: FeedbackCategoria
+  mensaje: string
+}
+
+export interface FeedbackResponse {
+  id: number
+  usuario: string | null
+  categoria: FeedbackCategoria
+  mensaje: string
+  estado: FeedbackEstado
+  fechaCreacion: string
+}
+
 // Config personal del dashboard persistida por usuario en el backend.
 // `layout` son items de react-grid-layout; se tipa laxo para no acoplar el DTO.
 export interface DashboardConfig {

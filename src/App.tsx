@@ -12,12 +12,18 @@ import Cuentas from '@/pages/Cuentas'
 import CuentaMovimientos from '@/pages/CuentaMovimientos'
 import Presupuestos from '@/pages/Presupuestos'
 import Ajustes from '@/pages/Ajustes'
+import Incidencias from '@/pages/Incidencias'
 import Placeholder from '@/pages/Placeholder'
 import type { ReactElement } from 'react'
 
 function RequireAuth({ children }: { children: ReactElement }) {
   const { isAuthenticated } = useAuth()
   return isAuthenticated ? children : <Navigate to="/login" replace />
+}
+
+function RequireAdmin({ children }: { children: ReactElement }) {
+  const { user } = useAuth()
+  return user?.role === 'ROLE_ADMIN' ? children : <Navigate to="/" replace />
 }
 
 export default function App() {
@@ -52,6 +58,14 @@ export default function App() {
         <Route path="/inversiones" element={<Inversiones />} />
         <Route path="/presupuestos" element={<Presupuestos />} />
         <Route path="/ajustes" element={<Ajustes />} />
+        <Route
+          path="/incidencias"
+          element={
+            <RequireAdmin>
+              <Incidencias />
+            </RequireAdmin>
+          }
+        />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

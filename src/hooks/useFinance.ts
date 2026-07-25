@@ -12,6 +12,8 @@ import type {
   CrearGasto,
   CuentaDTO,
   DashboardConfig,
+  FeedbackDTO,
+  FeedbackEstado,
   DeudaDTO,
   DeudaResponse,
   GastoRecurrenteResponse,
@@ -101,6 +103,26 @@ export function useGuardarDashboardConfig() {
 
 export function useMovimientos() {
   return useQuery({ queryKey: ['movimientos'], queryFn: financeApi.movimientos })
+}
+
+export function useEnviarFeedback() {
+  return useMutation({
+    mutationFn: (body: FeedbackDTO) => financeApi.enviarFeedback(body),
+  })
+}
+
+// ── Gestión de feedback (admin) ──
+export function useFeedbackList() {
+  return useQuery({ queryKey: ['feedback'], queryFn: financeApi.listarFeedback })
+}
+
+export function useActualizarEstadoFeedback() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, estado }: { id: number; estado: FeedbackEstado }) =>
+      financeApi.actualizarEstadoFeedback(id, estado),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['feedback'] }),
+  })
 }
 
 export function useMovimientosPaginados(params: {

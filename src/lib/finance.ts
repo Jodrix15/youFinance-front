@@ -8,6 +8,9 @@ import type {
   CuentaDTO,
   CuentaResponse,
   DistribucionPatrimonioResponse,
+  FeedbackDTO,
+  FeedbackEstado,
+  FeedbackResponse,
   DeudaDTO,
   DeudaResponse,
   GastoRecurrenteResponse,
@@ -165,6 +168,15 @@ export const financeApi = {
     api.get<number>('/api/dashboard/capital-inversion').then((r) => r.data),
   capitalDeuda: () =>
     api.get<number>('/api/dashboard/capital-deuda').then((r) => r.data),
+  enviarFeedback: (body: FeedbackDTO) =>
+    api.post<FeedbackResponse>('/api/feedback', body).then((r) => r.data),
+  // Gestión (admin)
+  listarFeedback: () =>
+    api.get<FeedbackResponse[]>('/api/feedback').then((r) => r.data),
+  actualizarEstadoFeedback: (id: number, estado: FeedbackEstado) =>
+    api
+      .patch<FeedbackResponse>(`/api/feedback/${id}/estado`, { estado })
+      .then((r) => r.data),
   presupuestos: () =>
     api.get<PresupuestoResponse[]>('/api/presupuesto').then((r) => r.data),
   crearPresupuesto: (body: PresupuestoDTO) =>
