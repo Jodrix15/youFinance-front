@@ -40,8 +40,11 @@ api.interceptors.response.use(
   (res) => res,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
-      // Evita bucles si ya estamos en el login
-      if (!window.location.pathname.startsWith('/login')) {
+      // No redirigir por fallos de login/registro (los gestiona la propia pantalla)
+      // ni si ya estamos en el login (evita bucles).
+      const url = error.config?.url ?? ''
+      const isAuthRequest = url.includes('/api/auth/')
+      if (!isAuthRequest && !window.location.pathname.startsWith('/login')) {
         window.location.assign('/login')
       }
     }
@@ -59,8 +62,17 @@ export function apiErrorMessage(error: unknown): string {
     if (error.response?.status === 429) {
       return 'Demasiados intentos. Espera un momento e inténtalo de nuevo.'
     }
-    if (error.response?.status === 401 || error.response?.status === 403) {
-      return 'Credenciales incorrectas o sin permisos.'
+    if (error.response?.status === 401) {
+      // Prioriza el mensaje del backend (p. ej. "Usuario o contraseña incorrectos").
+      return data?.message ?? 'Tu sesión no es válida o ha caducado. Vuelve a iniciar sesión.'
+    }
+    if (error.response?.status === 403) {
+      // Mostramos el motivo real del backend (permiso insuficiente o token CSRF
+      // inválido) en vez de un genérico, para no ocultar la causa.
+      return (
+        data?.message ??
+        'Acción no permitida: permiso insuficiente o el token CSRF no es válido. Recarga la página e inténtalo de nuevo.'
+      )
     }
     if (error.code === 'ERR_NETWORK') {
       return 'No se pudo conectar con el servidor. ¿Está el backend arrancado en :8080?'

@@ -56,7 +56,7 @@ export default function Login() {
             <LogoIcon />  
           </div>
           <div className={s.brand}>
-            <span>YouFinance</span>
+            You<span>Finance</span>
           </div>
         </div>
 
