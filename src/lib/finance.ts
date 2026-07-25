@@ -8,6 +8,9 @@ import type {
   CuentaDTO,
   CuentaResponse,
   DistribucionPatrimonioResponse,
+  FlujoCajaMesResponse,
+  GastoCategoriaResponse,
+  GastosFijosMesResponse,
   FeedbackDTO,
   FeedbackEstado,
   FeedbackResponse,
@@ -168,6 +171,18 @@ export const financeApi = {
     api.get<number>('/api/dashboard/capital-inversion').then((r) => r.data),
   capitalDeuda: () =>
     api.get<number>('/api/dashboard/capital-deuda').then((r) => r.data),
+  flujoCaja: (anio: number) =>
+    api
+      .get<FlujoCajaMesResponse[]>('/api/dashboard/flujo-caja', { params: { anio } })
+      .then((r) => r.data),
+  gastosCategoria: () =>
+    api
+      .get<GastoCategoriaResponse[]>('/api/dashboard/gastos-categoria')
+      .then((r) => r.data),
+  gastosFijosMes: (anio: number, mes: number) =>
+    api
+      .get<GastosFijosMesResponse>('/api/dashboard/gastos-fijos', { params: { anio, mes } })
+      .then((r) => r.data),
   enviarFeedback: (body: FeedbackDTO) =>
     api.post<FeedbackResponse>('/api/feedback', body).then((r) => r.data),
   // Gestión (admin)

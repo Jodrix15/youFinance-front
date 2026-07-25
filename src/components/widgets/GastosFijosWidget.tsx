@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { useDeudas, useRecurrentes } from '@/hooks/useFinance'
+import { useGastosFijosMes } from '@/hooks/useFinance'
 import { formatEur } from '@/lib/format'
-import { gastosFijosDelMes } from '@/lib/gastosFijos'
 import { WidgetError, WidgetLoading } from './WidgetState'
 
 const MESES = [
@@ -10,20 +9,22 @@ const MESES = [
 ]
 
 export default function GastosFijosWidget() {
-  const rec = useRecurrentes()
-  const deu = useDeudas()
   // Offset en meses respecto al mes actual (0 = este mes).
   const [offset, setOffset] = useState(0)
-
-  if (rec.isLoading || deu.isLoading) return <WidgetLoading />
-  if (rec.isError || deu.isError) return <WidgetError />
 
   const now = new Date()
   const sel = new Date(now.getFullYear(), now.getMonth() + offset, 1)
   const ym = { year: sel.getFullYear(), month: sel.getMonth() + 1 }
-  const { suscripciones, recurrentes, cuotasDeuda, total } = gastosFijosDelMes(
-    rec.data, deu.data, ym,
-  )
+  // Desglose del mes calculado en el backend (keepPreviousData evita parpadeo al navegar).
+  const { data, isLoading, isError } = useGastosFijosMes(ym.year, ym.month)
+
+  if (isLoading) return <WidgetLoading />
+  if (isError) return <WidgetError />
+
+  const suscripciones = Number(data?.suscripciones ?? 0)
+  const recurrentes = Number(data?.recurrentes ?? 0)
+  const cuotasDeuda = Number(data?.cuotasDeuda ?? 0)
+  const total = Number(data?.total ?? 0)
 
   const rows: [string, number][] = [
     ['Suscripciones', suscripciones],

@@ -1,5 +1,4 @@
-import { useMemo } from 'react'
-import { useMovimientos } from '@/hooks/useFinance'
+import { useFlujoCaja } from '@/hooks/useFinance'
 import { formatEur } from '@/lib/format'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { WidgetEmpty, WidgetError, WidgetLoading } from './WidgetState'
@@ -12,26 +11,18 @@ const MESES = [
 const anio = new Date().getFullYear() - 1
 
 export default function TopMesesGastoWidget() {
-  const { data: movs, isLoading, isError } = useMovimientos()
-
-  // Top 5 meses con más gasto del año anterior.
-  const top = useMemo(() => {
-    const porMes = new Array(12).fill(0)
-    ;(movs ?? [])
-      .filter((m) => m.tipoMovimiento === 'GASTO' && m.fechaTransaccion?.slice(0, 4) === String(anio))
-      .forEach((m) => {
-        const mes = Number(m.fechaTransaccion.slice(5, 7)) - 1
-        if (mes >= 0 && mes < 12) porMes[mes] += Math.abs(Number(m.importe || 0))
-      })
-    return porMes
-      .map((total, mes) => ({ mes, total }))
-      .filter((x) => x.total > 0)
-      .sort((a, b) => b.total - a.total)
-      .slice(0, 5)
-  }, [movs])
+  // Gasto por mes del año anterior, agregado en el backend (flujo de caja).
+  const { data, isLoading, isError } = useFlujoCaja(anio)
 
   if (isLoading) return <WidgetLoading />
   if (isError) return <WidgetError />
+
+  const top = (data ?? [])
+    .map((m) => ({ mes: m.mes - 1, total: Number(m.gastos || 0) }))
+    .filter((x) => x.total > 0)
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 5)
+
   if (top.length === 0)
     return <WidgetEmpty message={`Sin gastos registrados en ${anio}.`} />
 

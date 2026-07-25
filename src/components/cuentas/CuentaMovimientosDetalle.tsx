@@ -44,7 +44,7 @@ const EMPTY = { tipo: 'GASTO' as TipoMovimiento, catName: '', importe: '', descr
 
 interface Props { cuenta: CuentaResponse; onBack: () => void }
 
-export default function AccountMovimientos({ cuenta, onBack }: Props) {
+export default function CuentaMovimientosDetalle({ cuenta, onBack }: Props) {
   const { data: categorias } = useCategorias()
   const confirm = useConfirm()
   const crear = useCrearTransaccion()

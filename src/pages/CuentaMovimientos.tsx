@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { useCuentas } from '@/hooks/useFinance'
 import { apiErrorMessage } from '@/lib/api'
-import AccountMovimientos from '@/components/AccountMovimientos'
+import CuentaMovimientosDetalle from '@/components/cuentas/CuentaMovimientosDetalle'
 
 export default function CuentaMovimientos() {
   const { id } = useParams()
@@ -36,5 +36,5 @@ export default function CuentaMovimientos() {
     )
   }
 
-  return <AccountMovimientos cuenta={cuenta} onBack={() => navigate('/cuentas')} />
+  return <CuentaMovimientosDetalle cuenta={cuenta} onBack={() => navigate('/cuentas')} />
 }

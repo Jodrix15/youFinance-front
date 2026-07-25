@@ -250,6 +250,27 @@ export interface DistribucionPatrimonioResponse {
   porcentaje: number
 }
 
+// Ingresos y gastos de un mes (1-12) del año pedido (widget de flujo de caja).
+export interface FlujoCajaMesResponse {
+  mes: number
+  ingresos: number
+  gastos: number
+}
+
+// Total gastado por categoría (widget de gastos por categoría).
+export interface GastoCategoriaResponse {
+  categoria: string
+  total: number
+}
+
+// Desglose del gasto fijo que vence en un mes concreto.
+export interface GastosFijosMesResponse {
+  suscripciones: number
+  recurrentes: number
+  cuotasDeuda: number
+  total: number
+}
+
 // ── Feedback ──
 export type FeedbackCategoria = 'INCIDENCIA' | 'MEJORA' | 'PREGUNTA' | 'OTRO'
 export type FeedbackEstado = 'PENDIENTE' | 'RESUELTA' | 'DESCARTADA'

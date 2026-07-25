@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Bar } from 'react-chartjs-2'
-import { useMovimientos } from '@/hooks/useFinance'
+import { useFlujoCaja } from '@/hooks/useFinance'
 import { useTheme } from '@/context/ThemeContext'
 import { chartTheme } from '@/lib/chartSetup'
 import { formatEur } from '@/lib/format'
@@ -8,31 +8,23 @@ import { WidgetError, WidgetLoading } from './WidgetState'
 
 const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 
+const sum = (arr: number[]) => arr.reduce((a, b) => a + Number(b || 0), 0)
+
 export default function FlujoCajaWidget() {
   const { theme } = useTheme()
-  const { data: movs, isLoading, isError } = useMovimientos()
   const [anio, setAnio] = useState(() => new Date().getFullYear())
-
-  // Ingresos y gastos del año seleccionado, agregados por mes.
-  const { ingresos, gastos, totalIngresos, totalGastos, neto } = useMemo(() => {
-    const ingresos = new Array(12).fill(0)
-    const gastos = new Array(12).fill(0)
-    ;(movs ?? [])
-      .filter((m) => m.fechaTransaccion?.slice(0, 4) === String(anio))
-      .forEach((m) => {
-        const mes = Number(m.fechaTransaccion.slice(5, 7)) - 1
-        if (mes < 0 || mes > 11) return
-        const imp = Math.abs(Number(m.importe || 0))
-        if (m.tipoMovimiento === 'INGRESO') ingresos[mes] += imp
-        else if (m.tipoMovimiento === 'GASTO') gastos[mes] += imp
-      })
-    const totalIngresos = ingresos.reduce((a, b) => a + b, 0)
-    const totalGastos = gastos.reduce((a, b) => a + b, 0)
-    return { ingresos, gastos, totalIngresos, totalGastos, neto: totalIngresos - totalGastos }
-  }, [movs, anio])
+  // Agregado por mes calculado en el backend.
+  const { data: flujo, isLoading, isError } = useFlujoCaja(anio)
 
   if (isLoading) return <WidgetLoading />
   if (isError) return <WidgetError />
+
+  const meses = flujo ?? []
+  const ingresos = meses.map((m) => Number(m.ingresos || 0))
+  const gastos = meses.map((m) => Number(m.gastos || 0))
+  const totalIngresos = sum(ingresos)
+  const totalGastos = sum(gastos)
+  const neto = totalIngresos - totalGastos
 
   const t = chartTheme()
   const data = {

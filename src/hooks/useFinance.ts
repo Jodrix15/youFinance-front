@@ -158,6 +158,32 @@ export function useDistribucionPatrimonio() {
   })
 }
 
+// Flujo de caja mensual del año (ingresos/gastos por mes), del backend.
+export function useFlujoCaja(anio: number) {
+  return useQuery({
+    queryKey: ['dashboard', 'flujoCaja', anio],
+    queryFn: () => financeApi.flujoCaja(anio),
+    placeholderData: keepPreviousData,
+  })
+}
+
+// Total gastado por categoría, del backend.
+export function useGastosCategoria() {
+  return useQuery({
+    queryKey: ['dashboard', 'gastosCategoria'],
+    queryFn: financeApi.gastosCategoria,
+  })
+}
+
+// Gasto fijo que vence en un mes concreto, calculado en el backend.
+export function useGastosFijosMes(anio: number, mes: number) {
+  return useQuery({
+    queryKey: ['dashboard', 'gastosFijos', anio, mes],
+    queryFn: () => financeApi.gastosFijosMes(anio, mes),
+    placeholderData: keepPreviousData,
+  })
+}
+
 // KPIs del dashboard calculados en el backend (una query por métrica, todas
 // namespaceadas bajo ['dashboard'] para invalidarlas juntas).
 export function useResumenDashboard() {
@@ -436,6 +462,7 @@ export function useCrearRecurrente() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['recurrentes'] })
       qc.invalidateQueries({ queryKey: ['recurrenteResumen'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
@@ -448,6 +475,7 @@ export function useActualizarRecurrente() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['recurrentes'] })
       qc.invalidateQueries({ queryKey: ['recurrenteResumen'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
@@ -460,6 +488,7 @@ export function useNuevoPrecioRecurrente() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['recurrentes'] })
       qc.invalidateQueries({ queryKey: ['recurrenteResumen'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
@@ -484,6 +513,7 @@ export function useEliminarRecurrente() {
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ['recurrentes'] })
       qc.invalidateQueries({ queryKey: ['recurrenteResumen'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }

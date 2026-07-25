@@ -1,23 +1,22 @@
-import { useDeudas, useRecurrentes, useResumenDashboard } from '@/hooks/useFinance'
+import { useGastosFijosMes, useResumenDashboard } from '@/hooks/useFinance'
 import { formatEur } from '@/lib/format'
-import { gastosFijosDelMes } from '@/lib/gastosFijos'
 import { WidgetError, WidgetLoading } from './WidgetState'
 import s from './MetricsWidget.module.css'
+
+// Próximo mes natural (constante durante la vida de la vista).
+const next = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1)
+const NEXT_YM = { year: next.getFullYear(), month: next.getMonth() + 1 }
 
 export default function MetricsWidget() {
   const { patrimonioNeto, capitalCuentas, capitalInversion, capitalDeuda, isLoading, isError } =
     useResumenDashboard()
-  const rec = useRecurrentes()
-  const deu = useDeudas()
+  // Gasto fijo del próximo mes, calculado en el backend.
+  const gastosFijos = useGastosFijosMes(NEXT_YM.year, NEXT_YM.month)
 
-  if (isLoading || rec.isLoading || deu.isLoading) return <WidgetLoading />
-  if (isError || rec.isError || deu.isError) return <WidgetError />
+  if (isLoading || gastosFijos.isLoading) return <WidgetLoading />
+  if (isError || gastosFijos.isError) return <WidgetError />
 
-  // Pago fijo total del próximo mes natural (recurrentes + suscripciones + deudas).
-  const now = new Date()
-  const next = new Date(now.getFullYear(), now.getMonth() + 1, 1)
-  const nextYm = { year: next.getFullYear(), month: next.getMonth() + 1 }
-  const pagoProximoMes = gastosFijosDelMes(rec.data, deu.data, nextYm).total
+  const pagoProximoMes = Number(gastosFijos.data?.total ?? 0)
 
   const metrics = [
     {
