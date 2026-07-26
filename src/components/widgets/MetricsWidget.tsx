@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useGastosFijosMes, useResumenDashboard } from '@/hooks/useFinance'
 import { formatEur } from '@/lib/format'
 import { WidgetError, WidgetLoading } from './WidgetState'
@@ -8,6 +9,7 @@ const next = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1)
 const NEXT_YM = { year: next.getFullYear(), month: next.getMonth() + 1 }
 
 export default function MetricsWidget() {
+  const { t } = useTranslation()
   const { patrimonioNeto, capitalCuentas, capitalInversion, capitalDeuda, isLoading, isError } =
     useResumenDashboard()
   // Gasto fijo del próximo mes, calculado en el backend.
@@ -20,19 +22,19 @@ export default function MetricsWidget() {
 
   const metrics = [
     {
-      label: 'Patrimonio neto',
+      label: t('metrics.patrimonioNeto'),
       value: formatEur(patrimonioNeto),
       color: patrimonioNeto >= 0 ? 'var(--up)' : 'var(--down)',
     },
-    { label: 'Cuentas / ahorros', value: formatEur(capitalCuentas), color: undefined },
+    { label: t('metrics.cuentasAhorros'), value: formatEur(capitalCuentas), color: undefined },
     {
-      label: 'Inversiones',
+      label: t('metrics.inversiones'),
       value: formatEur(capitalInversion),
       color: capitalInversion >= 0 ? 'var(--up)' : 'var(--down)',
     },
-    { label: 'Deuda total', value: formatEur(capitalDeuda), color: 'var(--down)' },
+    { label: t('metrics.deudaTotal'), value: formatEur(capitalDeuda), color: 'var(--down)' },
     {
-      label: 'Gasto fijo próximo mes',
+      label: t('metrics.gastoFijoProximoMes'),
       value: formatEur(pagoProximoMes),
       color: 'var(--amber)',
     },

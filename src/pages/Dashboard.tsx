@@ -8,6 +8,7 @@ import {
   defaultLayout,
   defaultVisible,
 } from '@/components/widgets/registry'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/context/AuthContext'
 import {
   useDashboardConfig,
@@ -195,6 +196,7 @@ export default function Dashboard() {
   // En móvil los widgets se apilan en una columna (sin drag/resize), en el
   // orden visual del layout guardado.
   const isMobile = useIsMobile()
+  const { t } = useTranslation()
   const mobileWidgets = useMemo(
     () => [...visibleLayout].sort((a, b) => a.y - b.y || a.x - b.x),
     [visibleLayout],
@@ -204,19 +206,17 @@ export default function Dashboard() {
     <div>
       <div className={s.header}>
         <div>
-          <div className={s.title}>Dashboard</div>
-          <div className={s.sub}>
-            Arrastra por el icono, redimensiona desde la esquina, oculta con ×
-          </div>
+          <div className={s.title}>{t('dashboard.title')}</div>
+          <div className={s.sub}>{t('dashboard.subtitle')}</div>
         </div>
         <div className={s.spacer} />
         <div className={s.actions} ref={addRef}>
           <button className={s.btn} onClick={() => setAddOpen((o) => !o)}>
-            + Añadir widget
+            {t('dashboard.addWidget')}
           </button>
           {addOpen && (
             <div className={s.addMenu}>
-              <div className={s.addTitle}>Widgets disponibles</div>
+              <div className={s.addTitle}>{t('dashboard.availableWidgets')}</div>
               {WIDGETS.map((w) => {
                 const isVisible = visible.includes(w.id)
                 return (
@@ -226,14 +226,14 @@ export default function Dashboard() {
                     disabled={isVisible}
                     onClick={() => addWidget(w.id)}
                   >
-                    {w.title}
-                    <span className={s.tag}>{isVisible ? 'activo' : 'añadir'}</span>
+                    {t(`widgets.${w.id}`)}
+                    <span className={s.tag}>{isVisible ? t('dashboard.active') : t('dashboard.add')}</span>
                   </button>
                 )
               })}
               {hidden.length === 0 && (
                 <div className={s.addTitle} style={{ borderBottom: 'none' }}>
-                  Todos los widgets están visibles.
+                  {t('dashboard.allVisible')}
                 </div>
               )}
             </div>
@@ -249,7 +249,7 @@ export default function Dashboard() {
             const Comp = def.component
             return (
               <div key={l.i} style={{ height: l.h * 30 }}>
-                <WidgetFrame title={def.title} onHide={() => hideWidget(l.i)}>
+                <WidgetFrame title={t(`widgets.${l.i}`)} onHide={() => hideWidget(l.i)}>
                   <Comp />
                 </WidgetFrame>
               </div>
@@ -290,7 +290,7 @@ export default function Dashboard() {
               const Comp = def.component
               return (
                 <div key={l.i}>
-                  <WidgetFrame title={def.title} onHide={() => hideWidget(l.i)}>
+                  <WidgetFrame title={t(`widgets.${l.i}`)} onHide={() => hideWidget(l.i)}>
                     <Comp />
                   </WidgetFrame>
                 </div>
