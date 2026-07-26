@@ -1,0 +1,44 @@
+.header { margin-bottom: 1.25rem; }
+.header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.4px; }
+.header p { font-size: 13px; color: var(--tx2); margin-top: 2px; }
+
+.filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.25rem; }
+.filterSelect { width: 160px; }
+
+.charts {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 14px;
+  margin-bottom: 1.25rem;
+}
+@media (max-width: 900px) {
+  .charts { grid-template-columns: 1fr; }
+}
+.chartBox { height: 240px; }
+
+.cardBlock { margin-bottom: 1.25rem; }
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.row:last-child { border-bottom: none; }
+.rowName { flex: 1; color: var(--tx1); font-size: 14px; }
+.rowAmount { font-weight: 600; color: var(--tx1); min-width: 90px; text-align: right; }
+.track {
+  flex: 0 0 120px;
+  height: 6px;
+  background: var(--bg3);
+  border-radius: 20px;
+  overflow: hidden;
+}
+.fill { height: 100%; }
+.badge {
+  font-size: 11px;
+  border-radius: 20px;
+  padding: 1px 8px;
+  white-space: nowrap;
+}

@@ -1,6 +1,8 @@
 // Tipos espejo de los DTOs del backend Spring (com.example.finanzas.dto.*)
 
 export type TipoMovimiento = 'GASTO' | 'INGRESO' | 'INVERSION'
+// Familia de un ingreso según el esfuerzo (solo aplica a categorías de tipo INGRESO).
+export type OrigenIngreso = 'ACTIVO' | 'PASIVO' | 'INVERSION'
 export type Frecuencia = 'MENSUAL' | 'ANUAL'
 export type TipoPago = 'RECURRENTE' | 'SUSCRIPCION'
 export type Role = 'ROLE_ADMIN' | 'ROLE_USER'
@@ -214,6 +216,8 @@ export interface CategoriaResponse {
   id: number
   nombre: string
   tipo: TipoMovimiento
+  // Solo presente en categorías de ingreso; null en gastos/inversiones.
+  origenIngreso: OrigenIngreso | null
 }
 
 // ── Cuerpos de petición ──
@@ -231,6 +235,34 @@ export interface ActualizarInversionDTO {
 export interface CrearCategoria {
   nombre: string
   tipo: TipoMovimiento
+  // Obligatorio cuando tipo === 'INGRESO'; se omite en el resto.
+  origenIngreso?: OrigenIngreso | null
+}
+
+// Total de ingresos de una familia y su peso sobre el total del periodo.
+export interface IngresoFamiliaResponse {
+  familia: OrigenIngreso | null
+  total: number
+  porcentaje: number
+}
+
+// Total de ingresos del periodo y su reparto por familia.
+export interface ResumenIngresosResponse {
+  total: number
+  familias: IngresoFamiliaResponse[]
+}
+
+// Total de ingresos de una categoría, con su familia.
+export interface IngresoCategoriaResponse {
+  categoria: string
+  familia: OrigenIngreso | null
+  total: number
+}
+
+// Ingresos totales de un mes (mes = primer día, 'YYYY-MM-DD') para la evolución.
+export interface EvolucionIngresoResponse {
+  mes: string
+  total: number
 }
 
 // Foto mensual del patrimonio (mes = primer día del mes, 'YYYY-MM-DD')
