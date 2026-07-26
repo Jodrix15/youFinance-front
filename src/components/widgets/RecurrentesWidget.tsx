@@ -23,12 +23,12 @@ export default function RecurrentesWidget() {
       <tbody>
         {activos.map((r) => (
           <tr key={r.id}>
-            <td>{r.nombre}</td>
-            <td style={{ textTransform: 'capitalize' }}>{r.frecuencia.toLowerCase()}</td>
-            <td style={{ textAlign: 'right' }}>
+            <td data-label="Nombre">{r.nombre}</td>
+            <td data-label="Frecuencia" style={{ textTransform: 'capitalize' }}>{r.frecuencia.toLowerCase()}</td>
+            <td data-label="Importe" style={{ textAlign: 'right' }}>
               {r.importeActual != null ? formatEur(r.importeActual, true) : '—'}
             </td>
-            <td style={{ textAlign: 'right' }}>{r.fechaProximoPago ?? '—'}</td>
+            <td data-label="Próximo pago" style={{ textAlign: 'right' }}>{r.fechaProximoPago ?? '—'}</td>
           </tr>
         ))}
       </tbody>

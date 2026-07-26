@@ -82,19 +82,19 @@ export default function Incidencias() {
             <tbody>
               {lista.map((f) => (
                 <tr key={f.id}>
-                  <td style={{ color: 'var(--tx2)', fontSize: 12, whiteSpace: 'nowrap' }}>
+                  <td data-label="Fecha" style={{ color: 'var(--tx2)', fontSize: 12, whiteSpace: 'nowrap' }}>
                     {new Date(f.fechaCreacion).toLocaleString('es-ES', {
                       day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit',
                     })}
                   </td>
-                  <td>{f.usuario ?? '—'}</td>
-                  <td>
+                  <td data-label="Usuario">{f.usuario ?? '—'}</td>
+                  <td data-label="Tipo">
                     <span style={{ color: CAT_COLOR[f.categoria], fontWeight: 600, fontSize: 12 }}>
                       {CAT_LABEL[f.categoria]}
                     </span>
                   </td>
-                  <td style={{ whiteSpace: 'pre-wrap' }}>{f.mensaje}</td>
-                  <td>
+                  <td data-label="Mensaje" style={{ whiteSpace: 'pre-wrap' }}>{f.mensaje}</td>
+                  <td data-label="Estado">
                     <select
                       value={f.estado}
                       disabled={actualizar.isPending}

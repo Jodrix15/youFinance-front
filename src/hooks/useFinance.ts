@@ -105,6 +105,11 @@ export function useMovimientos() {
   return useQuery({ queryKey: ['movimientos'], queryFn: financeApi.movimientos })
 }
 
+// Logros del usuario (se evalúan/desbloquean en el backend al pedirlos).
+export function useLogros() {
+  return useQuery({ queryKey: ['logros'], queryFn: financeApi.logros })
+}
+
 export function useEnviarFeedback() {
   return useMutation({
     mutationFn: (body: FeedbackDTO) => financeApi.enviarFeedback(body),
@@ -260,6 +265,7 @@ export function useCrearCuenta() {
       qc.invalidateQueries({ queryKey: ['cuentas'] })
       qc.invalidateQueries({ queryKey: ['cuentaResumen'] })
       qc.invalidateQueries({ queryKey: ['dashboard'] })
+      qc.invalidateQueries({ queryKey: ['logros'] })
     },
   })
 }
@@ -272,6 +278,7 @@ export function useEliminarCuenta() {
       qc.invalidateQueries({ queryKey: ['cuentas'] })
       qc.invalidateQueries({ queryKey: ['cuentaResumen'] })
       qc.invalidateQueries({ queryKey: ['dashboard'] })
+      qc.invalidateQueries({ queryKey: ['logros'] })
     },
   })
 }
@@ -289,6 +296,7 @@ export function useCrearTransaccion() {
       qc.invalidateQueries({ queryKey: ['cuentas'] })
       qc.invalidateQueries({ queryKey: ['cuentaResumen'] })
       qc.invalidateQueries({ queryKey: ['dashboard'] })
+      qc.invalidateQueries({ queryKey: ['logros'] })
     },
   })
 }
@@ -305,6 +313,7 @@ export function useEliminarTransaccion() {
       qc.invalidateQueries({ queryKey: ['cuentas'] })
       qc.invalidateQueries({ queryKey: ['cuentaResumen'] })
       qc.invalidateQueries({ queryKey: ['dashboard'] })
+      qc.invalidateQueries({ queryKey: ['logros'] })
     },
   })
 }
@@ -321,6 +330,7 @@ export function useActualizarTransaccion() {
       qc.invalidateQueries({ queryKey: ['cuentas'] })
       qc.invalidateQueries({ queryKey: ['cuentaResumen'] })
       qc.invalidateQueries({ queryKey: ['dashboard'] })
+      qc.invalidateQueries({ queryKey: ['logros'] })
     },
   })
 }
@@ -332,6 +342,7 @@ export function useCrearInversion() {
       qc.invalidateQueries({ queryKey: ['inversiones'] })
       qc.invalidateQueries({ queryKey: ['inversionResumen'] })
       qc.invalidateQueries({ queryKey: ['dashboard'] })
+      qc.invalidateQueries({ queryKey: ['logros'] })
     },
   })
 }
@@ -345,6 +356,7 @@ export function useActualizarInversion() {
       qc.invalidateQueries({ queryKey: ['inversiones'] })
       qc.invalidateQueries({ queryKey: ['inversionResumen'] })
       qc.invalidateQueries({ queryKey: ['dashboard'] })
+      qc.invalidateQueries({ queryKey: ['logros'] })
     },
   })
 }
@@ -370,6 +382,7 @@ export function useEliminarInversion() {
       qc.invalidateQueries({ queryKey: ['inversiones'] })
       qc.invalidateQueries({ queryKey: ['inversionResumen'] })
       qc.invalidateQueries({ queryKey: ['dashboard'] })
+      qc.invalidateQueries({ queryKey: ['logros'] })
     },
   })
 }
@@ -413,6 +426,7 @@ export function useCrearDeuda() {
       qc.invalidateQueries({ queryKey: ['deudas'] })
       qc.invalidateQueries({ queryKey: ['deudaResumen'] })
       qc.invalidateQueries({ queryKey: ['dashboard'] })
+      qc.invalidateQueries({ queryKey: ['logros'] })
     },
   })
 }
@@ -426,6 +440,7 @@ export function useActualizarDeuda() {
       qc.invalidateQueries({ queryKey: ['deudas'] })
       qc.invalidateQueries({ queryKey: ['deudaResumen'] })
       qc.invalidateQueries({ queryKey: ['dashboard'] })
+      qc.invalidateQueries({ queryKey: ['logros'] })
     },
   })
 }
@@ -451,6 +466,7 @@ export function useEliminarDeuda() {
       qc.invalidateQueries({ queryKey: ['deudas'] })
       qc.invalidateQueries({ queryKey: ['deudaResumen'] })
       qc.invalidateQueries({ queryKey: ['dashboard'] })
+      qc.invalidateQueries({ queryKey: ['logros'] })
     },
   })
 }
@@ -463,6 +479,7 @@ export function useCrearRecurrente() {
       qc.invalidateQueries({ queryKey: ['recurrentes'] })
       qc.invalidateQueries({ queryKey: ['recurrenteResumen'] })
       qc.invalidateQueries({ queryKey: ['dashboard'] })
+      qc.invalidateQueries({ queryKey: ['logros'] })
     },
   })
 }
@@ -476,6 +493,7 @@ export function useActualizarRecurrente() {
       qc.invalidateQueries({ queryKey: ['recurrentes'] })
       qc.invalidateQueries({ queryKey: ['recurrenteResumen'] })
       qc.invalidateQueries({ queryKey: ['dashboard'] })
+      qc.invalidateQueries({ queryKey: ['logros'] })
     },
   })
 }
@@ -489,6 +507,7 @@ export function useNuevoPrecioRecurrente() {
       qc.invalidateQueries({ queryKey: ['recurrentes'] })
       qc.invalidateQueries({ queryKey: ['recurrenteResumen'] })
       qc.invalidateQueries({ queryKey: ['dashboard'] })
+      qc.invalidateQueries({ queryKey: ['logros'] })
     },
   })
 }
@@ -514,6 +533,7 @@ export function useEliminarRecurrente() {
       qc.invalidateQueries({ queryKey: ['recurrentes'] })
       qc.invalidateQueries({ queryKey: ['recurrenteResumen'] })
       qc.invalidateQueries({ queryKey: ['dashboard'] })
+      qc.invalidateQueries({ queryKey: ['logros'] })
     },
   })
 }

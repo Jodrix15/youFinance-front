@@ -13,6 +13,7 @@ import {
   useDashboardConfig,
   useGuardarDashboardConfig,
 } from '@/hooks/useFinance'
+import { useIsMobile } from '@/hooks/useMediaQuery'
 import s from './Dashboard.module.css'
 
 // La config vive en el backend por usuario. localStorage se usa solo como caché
@@ -191,6 +192,14 @@ export default function Dashboard() {
 
   const hidden = WIDGETS.filter((w) => !visible.includes(w.id))
 
+  // En móvil los widgets se apilan en una columna (sin drag/resize), en el
+  // orden visual del layout guardado.
+  const isMobile = useIsMobile()
+  const mobileWidgets = useMemo(
+    () => [...visibleLayout].sort((a, b) => a.y - b.y || a.x - b.x),
+    [visibleLayout],
+  )
+
   return (
     <div>
       <div className={s.header}>
@@ -232,6 +241,22 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {isMobile ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {mobileWidgets.map((l) => {
+            const def = WIDGET_MAP[l.i]
+            if (!def) return null
+            const Comp = def.component
+            return (
+              <div key={l.i} style={{ height: l.h * 30 }}>
+                <WidgetFrame title={def.title} onHide={() => hideWidget(l.i)}>
+                  <Comp />
+                </WidgetFrame>
+              </div>
+            )
+          })}
+        </div>
+      ) : (
       <div ref={gridRef}>
         {gridWidth > 0 && (
           <GridLayout
@@ -274,6 +299,7 @@ export default function Dashboard() {
           </GridLayout>
         )}
       </div>
+      )}
     </div>
   )
 }

@@ -135,3 +135,52 @@ textarea:focus-visible {
   transition: none;
   z-index: 3;
 }
+
+/* ── Móvil (≤ 768px) ── */
+@media (max-width: 768px) {
+  .card {
+    padding: 0.85rem 0.9rem;
+  }
+
+  /* Tablas .tbl → tarjetas apiladas: cada fila es una tarjeta y cada celda una
+     línea "etiqueta: valor" (la etiqueta viene del atributo data-label). */
+  .tbl thead {
+    display: none;
+  }
+  .tbl,
+  .tbl tbody,
+  .tbl tr,
+  .tbl td {
+    display: block;
+    width: auto;
+  }
+  .tbl tr {
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    padding: 4px 10px;
+    margin-bottom: 8px;
+  }
+  .tbl td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    text-align: right !important;
+    border-bottom: 1px solid var(--border);
+    padding: 8px 0;
+  }
+  .tbl tr td:last-child {
+    border-bottom: none;
+  }
+  .tbl td::before {
+    content: attr(data-label);
+    color: var(--tx2);
+    font-weight: 500;
+    text-align: left;
+    white-space: nowrap;
+  }
+  /* Celdas sin data-label (p. ej. acciones) ocupan toda la fila */
+  .tbl td:not([data-label]) {
+    justify-content: flex-end;
+  }
+}

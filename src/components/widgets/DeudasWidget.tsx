@@ -30,9 +30,9 @@ export default function DeudasWidget() {
         <tbody>
           {data.map((d, i) => (
             <tr key={`${d.nombreDeuda}-${i}`}>
-              <td>{d.nombreDeuda}</td>
-              <td style={{ color: 'var(--tx2)' }}>{d.acreedor || '—'}</td>
-              <td style={{ textAlign: 'right' }} className="down">
+              <td data-label="Nombre">{d.nombreDeuda}</td>
+              <td data-label="Acreedor" style={{ color: 'var(--tx2)' }}>{d.acreedor || '—'}</td>
+              <td data-label="Pendiente" style={{ textAlign: 'right' }} className="down">
                 {formatEur(d.cantidadPendiente, true)}
               </td>
             </tr>

@@ -37,6 +37,15 @@ const ICONS = {
       <path d="M3 8.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5" />
     </>
   ),
+  logros: (
+    <path
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1"
+      strokeLinejoin="round"
+      d="M2.5.5A.5.5 0 0 1 3 0h10a.5.5 0 0 1 .5.5c0 .538-.012 1.05-.034 1.536a3 3 0 1 1-1.133 5.89c-.79 1.865-1.878 2.777-2.833 3.011v2.173l1.425.356c.194.048.377.135.537.255L13.3 15.1a.5.5 0 0 1-.3.9H3a.5.5 0 0 1-.3-.9l1.838-1.379c.16-.12.343-.207.537-.255L6.5 13.11v-2.173c-.955-.234-2.043-1.146-2.833-3.012a3 3 0 1 1-1.133-5.89A33 33 0 0 1 2.5 2.037zm.099 2.54a2 2 0 0 0 .72 3.935c-.312-.902-.523-1.98-.6-3.236zm10.802 0c-.077 1.256-.29 2.334-.6 3.236a2 2 0 0 0 .72-3.935z"
+    />
+  ),
 }
 
 const NAV = [
@@ -47,6 +56,7 @@ const NAV = [
   { to: '/deudas', label: 'Deudas', icon: ICONS.deudas },
   { to: '/inversiones', label: 'Inversiones', icon: ICONS.inversiones },
   { to: '/presupuestos', label: 'Presupuestos', icon: ICONS.presupuestos },
+  { to: '/logros', label: 'Logros', icon: ICONS.logros },
 ]
 
 export default function Topbar() {
@@ -55,6 +65,7 @@ export default function Topbar() {
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
   const [feedbackOpen, setFeedbackOpen] = useState(false)
+  const [navOpen, setNavOpen] = useState(false)
   const wrapRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -72,6 +83,16 @@ export default function Topbar() {
   return (
     <header className={s.topbar}>
       <div className={s.inner}>
+        <button
+          className={s.hamburger}
+          onClick={() => setNavOpen(true)}
+          aria-label="Abrir menú"
+        >
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" fill="none" />
+          </svg>
+        </button>
+
         <div className={s.brand}>
           <div className={s.brandIcon}>
             <LogoIcon />
@@ -198,6 +219,35 @@ export default function Topbar() {
           </div>
         </div>
       </div>
+
+      {navOpen && (
+        <div className={s.drawerOverlay} onClick={() => setNavOpen(false)}>
+          <nav className={s.drawer} onClick={(e) => e.stopPropagation()}>
+            <div className={s.drawerHead}>
+              <span className={s.brandText} style={{ fontWeight: 700 }}>
+                You<span style={{ color: 'var(--accent)' }}>Finance</span>
+              </span>
+              <button className={s.iconBtn} onClick={() => setNavOpen(false)} aria-label="Cerrar menú">
+                <svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" fill="none" /></svg>
+              </button>
+            </div>
+            {NAV.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                onClick={() => setNavOpen(false)}
+                className={({ isActive }) => `${s.drawerItem} ${isActive ? s.navActive : ''}`}
+              >
+                <svg className={s.navIcon} viewBox="0 0 16 16" aria-hidden="true">
+                  {item.icon}
+                </svg>
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
+        </div>
+      )}
 
       {feedbackOpen && <FeedbackModal onClose={() => setFeedbackOpen(false)} />}
     </header>
