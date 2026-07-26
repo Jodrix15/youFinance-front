@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/context/AuthContext'
 import { useTheme } from '@/context/ThemeContext'
@@ -55,6 +55,36 @@ const ICONS = {
   ),
 }
 
+const CONFIG_ICONS = {
+  ajustes: (
+    <>
+      <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0" />
+      <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z" />
+    </>
+  ),
+  feedback: (
+    <path d="M2.678 11.894a1 1 0 0 1 .287.801 11 11 0 0 1-.398 2c1.395-.323 2.247-.697 2.634-.893a1 1 0 0 1 .71-.074A8 8 0 0 0 8 14c3.996 0 7-2.807 7-6s-3.004-6-7-6-7 2.808-7 6c0 1.468.617 2.83 1.678 3.894m-.493 3.905a22 22 0 0 1-.713.129c-.2.032-.352-.176-.273-.362a10 10 0 0 0 .244-.637l.003-.01c.248-.72.45-1.548.524-2.319C.743 11.37 0 9.76 0 8c0-3.866 3.582-7 8-7s8 3.134 8 7-3.582 7-8 7a9 9 0 0 1-2.347-.306c-.52.263-1.639.742-3.468 1.105" />
+  ),
+  incidencias: (
+    <>
+      <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.15.15 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.2.2 0 0 1-.054.06.1.1 0 0 1-.066.017H1.146a.1.1 0 0 1-.066-.017.2.2 0 0 1-.054-.06.18.18 0 0 1 .002-.183L7.884 2.073a.15.15 0 0 1 .054-.057m1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767z" />
+      <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z" />
+    </>
+  ),
+  sun: (
+    <path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6m0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8M8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0m0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13m8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5M3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8m10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0m-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0m9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707M4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707" />
+  ),
+  moon: (
+    <path d="M6 .278a.77.77 0 0 1 .08.858 7.2 7.2 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277q.792-.001 1.533-.16a.79.79 0 0 1 .81.316.73.73 0 0 1-.031.893A8.35 8.35 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.75.75 0 0 1 6 .278" />
+  ),
+  logout: (
+    <>
+      <path d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0z" />
+      <path d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z" />
+    </>
+  ),
+}
+
 const NAV = [
   { to: '/', key: 'dashboard', end: true, icon: ICONS.dashboard },
   { to: '/cuentas', key: 'cuentas', icon: ICONS.cuentas },
@@ -71,27 +101,158 @@ export default function Topbar() {
   const { user, logout } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const { t } = useTranslation()
-  const navigate = useNavigate()
-  const [menuOpen, setMenuOpen] = useState(false)
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [navOpen, setNavOpen] = useState(false)
-  const wrapRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    function onClick(e: MouseEvent) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
-        setMenuOpen(false)
-      }
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem('yf-sidebar-collapsed') === '1'
+    } catch {
+      return false
     }
-    document.addEventListener('mousedown', onClick)
-    return () => document.removeEventListener('mousedown', onClick)
-  }, [])
+  })
+
+  function toggleCollapsed() {
+    setCollapsed((c) => {
+      const next = !c
+      try {
+        localStorage.setItem('yf-sidebar-collapsed', next ? '1' : '0')
+      } catch {
+        // localStorage puede fallar en modo privado; el estado sigue en memoria.
+      }
+      return next
+    })
+  }
 
   const initials = (user?.username ?? 'JF').slice(0, 2).toUpperCase()
+  const isAdmin = user?.role === 'ROLE_ADMIN'
+
+  const brand = (
+    <div className={s.brand}>
+      <div className={s.brandIcon}>
+        <LogoIcon />
+      </div>
+      <span className={s.brandText}>
+        You<span>Finance</span>
+      </span>
+    </div>
+  )
+
+  function navLinks(onClick?: () => void, itemClass = s.navBtn) {
+    return NAV.map((item) => (
+      <NavLink
+        key={item.to}
+        to={item.to}
+        end={item.end}
+        onClick={onClick}
+        title={collapsed ? t(`nav.${item.key}`) : undefined}
+        className={({ isActive }) => `${itemClass} ${isActive ? s.navActive : ''}`}
+      >
+        <svg className={s.navIcon} viewBox="0 0 16 16" aria-hidden="true">
+          {item.icon}
+        </svg>
+        <span className={s.navLabel}>{t(`nav.${item.key}`)}</span>
+      </NavLink>
+    ))
+  }
+
+  const themeLabel = t('menu.changeTheme', {
+    mode: theme === 'dark' ? t('menu.light') : t('menu.dark'),
+  })
 
   return (
-    <header className={s.topbar}>
-      <div className={s.inner}>
+    <>
+      <aside className={`${s.sidebar} ${collapsed ? s.collapsed : ''}`}>
+        <div className={s.head}>{brand}</div>
+
+        <button
+          className={s.toggle}
+          onClick={toggleCollapsed}
+          aria-label={collapsed ? 'Expandir menú' : 'Plegar menú'}
+          title={collapsed ? 'Expandir menú' : 'Plegar menú'}
+        >
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            {collapsed ? (
+              <path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            ) : (
+              <path d="M10 3.5 5.5 8 10 12.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            )}
+          </svg>
+          <span className={s.toggleLabel}>Plegar menú</span>
+        </button>
+
+        <nav className={s.nav}>{navLinks()}</nav>
+
+        <div className={s.footer}>
+          <div className={s.footerNav}>
+            <NavLink
+              to="/ajustes"
+              title={collapsed ? t('menu.settings') : undefined}
+              className={({ isActive }) => `${s.navBtn} ${isActive ? s.navActive : ''}`}
+            >
+              <svg className={s.navIcon} viewBox="0 0 16 16" aria-hidden="true">
+                {CONFIG_ICONS.ajustes}
+              </svg>
+              <span className={s.navLabel}>{t('menu.settings')}</span>
+            </NavLink>
+
+            {isAdmin && (
+              <NavLink
+                to="/incidencias"
+                title={collapsed ? t('menu.incidencias') : undefined}
+                className={({ isActive }) => `${s.navBtn} ${isActive ? s.navActive : ''}`}
+              >
+                <svg className={s.navIcon} viewBox="0 0 16 16" aria-hidden="true">
+                  {CONFIG_ICONS.incidencias}
+                </svg>
+                <span className={s.navLabel}>{t('menu.incidencias')}</span>
+              </NavLink>
+            )}
+
+            <button
+              className={s.navBtn}
+              onClick={() => setFeedbackOpen(true)}
+              title={collapsed ? t('menu.feedback') : undefined}
+            >
+              <svg className={s.navIcon} viewBox="0 0 16 16" aria-hidden="true">
+                {CONFIG_ICONS.feedback}
+              </svg>
+              <span className={s.navLabel}>{t('menu.feedback')}</span>
+            </button>
+
+            <button
+              className={s.navBtn}
+              onClick={toggleTheme}
+              title={collapsed ? themeLabel : undefined}
+            >
+              <svg className={s.navIcon} viewBox="0 0 16 16" aria-hidden="true">
+                {theme === 'dark' ? CONFIG_ICONS.sun : CONFIG_ICONS.moon}
+              </svg>
+              <span className={s.navLabel}>{themeLabel}</span>
+            </button>
+          </div>
+
+          <div className={s.userRow} title={collapsed ? user?.username ?? '' : undefined}>
+            <span className={s.avatar}>
+              {user?.fotoPerfil ? (
+                <img className={s.avatarImg} src={user.fotoPerfil} alt="" />
+              ) : (
+                initials
+              )}
+            </span>
+            <span className={s.avatarInfo}>
+              <span className={s.avatarName}>{user?.username}</span>
+              <span className={s.avatarRole}>{user?.role}</span>
+            </span>
+            <button className={s.logoutBtn} onClick={logout} aria-label={t('menu.logout')} title={t('menu.logout')}>
+              <svg viewBox="0 0 16 16" aria-hidden="true">
+                {CONFIG_ICONS.logout}
+              </svg>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <div className={s.mobileTopbar}>
         <button
           className={s.hamburger}
           onClick={() => setNavOpen(true)}
@@ -101,134 +262,7 @@ export default function Topbar() {
             <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" fill="none" />
           </svg>
         </button>
-
-        <div className={s.brand}>
-          <div className={s.brandIcon}>
-            <LogoIcon />
-          </div>
-          <span className={s.brandText}>You<span>Finance</span></span>
-        </div>
-
-        <nav className={s.nav}>
-          {NAV.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) =>
-                `${s.navBtn} ${isActive ? s.navActive : ''}`
-              }
-            >
-              <svg className={s.navIcon} viewBox="0 0 16 16" aria-hidden="true">
-                {item.icon}
-              </svg>
-              {t(`nav.${item.key}`)}
-            </NavLink>
-          ))}
-        </nav>
-
-        <div className={s.right}>
-          <button
-            className={s.iconBtn}
-            onClick={toggleTheme}
-            title="Cambiar tema"
-            aria-label="Cambiar tema"
-          >
-            {theme === 'dark' ? (
-              <svg viewBox="0 0 16 16">
-                <path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6m0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8M8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0m0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13m8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5M3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8m10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0m-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0m9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707M4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707" />
-              </svg>
-            ) : (
-              <svg viewBox="0 0 16 16">
-                <path d="M6 .278a.77.77 0 0 1 .08.858 7.2 7.2 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277q.792-.001 1.533-.16a.79.79 0 0 1 .81.316.73.73 0 0 1-.031.893A8.35 8.35 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.75.75 0 0 1 6 .278" />
-              </svg>
-            )}
-          </button>
-
-          <div className={s.avatarWrap} ref={wrapRef}>
-            <button
-              className={s.avatar}
-              onClick={() => setMenuOpen((o) => !o)}
-              aria-label="Perfil"
-            >
-              {user?.fotoPerfil ? (
-                <img className={s.avatarImg} src={user.fotoPerfil} alt="" />
-              ) : (
-                initials
-              )}
-            </button>
-            {menuOpen && (
-              <div className={s.menu}>
-                <div className={s.menuHead}>
-                  <div className={s.menuName}>{user?.username}</div>
-                  <div className={s.menuSub}>{user?.role}</div>
-                </div>
-                <button
-                  className={s.menuItem}
-                  onClick={() => {
-                    setMenuOpen(false)
-                    navigate('/ajustes')
-                  }}
-                >
-                  <svg className={s.menuIcon} viewBox="0 0 16 16" aria-hidden="true">
-                    <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0" />
-                    <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z" />
-                  </svg>
-                  {t('menu.settings')}
-                </button>
-                <button
-                  className={s.menuItem}
-                  onClick={() => {
-                    setMenuOpen(false)
-                    setFeedbackOpen(true)
-                  }}
-                >
-                  <svg className={s.menuIcon} viewBox="0 0 16 16" aria-hidden="true">
-                    <path d="M2.678 11.894a1 1 0 0 1 .287.801 11 11 0 0 1-.398 2c1.395-.323 2.247-.697 2.634-.893a1 1 0 0 1 .71-.074A8 8 0 0 0 8 14c3.996 0 7-2.807 7-6s-3.004-6-7-6-7 2.808-7 6c0 1.468.617 2.83 1.678 3.894m-.493 3.905a22 22 0 0 1-.713.129c-.2.032-.352-.176-.273-.362a10 10 0 0 0 .244-.637l.003-.01c.248-.72.45-1.548.524-2.319C.743 11.37 0 9.76 0 8c0-3.866 3.582-7 8-7s8 3.134 8 7-3.582 7-8 7a9 9 0 0 1-2.347-.306c-.52.263-1.639.742-3.468 1.105" />
-                  </svg>
-                  {t('menu.feedback')}
-                </button>
-                {user?.role === 'ROLE_ADMIN' && (
-                  <button
-                    className={s.menuItem}
-                    onClick={() => {
-                      setMenuOpen(false)
-                      navigate('/incidencias')
-                    }}
-                  >
-                    <svg className={s.menuIcon} viewBox="0 0 16 16" aria-hidden="true">
-                      <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.15.15 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.2.2 0 0 1-.054.06.1.1 0 0 1-.066.017H1.146a.1.1 0 0 1-.066-.017.2.2 0 0 1-.054-.06.18.18 0 0 1 .002-.183L7.884 2.073a.15.15 0 0 1 .054-.057m1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767z" />
-                      <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z" />
-                    </svg>
-                    {t('menu.incidencias')}
-                  </button>
-                )}
-                <button className={s.menuItem} onClick={toggleTheme}>
-                  <svg className={s.menuIcon} viewBox="0 0 16 16" aria-hidden="true">
-                    {theme === 'dark' ? (
-                      <path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6m0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8M8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0m0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13m8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5M3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8m10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0m-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0m9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707M4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707" />
-                    ) : (
-                      <path d="M6 .278a.77.77 0 0 1 .08.858 7.2 7.2 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277q.792-.001 1.533-.16a.79.79 0 0 1 .81.316.73.73 0 0 1-.031.893A8.35 8.35 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.75.75 0 0 1 6 .278" />
-                    )}
-                  </svg>
-                  {t('menu.changeTheme', {
-                    mode: theme === 'dark' ? t('menu.light') : t('menu.dark'),
-                  })}
-                </button>
-                <button
-                  className={`${s.menuItem} ${s.danger}`}
-                  onClick={logout}
-                >
-                  <svg className={s.menuIcon} viewBox="0 0 16 16" aria-hidden="true">
-                    <path d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0z" />
-                    <path d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z" />
-                  </svg>
-                  {t('menu.logout')}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+        {brand}
       </div>
 
       {navOpen && (
@@ -242,25 +276,58 @@ export default function Topbar() {
                 <svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" fill="none" /></svg>
               </button>
             </div>
-            {NAV.map((item) => (
+            {navLinks(() => setNavOpen(false), s.drawerItem)}
+            <NavLink
+              to="/ajustes"
+              onClick={() => setNavOpen(false)}
+              className={({ isActive }) => `${s.drawerItem} ${isActive ? s.navActive : ''}`}
+            >
+              <svg className={s.navIcon} viewBox="0 0 16 16" aria-hidden="true">
+                {CONFIG_ICONS.ajustes}
+              </svg>
+              {t('menu.settings')}
+            </NavLink>
+            {isAdmin && (
               <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
+                to="/incidencias"
                 onClick={() => setNavOpen(false)}
                 className={({ isActive }) => `${s.drawerItem} ${isActive ? s.navActive : ''}`}
               >
                 <svg className={s.navIcon} viewBox="0 0 16 16" aria-hidden="true">
-                  {item.icon}
+                  {CONFIG_ICONS.incidencias}
                 </svg>
-                {t(`nav.${item.key}`)}
+                {t('menu.incidencias')}
               </NavLink>
-            ))}
+            )}
+            <button
+              className={s.drawerItem}
+              onClick={() => {
+                setNavOpen(false)
+                setFeedbackOpen(true)
+              }}
+            >
+              <svg className={s.navIcon} viewBox="0 0 16 16" aria-hidden="true">
+                {CONFIG_ICONS.feedback}
+              </svg>
+              {t('menu.feedback')}
+            </button>
+            <button className={s.drawerItem} onClick={toggleTheme}>
+              <svg className={s.navIcon} viewBox="0 0 16 16" aria-hidden="true">
+                {theme === 'dark' ? CONFIG_ICONS.sun : CONFIG_ICONS.moon}
+              </svg>
+              {themeLabel}
+            </button>
+            <button className={`${s.drawerItem} ${s.danger}`} onClick={logout}>
+              <svg className={s.navIcon} viewBox="0 0 16 16" aria-hidden="true">
+                {CONFIG_ICONS.logout}
+              </svg>
+              {t('menu.logout')}
+            </button>
           </nav>
         </div>
       )}
 
       {feedbackOpen && <FeedbackModal onClose={() => setFeedbackOpen(false)} />}
-    </header>
+    </>
   )
 }

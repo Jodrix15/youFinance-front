@@ -290,10 +290,6 @@ export default function Inversiones() {
 
   return (
     <div>
-      <div className={s.header}>
-        <h1>Inversiones</h1>
-        <p>Controla en qué categorías estás invirtiendo y su rentabilidad</p>
-      </div>
 
       <StatGrid>
         <StatCard label="Total invertido" value={formatEur(totalInvertido)} />

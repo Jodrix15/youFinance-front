@@ -240,11 +240,6 @@ export default function Deudas() {
 
   return (
     <div>
-      <div className={s.header}>
-        <h1>Deudas</h1>
-        <p>Controla lo que debes, a quién y cuánto te queda por pagar</p>
-      </div>
-
       <StatGrid>
         <StatCard label="Deuda pendiente" value={formatEur(totalPendiente)} color="var(--down)" />
         <StatCard label="Total pagado" value={formatEur(totalPagado)} color="var(--up)" />

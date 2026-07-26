@@ -118,11 +118,6 @@ export default function Ingresos() {
 
   return (
     <div>
-      <div className={s.header}>
-        <h1>Ingresos</h1>
-        <p>De dónde proviene tu dinero, clasificado por esfuerzo</p>
-      </div>
-
       <div className={s.filters}>
         <div className={s.filterSelect}>
           <Select

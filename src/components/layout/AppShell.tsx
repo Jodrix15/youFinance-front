@@ -1,5 +1,5 @@
 import { Suspense, useEffect } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { financeApi } from '@/lib/finance'
@@ -12,6 +12,45 @@ import s from './AppShell.module.css'
 export default function AppShell() {
   const queryClient = useQueryClient()
   const { t } = useTranslation()
+  const { pathname } = useLocation()
+
+  // Título + subtítulo de cada sección para el encabezado global. Las rutas no
+  // listadas (p. ej. el detalle de una cuenta) conservan su propia cabecera.
+  const pageMeta: Record<string, { title: string; subtitle: string }> = {
+    '/cuentas': {
+      title: t('nav.cuentas'),
+      subtitle: 'Tus cuentas y su saldo. Haz clic en una para ver sus movimientos.',
+    },
+    '/ingresos': {
+      title: t('nav.ingresos'),
+      subtitle: 'De dónde proviene tu dinero, clasificado por esfuerzo',
+    },
+    '/recurrentes': {
+      title: t('nav.recurrentes'),
+      subtitle: 'Tus gastos fijos mensuales y anuales',
+    },
+    '/suscripciones': {
+      title: t('nav.suscripciones'),
+      subtitle: 'Controla tus suscripciones activas y cuánto te cuestan al mes',
+    },
+    '/deudas': {
+      title: t('nav.deudas'),
+      subtitle: 'Controla lo que debes, a quién y cuánto te queda por pagar',
+    },
+    '/inversiones': {
+      title: t('nav.inversiones'),
+      subtitle: 'Controla en qué categorías estás invirtiendo y su rentabilidad',
+    },
+    '/presupuestos': {
+      title: t('nav.presupuestos'),
+      subtitle: 'Reparte tu dinero por partidas y compáralo con el gasto real',
+    },
+    '/ajustes': {
+      title: t('menu.settings'),
+      subtitle: 'Gestiona tu perfil y la configuración de la cuenta',
+    },
+  }
+  const meta = pageMeta[pathname]
 
   // Evalúa logros al entrar y avisa con un toast de los recién desbloqueados.
   const { data: logros } = useLogros()
@@ -73,11 +112,19 @@ export default function AppShell() {
     <div className={s.shell}>
       <Topbar />
       <main className={s.main}>
-        <ErrorBoundary>
-          <Suspense fallback={<div style={{ padding: 24, color: 'var(--tx2)' }}>Cargando…</div>}>
-            <Outlet />
-          </Suspense>
-        </ErrorBoundary>
+        {meta && (
+          <header className={s.pageHeader}>
+            <h1 className={s.pageTitle}>{meta.title}</h1>
+            <p className={s.pageSubtitle}>{meta.subtitle}</p>
+          </header>
+        )}
+        <div className={s.mainInner}>
+          <ErrorBoundary>
+            <Suspense fallback={<div style={{ padding: 24, color: 'var(--tx2)' }}>Cargando…</div>}>
+              <Outlet />
+            </Suspense>
+          </ErrorBoundary>
+        </div>
       </main>
     </div>
   )

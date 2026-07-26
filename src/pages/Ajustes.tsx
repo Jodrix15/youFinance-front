@@ -211,10 +211,6 @@ export default function Ajustes() {
 
   return (
     <div>
-      <div className={s.header}>
-        <h1>Ajustes</h1>
-        <p>Gestiona tu perfil y la configuración de la cuenta</p>
-      </div>
 
       <div className={s.layout}>
         <nav className={s.sidebar}>

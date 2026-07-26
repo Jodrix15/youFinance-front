@@ -497,14 +497,6 @@ export default function Presupuestos() {
 
   return (
     <div>
-      <div className={s.header}>
-        <h1>Presupuestos</h1>
-        <p>
-          Reparte tu dinero por partidas y compáralo con el gasto real. El dinero
-          disponible es la cantidad que introduces menos tus gastos fijos del mes.
-        </p>
-      </div>
-
       <div className={s.banner}>
         <div className={s.bannerIcon}>
           <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M4 10.781c.148 1.667 1.513 2.85 3.591 3.003V15h1.043v-1.216c2.27-.179 3.678-1.438 3.678-3.3 0-1.59-.947-2.51-2.956-3.028l-.722-.187V3.467c1.122.11 1.879.714 2.06 1.578h1.9c-.164-1.6-1.532-2.769-3.96-2.93V1H7.591v1.140c-2.08.169-3.487 1.438-3.487 3.161 0 1.454.98 2.442 2.914 2.933l.573.156v4.325c-1.148-.186-1.928-.809-2.11-1.72H4zm3.591-3.234c-1.083-.263-1.687-.86-1.687-1.72 0-.985.769-1.72 1.874-1.849v3.593zm1.079 1.375c1.243.302 1.867.867 1.867 1.877 0 1.176-.891 1.951-2.297 2.02V8.803z" /></svg>
