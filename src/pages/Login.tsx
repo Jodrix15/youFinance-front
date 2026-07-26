@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/context/AuthContext'
 import { apiErrorMessage } from '@/lib/api'
 import { LogoIcon } from '@/components/ui/LogoIcon'
@@ -9,6 +10,7 @@ type Tab = 'signin' | 'signup'
 
 export default function Login() {
   const { login, register } = useAuth()
+  const { t } = useTranslation()
   const navigate = useNavigate()
 
   const [tab, setTab] = useState<Tab>('signin')
@@ -61,12 +63,10 @@ export default function Login() {
         </div>
 
         <div className={s.title}>
-          {tab === 'signin' ? 'Bienvenido de nuevo' : 'Crea tu cuenta'}
+          {tab === 'signin' ? t('login.welcome') : t('login.createAccount')}
         </div>
         <div className={s.sub}>
-          {tab === 'signin'
-            ? 'Accede a tu panel financiero'
-            : 'Empieza a controlar tus finanzas'}
+          {tab === 'signin' ? t('login.accessSub') : t('login.createSub')}
         </div>
 
         <div className={s.tabs}>
@@ -75,31 +75,31 @@ export default function Login() {
             className={`${s.tab} ${tab === 'signin' ? s.tabActive : ''}`}
             onClick={() => setTab('signin')}
           >
-            Iniciar sesión
+            {t('login.signin')}
           </button>
           <button
             type="button"
             className={`${s.tab} ${tab === 'signup' ? s.tabActive : ''}`}
             onClick={() => setTab('signup')}
           >
-            Registrarse
+            {t('login.signup')}
           </button>
         </div>
 
         <form onSubmit={submit}>
           <div className={s.field}>
-            <label>Usuario</label>
+            <label>{t('login.user')}</label>
             <input
               type="text"
               autoComplete="username"
-              placeholder="tu usuario"
+              placeholder={t('login.userPlaceholder')}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
             />
           </div>
           <div className={s.field}>
-            <label>Contraseña</label>
+            <label>{t('login.password')}</label>
             <input
               type="password"
               autoComplete={tab === 'signin' ? 'current-password' : 'new-password'}
@@ -111,18 +111,18 @@ export default function Login() {
             />
           </div>
           <button className={s.btn} type="submit" disabled={loading}>
-            {loading ? 'Cargando…' : tab === 'signin' ? 'Entrar' : 'Crear cuenta'}
+            {loading ? t('common.loading') : tab === 'signin' ? t('login.enter') : t('login.createAccount')}
           </button>
         </form>
 
         <div className={s.divider}>o</div>
         <button type="button" className={s.demo} onClick={demo} disabled={loading}>
-          Entrar con cuenta demo (admin)
+          {t('login.demo')}
         </button>
 
         {error && <div className={s.error}>{error}</div>}
 
-        <div className={s.footer}>YouFinance · Panel financiero personal</div>
+        <div className={s.footer}>{t('login.footer')}</div>
       </div>
     </div>
   )

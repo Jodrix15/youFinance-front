@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 import { userApi } from '@/lib/finance'
+import i18n from '@/i18n'
 import { useAuth } from '@/context/AuthContext'
 import { apiErrorMessage } from '@/lib/api'
 import { notifyOk, notifyError } from '@/lib/notify'
@@ -43,6 +45,7 @@ const MONEDAS: { value: Moneda; label: string }[] = [
 
 const IDIOMAS: { value: string; label: string }[] = [
   { value: 'es', label: 'Español' },
+  { value: 'ca', label: 'Català' },
   { value: 'en', label: 'English' },
 ]
 
@@ -59,6 +62,7 @@ function fileToDataUrl(file: File): Promise<string> {
 
 export default function Ajustes() {
   const { applyProfile } = useAuth()
+  const { t } = useTranslation()
 
   const [seccion, setSeccion] = useState<Seccion>('datos')
   const [loading, setLoading] = useState(true)
@@ -395,29 +399,31 @@ export default function Ajustes() {
               <form onSubmit={savePrefs}>
                 <div className={s.grid2}>
                   <div className={s.field}>
-                    <label>Moneda</label>
+                    <label>{t('settings.currency')}</label>
                     <Select
                       value={moneda}
                       options={MONEDAS}
                       onChange={setMoneda}
-                      ariaLabel="Moneda"
+                      ariaLabel={t('settings.currency')}
                     />
                   </div>
                   <div className={s.field}>
-                    <label>
-                      Idioma <span className={s.badge}>próximamente</span>
-                    </label>
+                    <label>{t('settings.language')}</label>
                     <Select
                       value={idioma}
                       options={IDIOMAS}
-                      onChange={setIdioma}
-                      ariaLabel="Idioma"
+                      onChange={(v) => {
+                        setIdioma(v)
+                        // Cambia el idioma de la interfaz al instante (se persiste al guardar).
+                        i18n.changeLanguage(v)
+                      }}
+                      ariaLabel={t('settings.language')}
                     />
                   </div>
                 </div>
                 <div className={s.actions}>
                   <button className={s.btn} type="submit" disabled={savingPrefs}>
-                    {savingPrefs ? 'Guardando…' : 'Guardar preferencias'}
+                    {savingPrefs ? t('settings.savingPreferences') : t('settings.savePreferences')}
                   </button>
                 </div>
               </form>

@@ -1,7 +1,9 @@
+import { useTranslation } from 'react-i18next'
 import { useLogros } from '@/hooks/useFinance'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 
 export default function Logros() {
+  const { t } = useTranslation()
   const { data, isLoading, isError } = useLogros()
 
   const logros = data ?? []
@@ -9,15 +11,15 @@ export default function Logros() {
 
   return (
     <div>
-      <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Logros</h1>
+      <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>{t('logros.title')}</h1>
       <p style={{ color: 'var(--tx2)', marginTop: 4 }}>
-        {conseguidos} de {logros.length} conseguidos.
+        {t('logros.progress', { done: conseguidos, total: logros.length })}
       </p>
 
       {isLoading ? (
-        <div style={{ color: 'var(--tx2)', marginTop: 16 }}>Cargando…</div>
+        <div style={{ color: 'var(--tx2)', marginTop: 16 }}>{t('common.loading')}</div>
       ) : isError ? (
-        <div style={{ color: 'var(--down)', marginTop: 16 }}>No se pudieron cargar los logros.</div>
+        <div style={{ color: 'var(--down)', marginTop: 16 }}>{t('logros.loadError')}</div>
       ) : (
         <div
           style={{
@@ -48,15 +50,19 @@ export default function Logros() {
                   <span style={{ fontSize: 28, filter: l.desbloqueado ? 'none' : 'grayscale(1)' }}>
                     {l.icono}
                   </span>
-                  <div style={{ fontWeight: 600, color: 'var(--tx1)' }}>{l.nombre}</div>
+                  <div style={{ fontWeight: 600, color: 'var(--tx1)' }}>
+                    {t(`logros.items.${l.codigo}.nombre`, l.nombre)}
+                  </div>
                 </div>
-                <div style={{ fontSize: 13, color: 'var(--tx2)', flex: 1 }}>{l.descripcion}</div>
+                <div style={{ fontSize: 13, color: 'var(--tx2)', flex: 1 }}>
+                  {t(`logros.items.${l.codigo}.desc`, l.descripcion)}
+                </div>
 
                 {l.desbloqueado ? (
                   <div style={{ fontSize: 11, color: 'var(--up)', fontWeight: 600 }}>
-                    ✓ Conseguido
+                    {t('logros.unlocked')}
                     {l.fechaDesbloqueo
-                      ? ` · ${new Date(l.fechaDesbloqueo).toLocaleDateString('es-ES')}`
+                      ? ` · ${new Date(l.fechaDesbloqueo).toLocaleDateString()}`
                       : ''}
                   </div>
                 ) : tieneProgreso ? (
@@ -67,7 +73,7 @@ export default function Logros() {
                     </div>
                   </div>
                 ) : (
-                  <div style={{ fontSize: 11, color: 'var(--tx3)' }}>Bloqueado</div>
+                  <div style={{ fontSize: 11, color: 'var(--tx3)' }}>{t('logros.locked')}</div>
                 )}
               </div>
             )

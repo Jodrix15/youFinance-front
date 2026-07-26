@@ -2,6 +2,7 @@ import { lazy, type ReactElement } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { setActiveCurrency } from '@/lib/format'
+import i18n, { normalizarIdioma } from '@/i18n'
 import AppShell from '@/components/layout/AppShell'
 import Login from '@/pages/Login'
 import Dashboard from '@/pages/Dashboard'
@@ -38,6 +39,10 @@ export default function App() {
   // el usuario y App vuelve a renderizar, propagando el nuevo símbolo a todas
   // las vistas montadas.
   setActiveCurrency(user?.moneda ?? 'EUR')
+
+  // Sincroniza el idioma de la interfaz con la preferencia del usuario.
+  const idioma = normalizarIdioma(user?.idioma)
+  if (i18n.language !== idioma) i18n.changeLanguage(idioma)
 
   return (
     <Routes>

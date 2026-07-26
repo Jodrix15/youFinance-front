@@ -1,6 +1,7 @@
 import { Suspense, useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { financeApi } from '@/lib/finance'
 import { useLogros } from '@/hooks/useFinance'
 import { notifyOk } from '@/lib/notify'
@@ -10,14 +11,22 @@ import s from './AppShell.module.css'
 
 export default function AppShell() {
   const queryClient = useQueryClient()
+  const { t } = useTranslation()
 
   // Evalúa logros al entrar y avisa con un toast de los recién desbloqueados.
   const { data: logros } = useLogros()
   useEffect(() => {
     ;(logros ?? [])
       .filter((l) => l.nuevo)
-      .forEach((l) => notifyOk(`¡Logro desbloqueado! ${l.icono} ${l.nombre}`))
-  }, [logros])
+      .forEach((l) =>
+        notifyOk(
+          t('logros.unlockedToast', {
+            icon: l.icono,
+            name: t(`logros.items.${l.codigo}.nombre`, l.nombre),
+          }),
+        ),
+      )
+  }, [logros, t])
 
   // Precargamos los datos de las secciones al entrar en la zona autenticada.
   // Así, al navegar entre secciones, ya están en caché y se pinta el contenido
