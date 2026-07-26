@@ -17,6 +17,7 @@ const es = {
   nav: {
     dashboard: 'Dashboard',
     cuentas: 'Cuentas',
+    ingresos: 'Ingresos',
     recurrentes: 'Recurrentes',
     suscripciones: 'Suscripciones',
     deudas: 'Deudas',

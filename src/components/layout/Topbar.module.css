@@ -1,18 +1,30 @@
-.topbar {
+/* Barra de navegación LATERAL (izquierda), plegable a solo iconos.
+   En móvil (<=768px) se oculta y se usa una barra superior con drawer. */
+
+.sidebar {
+  width: 224px;
+  flex: none;
+  /* Un tono más claro que el fondo de la app para diferenciar la barra. */
+  background: var(--bg1);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
   position: sticky;
   top: 0;
-  z-index: 100;
-  background: var(--header-bg);
-  border-bottom: 1px solid var(--border);
+  height: 100vh;
+  transition: width 0.15s ease;
 }
-.inner {
-  max-width: var(--app-width);
-  margin: 0 auto;
-  padding: 0 1rem;
-  height: 56px;
+.collapsed {
+  width: 66px;
+}
+
+.head {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
+  gap: 8px;
+  height: 56px;
+  padding: 0 12px;
+  flex-shrink: 0;
 }
 .brand {
   display: flex;
@@ -22,7 +34,8 @@
   font-weight: 700;
   letter-spacing: -0.3px;
   color: var(--tx1);
-  flex-shrink: 0;
+  overflow: hidden;
+  white-space: nowrap;
 }
 .brand .brandText {
   color: var(--tx1);
@@ -38,25 +51,69 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 .brandIcon svg {
   width: 15px;
   height: 15px;
   fill: #fff;
 }
-.nav {
+.collapsed .brandText {
+  display: none;
+}
+
+.collapsed .head {
+  justify-content: center;
+  padding: 0;
+}
+
+/* Botón de plegar/desplegar: fila propia bajo el logo, siempre accesible. */
+.toggle {
   display: flex;
   align-items: center;
+  gap: 11px;
+  margin: 2px 8px 4px;
+  padding: 8px 11px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--tx3);
+  background: transparent;
+  border: none;
+  border-radius: var(--r-md);
+  cursor: pointer;
+}
+.toggle:hover {
+  color: var(--tx1);
+  background: var(--bg2);
+}
+.toggle svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+.collapsed .toggle {
   justify-content: center;
-  gap: 2px;
-  overflow-x: auto;
+  padding: 8px 0;
+}
+.collapsed .toggleLabel {
+  display: none;
+}
+
+.nav {
   flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
 }
 .navBtn {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 12px;
+  gap: 11px;
+  padding: 9px 11px;
   font-size: 13px;
   font-weight: 500;
   color: var(--tx2);
@@ -65,13 +122,8 @@
   border-radius: var(--r-md);
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.15s;
-}
-.navIcon {
-  width: 15px;
-  height: 15px;
-  fill: currentColor;
-  flex-shrink: 0;
+  text-decoration: none;
+  transition: all 0.12s;
 }
 .navBtn:hover {
   color: var(--tx1);
@@ -81,58 +133,54 @@
   color: var(--tx1);
   background: var(--bg2);
 }
-.right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-/* Botón hamburguesa: oculto en escritorio, visible en móvil. */
-.hamburger {
-  display: none;
-  width: 34px;
-  height: 34px;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  color: var(--tx1);
-  cursor: pointer;
-  flex-shrink: 0;
-}
-.hamburger svg {
-  width: 18px;
-  height: 18px;
-}
-.iconBtn {
-  width: 34px;
-  height: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  color: var(--tx2);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.iconBtn:hover {
-  color: var(--tx1);
-  background: var(--bg2);
-}
-.iconBtn svg {
+.navIcon {
   width: 16px;
   height: 16px;
   fill: currentColor;
+  flex-shrink: 0;
+}
+.navLabel {
+  overflow: hidden;
+}
+.collapsed .navBtn {
+  justify-content: center;
+  padding: 9px 0;
+}
+.collapsed .navLabel {
+  display: none;
+}
+
+.footer {
+  border-top: 1px solid var(--border);
+  padding: 8px;
+  flex-shrink: 0;
 }
 .avatarWrap {
   position: relative;
 }
+.avatarBtn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px;
+  background: transparent;
+  border: none;
+  border-radius: var(--r-md);
+  cursor: pointer;
+  color: var(--tx1);
+  transition: background 0.12s;
+}
+.avatarBtn:hover {
+  background: var(--bg2);
+}
+.collapsed .avatarBtn {
+  justify-content: center;
+  padding: 8px 0;
+}
 .avatar {
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   background: var(--accent);
   color: #fff;
@@ -141,27 +189,94 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  border: none;
   overflow: hidden;
-  padding: 0;
+  flex-shrink: 0;
 }
 .avatarImg {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
+.avatarInfo {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  text-align: left;
+}
+.avatarName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tx1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.avatarRole {
+  font-size: 11px;
+  color: var(--tx2);
+}
+.collapsed .avatarInfo {
+  display: none;
+}
+
+/* Grupo de configuración dentro de la barra (Ajustes, feedback, tema…). */
+.footerNav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.userRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: var(--r-md);
+}
+.collapsed .userRow {
+  justify-content: center;
+  padding: 8px 0;
+}
+.logoutBtn {
+  margin-left: auto;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: var(--r-md);
+  color: var(--tx2);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.logoutBtn:hover {
+  color: var(--down);
+  background: var(--bg2);
+}
+.logoutBtn svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+.collapsed .logoutBtn {
+  display: none;
+}
+
 .menu {
   position: absolute;
-  right: 0;
-  top: calc(100% + 8px);
+  left: calc(100% + 8px);
+  bottom: 0;
   width: 220px;
   background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   box-shadow: 0 8px 32px var(--shadow);
   overflow: hidden;
-  z-index: 200;
+  z-index: 300;
 }
 .menuHead {
   padding: 12px 14px;
@@ -203,7 +318,43 @@
   color: var(--down);
 }
 
-/* ── Drawer de navegación (solo móvil) ── */
+/* ── Barra superior + drawer (solo móvil) ── */
+.mobileTopbar {
+  display: none;
+}
+.hamburger {
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  color: var(--tx1);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.hamburger svg {
+  width: 18px;
+  height: 18px;
+}
+.iconBtn {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  color: var(--tx2);
+  cursor: pointer;
+}
+.iconBtn svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
 .drawerOverlay {
   position: fixed;
   inset: 0;
@@ -247,18 +398,23 @@
   background: var(--bg2);
 }
 
-/* ── Punto de corte móvil ── */
 @media (max-width: 768px) {
-  .hamburger {
-    display: inline-flex;
-  }
-  .nav {
+  .sidebar {
     display: none;
   }
-  .inner {
-    gap: 0.75rem;
+  .mobileTopbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 52px;
+    padding: 0 12px;
+    background: var(--header-bg);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
   }
-  .brand {
+  .mobileTopbar .brand {
     flex: 1;
   }
 }

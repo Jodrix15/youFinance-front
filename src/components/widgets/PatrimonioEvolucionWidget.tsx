@@ -28,20 +28,34 @@ export default function PatrimonioEvolucionWidget() {
 
   const snaps = hist.data ?? []
 
-  // Fecha de corte según el rango (los snapshots vienen ordenados por mes asc,
-  // con mes = 'YYYY-MM-DD' del primer día). Comparamos como cadenas ISO.
+  // Serie mensual continua sobre TODO el rango elegido: rellenamos a cero los
+  // meses sin snapshot para que la línea cubra el rango y no se corte. (Los
+  // snapshots vienen ordenados por mes asc, con mes = 'YYYY-MM-DD'.)
   const now = new Date()
-  const monthsAgo = (n: number) => {
-    const d = new Date(now.getFullYear(), now.getMonth() - n, 1)
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-01`
+  const monthKey = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}`
+  const snapMap = new Map(snaps.map((s) => [s.mes.slice(0, 7), s]))
+  const end = new Date(now.getFullYear(), now.getMonth(), 1)
+  let start: Date
+  if (range === 'YTD') start = new Date(now.getFullYear(), 0, 1)
+  else if (range === '1A') start = new Date(now.getFullYear(), now.getMonth() - 11, 1)
+  else if (range === '5A') start = new Date(now.getFullYear(), now.getMonth() - 59, 1)
+  else {
+    // Máx: desde el primer snapshot registrado hasta hoy.
+    const first = snaps[0]
+    start = first
+      ? new Date(Number(first.mes.slice(0, 4)), Number(first.mes.slice(5, 7)) - 1, 1)
+      : end
   }
-  let cutoff: string | null
-  if (range === 'YTD') cutoff = `${now.getFullYear()}-01-01`
-  else if (range === '1A') cutoff = monthsAgo(11)
-  else if (range === '5A') cutoff = monthsAgo(59)
-  else cutoff = null
-
-  const filtered = snaps.filter((s) => !cutoff || s.mes >= cutoff)
+  const filtered: typeof snaps = []
+  const cur = new Date(start)
+  while (cur <= end) {
+    const k = monthKey(cur)
+    const found = snapMap.get(k)
+    filtered.push(
+      found ?? { mes: `${k}-01`, patrimonioNeto: 0, cuentas: 0, inversiones: 0, deudas: 0 },
+    )
+    cur.setMonth(cur.getMonth() + 1)
+  }
 
   const rangeButtons = (
     <div style={{ marginBottom: 8, flexShrink: 0 }}>

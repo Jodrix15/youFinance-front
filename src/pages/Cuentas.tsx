@@ -120,11 +120,6 @@ export default function Cuentas() {
 
   return (
     <div>
-      <div className={s.header}>
-        <h1>Cuentas</h1>
-        <p>Tus cuentas y su saldo. Haz clic en una para ver sus movimientos.</p>
-      </div>
-
       <div className={s.filters}>
         <div className={s.filterSelect}>
           <Select

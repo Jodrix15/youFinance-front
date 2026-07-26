@@ -10,7 +10,7 @@ import { notifyOk, notifyError } from '@/lib/notify'
 import { apiErrorMessage } from '@/lib/api'
 import Skeleton from '@/components/ui/Skeleton'
 import Select from '@/components/ui/Select'
-import type { CategoriaResponse, TipoMovimiento } from '@/types/api'
+import type { CategoriaResponse, OrigenIngreso, TipoMovimiento } from '@/types/api'
 import s from './CategoriasManager.module.css'
 
 const TIPOS: { value: TipoMovimiento; label: string }[] = [
@@ -25,6 +25,40 @@ const GRUPOS: { tipo: TipoMovimiento; label: string }[] = [
   { tipo: 'INVERSION', label: 'Inversiones' },
 ]
 
+// Familia del ingreso según el esfuerzo. Solo se pide cuando el tipo es Ingreso.
+const FAMILIAS: { value: OrigenIngreso; label: string }[] = [
+  { value: 'ACTIVO', label: 'Activo' },
+  { value: 'PASIVO', label: 'Pasivo' },
+  { value: 'INVERSION', label: 'Inversión' },
+]
+
+const FAMILIA_COLOR: Record<OrigenIngreso, string> = {
+  ACTIVO: 'var(--teal)',
+  PASIVO: 'var(--blue)',
+  INVERSION: 'var(--purple)',
+}
+
+function familiaLabel(o: OrigenIngreso): string {
+  return FAMILIAS.find((f) => f.value === o)?.label ?? o
+}
+
+function FamiliaBadge({ familia }: { familia: OrigenIngreso }) {
+  return (
+    <span
+      style={{
+        fontSize: 11,
+        color: FAMILIA_COLOR[familia],
+        border: `1px solid ${FAMILIA_COLOR[familia]}`,
+        borderRadius: 20,
+        padding: '1px 8px',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {familiaLabel(familia)}
+    </span>
+  )
+}
+
 export default function CategoriasManager() {
   const { data: categorias, isLoading, isError, error } = useCategorias()
   const crear = useCrearCategoria()
@@ -35,10 +69,12 @@ export default function CategoriasManager() {
   // Alta
   const [nombre, setNombre] = useState('')
   const [tipo, setTipo] = useState<TipoMovimiento>('GASTO')
+  const [origen, setOrigen] = useState<OrigenIngreso>('ACTIVO')
 
-  // Edición inline (solo el nombre; el tipo se conserva)
+  // Edición inline (nombre y, en ingresos, familia; el tipo se conserva)
   const [editId, setEditId] = useState<number | null>(null)
   const [editNombre, setEditNombre] = useState('')
+  const [editOrigen, setEditOrigen] = useState<OrigenIngreso>('ACTIVO')
 
   const porTipo = useMemo(() => {
     const map: Record<TipoMovimiento, CategoriaResponse[]> = {
@@ -55,7 +91,11 @@ export default function CategoriasManager() {
     const n = nombre.trim()
     if (!n) return
     try {
-      await crear.mutateAsync({ nombre: n, tipo })
+      await crear.mutateAsync({
+        nombre: n,
+        tipo,
+        origenIngreso: tipo === 'INGRESO' ? origen : undefined,
+      })
       setNombre('')
       notifyOk('Categoría creada')
     } catch (err) {
@@ -66,13 +106,19 @@ export default function CategoriasManager() {
   function startEdit(c: CategoriaResponse) {
     setEditId(c.id)
     setEditNombre(c.nombre)
+    setEditOrigen(c.origenIngreso ?? 'ACTIVO')
   }
 
   async function saveEdit(c: CategoriaResponse) {
     const n = editNombre.trim()
     if (!n) return
     try {
-      await actualizar.mutateAsync({ id: c.id, nombre: n, tipo: c.tipo })
+      await actualizar.mutateAsync({
+        id: c.id,
+        nombre: n,
+        tipo: c.tipo,
+        origenIngreso: c.tipo === 'INGRESO' ? editOrigen : undefined,
+      })
       setEditId(null)
       notifyOk('Categoría actualizada')
     } catch (err) {
@@ -113,6 +159,16 @@ export default function CategoriasManager() {
         <div className={s.selectWrap}>
           <Select value={tipo} options={TIPOS} onChange={setTipo} ariaLabel="Tipo" />
         </div>
+        {tipo === 'INGRESO' && (
+          <div className={s.selectWrap}>
+            <Select
+              value={origen}
+              options={FAMILIAS}
+              onChange={setOrigen}
+              ariaLabel="Familia del ingreso"
+            />
+          </div>
+        )}
         <button
           className={s.btn}
           type="submit"
@@ -154,6 +210,16 @@ export default function CategoriasManager() {
                             if (e.key === 'Escape') setEditId(null)
                           }}
                         />
+                        {c.tipo === 'INGRESO' && (
+                          <div className={s.selectWrap}>
+                            <Select
+                              value={editOrigen}
+                              options={FAMILIAS}
+                              onChange={setEditOrigen}
+                              ariaLabel="Familia del ingreso"
+                            />
+                          </div>
+                        )}
                         <button
                           className={`${s.iconBtn} ${s.iconOk}`}
                           title="Guardar"
@@ -179,6 +245,23 @@ export default function CategoriasManager() {
                     ) : (
                       <li key={c.id} className={s.row}>
                         <span className={s.rowName}>{c.nombre}</span>
+                        {c.tipo === 'INGRESO' &&
+                          (c.origenIngreso ? (
+                            <FamiliaBadge familia={c.origenIngreso} />
+                          ) : (
+                            <span
+                              style={{
+                                fontSize: 11,
+                                color: 'var(--tx3)',
+                                border: '1px dashed var(--border2)',
+                                borderRadius: 20,
+                                padding: '1px 8px',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              Sin clasificar
+                            </span>
+                          ))}
                         <button
                           className={s.iconBtn}
                           title="Editar"

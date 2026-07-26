@@ -11,6 +11,9 @@ import type {
   FlujoCajaMesResponse,
   GastoCategoriaResponse,
   GastosFijosMesResponse,
+  IngresoCategoriaResponse,
+  EvolucionIngresoResponse,
+  ResumenIngresosResponse,
   FeedbackDTO,
   FeedbackEstado,
   FeedbackResponse,
@@ -183,6 +186,18 @@ export const financeApi = {
   gastosFijosMes: (anio: number, mes: number) =>
     api
       .get<GastosFijosMesResponse>('/api/dashboard/gastos-fijos', { params: { anio, mes } })
+      .then((r) => r.data),
+  ingresosResumen: (params?: { anio?: number; mes?: number }) =>
+    api
+      .get<ResumenIngresosResponse>('/api/ingresos/resumen', { params })
+      .then((r) => r.data),
+  ingresosPorCategoria: (params?: { anio?: number; mes?: number }) =>
+    api
+      .get<IngresoCategoriaResponse[]>('/api/ingresos/por-categoria', { params })
+      .then((r) => r.data),
+  ingresosEvolucion: () =>
+    api
+      .get<EvolucionIngresoResponse[]>('/api/ingresos/evolucion')
       .then((r) => r.data),
   logros: () => api.get<LogroResponse[]>('/api/logros').then((r) => r.data),
   enviarFeedback: (body: FeedbackDTO) =>

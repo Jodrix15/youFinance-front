@@ -180,6 +180,32 @@ export function useGastosCategoria() {
   })
 }
 
+// Resumen de ingresos por familia (Activo/Pasivo/Inversión) del periodo.
+export function useIngresosResumen(params?: { anio?: number; mes?: number }) {
+  return useQuery({
+    queryKey: ['ingresos', 'resumen', params?.anio ?? null, params?.mes ?? null],
+    queryFn: () => financeApi.ingresosResumen(params),
+    placeholderData: keepPreviousData,
+  })
+}
+
+// Total de ingresos por categoría del periodo.
+export function useIngresosPorCategoria(params?: { anio?: number; mes?: number }) {
+  return useQuery({
+    queryKey: ['ingresos', 'porCategoria', params?.anio ?? null, params?.mes ?? null],
+    queryFn: () => financeApi.ingresosPorCategoria(params),
+    placeholderData: keepPreviousData,
+  })
+}
+
+// Serie mensual de ingresos totales (para la curva de evolución).
+export function useIngresosEvolucion() {
+  return useQuery({
+    queryKey: ['ingresos', 'evolucion'],
+    queryFn: financeApi.ingresosEvolucion,
+  })
+}
+
 // Gasto fijo que vence en un mes concreto, calculado en el backend.
 export function useGastosFijosMes(anio: number, mes: number) {
   return useQuery({

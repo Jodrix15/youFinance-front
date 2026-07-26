@@ -10,6 +10,7 @@ import PatrimonioEvolucionWidget from './PatrimonioEvolucionWidget'
 import GastosCategoriaWidget from './GastosCategoriaWidget'
 import TopMesesGastoWidget from './TopMesesGastoWidget'
 import FlujoCajaWidget from './FlujoCajaWidget'
+import IngresosFamiliaWidget from './IngresosFamiliaWidget'
 
 export interface WidgetDef {
   id: string
@@ -57,6 +58,12 @@ export const WIDGETS: WidgetDef[] = [
     default: { x: 0, y: 20, w: 3, h: 6, minW: 3, minH: 6 },
   },
   {
+    id: 'ingresos-familia',
+    title: 'Ingresos por familia',
+    component: IngresosFamiliaWidget,
+    default: { x: 9, y: 26, w: 3, h: 6, minW: 3, minH: 6 },
+  },
+  {
     id: 'recurrentes',
     title: 'Gastos recurrentes',
     component: RecurrentesWidget,
@@ -100,6 +107,7 @@ const DEFAULT_VISIBLE = [
   'flujo-caja',
   'gastos-fijos',
   'gastos-categoria',
+  'ingresos-familia',
   'recurrentes',
   'deudas',
 ]

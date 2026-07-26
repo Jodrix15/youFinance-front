@@ -15,11 +15,11 @@ const Suscripciones = lazy(() => import('@/pages/Suscripciones'))
 const Recurrentes = lazy(() => import('@/pages/Recurrentes'))
 const Cuentas = lazy(() => import('@/pages/Cuentas'))
 const CuentaMovimientos = lazy(() => import('@/pages/CuentaMovimientos'))
+const Ingresos = lazy(() => import('@/pages/Ingresos'))
 const Presupuestos = lazy(() => import('@/pages/Presupuestos'))
 const Ajustes = lazy(() => import('@/pages/Ajustes'))
 const Incidencias = lazy(() => import('@/pages/Incidencias'))
 const Logros = lazy(() => import('@/pages/Logros'))
-const Placeholder = lazy(() => import('@/pages/Placeholder'))
 
 function RequireAuth({ children }: { children: ReactElement }) {
   const { isAuthenticated } = useAuth()
@@ -60,7 +60,7 @@ export default function App() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/cuentas" element={<Cuentas />} />
         <Route path="/cuentas/:id" element={<CuentaMovimientos />} />
-        <Route path="/nominas" element={<Placeholder title="Nóminas" />} />
+        <Route path="/ingresos" element={<Ingresos />} />
         <Route path="/recurrentes" element={<Recurrentes />} />
         <Route path="/suscripciones" element={<Suscripciones />} />
         <Route path="/deudas" element={<Deudas />} />

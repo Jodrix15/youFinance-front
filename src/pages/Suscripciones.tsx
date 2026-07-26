@@ -255,10 +255,6 @@ export default function Suscripciones() {
 
   return (
     <div>
-      <div className={s.header}>
-        <h1>Suscripciones</h1>
-        <p>Controla tus suscripciones activas y cuánto te cuestan al mes</p>
-      </div>
 
       <StatGrid>
         <StatCard label="Gasto mensual" value={formatEur(gastoMensual, true)} />

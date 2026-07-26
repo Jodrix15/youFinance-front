@@ -17,6 +17,7 @@ const ca = {
   nav: {
     dashboard: 'Tauler',
     cuentas: 'Comptes',
+    ingresos: 'Ingressos',
     recurrentes: 'Recurrents',
     suscripciones: 'Subscripcions',
     deudas: 'Deutes',

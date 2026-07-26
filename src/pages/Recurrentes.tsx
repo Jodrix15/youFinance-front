@@ -283,10 +283,6 @@ export default function Recurrentes() {
 
   return (
     <div>
-      <div className={s.header}>
-        <h1>Gastos recurrentes</h1>
-        <p>Tus gastos fijos mensuales y anuales</p>
-      </div>
 
       <StatGrid>
         <StatCard label="Gasto mensual" value={formatEur(gastoMensual, true)} />
