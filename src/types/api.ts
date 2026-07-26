@@ -271,6 +271,19 @@ export interface GastosFijosMesResponse {
   total: number
 }
 
+// ── Logros ──
+export interface LogroResponse {
+  codigo: string
+  nombre: string
+  descripcion: string
+  icono: string
+  desbloqueado: boolean
+  fechaDesbloqueo: string | null
+  progresoActual: number | null
+  progresoObjetivo: number | null
+  nuevo: boolean
+}
+
 // ── Feedback ──
 export type FeedbackCategoria = 'INCIDENCIA' | 'MEJORA' | 'PREGUNTA' | 'OTRO'
 export type FeedbackEstado = 'PENDIENTE' | 'RESUELTA' | 'DESCARTADA'

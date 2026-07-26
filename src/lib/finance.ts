@@ -14,6 +14,7 @@ import type {
   FeedbackDTO,
   FeedbackEstado,
   FeedbackResponse,
+  LogroResponse,
   DeudaDTO,
   DeudaResponse,
   GastoRecurrenteResponse,
@@ -183,6 +184,7 @@ export const financeApi = {
     api
       .get<GastosFijosMesResponse>('/api/dashboard/gastos-fijos', { params: { anio, mes } })
       .then((r) => r.data),
+  logros: () => api.get<LogroResponse[]>('/api/logros').then((r) => r.data),
   enviarFeedback: (body: FeedbackDTO) =>
     api.post<FeedbackResponse>('/api/feedback', body).then((r) => r.data),
   // Gestión (admin)

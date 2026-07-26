@@ -317,11 +317,11 @@ export default function CuentaMovimientosDetalle({ cuenta, onBack }: Props) {
             <tbody>
               {rows.map((m) => (
                 <tr key={m.id} onClick={() => startEdit(m)}>
-                  <td>{m.fechaTransaccion ?? '—'}</td>
-                  <td>{m.descripcion || '—'}</td>
-                  <td>{m.categoriaNombre ?? '—'}</td>
-                  <td><span className={`${s.badge} ${s[BADGE[m.tipoMovimiento]]}`}>{TIPO_LABEL[m.tipoMovimiento]}</span></td>
-                  <td className={s.amount} style={{ color: esNegativo(m.tipoMovimiento) ? 'var(--down)' : 'var(--up)' }}>{esNegativo(m.tipoMovimiento) ? '−' : '+'}{formatEur(Math.abs(m.importe), true)}</td>
+                  <td data-label="Fecha">{m.fechaTransaccion ?? '—'}</td>
+                  <td data-label="Descripción">{m.descripcion || '—'}</td>
+                  <td data-label="Categoría">{m.categoriaNombre ?? '—'}</td>
+                  <td data-label="Tipo"><span className={`${s.badge} ${s[BADGE[m.tipoMovimiento]]}`}>{TIPO_LABEL[m.tipoMovimiento]}</span></td>
+                  <td data-label="Importe" className={s.amount} style={{ color: esNegativo(m.tipoMovimiento) ? 'var(--down)' : 'var(--up)' }}>{esNegativo(m.tipoMovimiento) ? '−' : '+'}{formatEur(Math.abs(m.importe), true)}</td>
                 </tr>
               ))}
             </tbody>

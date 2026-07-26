@@ -20,6 +20,16 @@
 .movTable tbody tr { cursor: pointer; transition: background 0.12s; }
 .movTable tbody tr:hover { background: var(--bg2); }
 .movTable th:last-child, .movTable td:last-child { text-align: right; }
+
+/* Móvil: la tabla de movimientos se convierte en tarjetas apiladas. */
+@media (max-width: 768px) {
+  .movTable thead { display: none; }
+  .movTable, .movTable tbody, .movTable tr, .movTable td { display: block; width: auto; }
+  .movTable tr { border: 1px solid var(--border); border-radius: var(--r-md); padding: 4px 10px; margin-bottom: 8px; }
+  .movTable td { display: flex; align-items: center; justify-content: space-between; gap: 12px; text-align: right !important; border-bottom: 1px solid var(--border); padding: 8px 0; }
+  .movTable tr td:last-child { border-bottom: none; text-align: right; }
+  .movTable td::before { content: attr(data-label); color: var(--tx2); font-weight: 500; text-align: left; white-space: nowrap; }
+}
 .amount { font-weight: 600; white-space: nowrap; }
 .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
 .bGasto { color: var(--coral); background: rgba(216, 90, 48, 0.15); }

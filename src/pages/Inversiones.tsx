@@ -408,16 +408,18 @@ export default function Inversiones() {
             <tbody>
               {sorted.map((i) => (
                 <tr key={i.id} onClick={() => selectInversion(i.id)}>
-                  <td>{i.categoriaNombre ?? `#${i.id}`}</td>
-                  <td className={s.center}>{formatEur(i.capitalAportado, true)}</td>
-                  <td className={s.center}>{formatEur(i.capitalTotal, true)}</td>
+                  <td data-label="Categoría">{i.categoriaNombre ?? `#${i.id}`}</td>
+                  <td data-label="Aportado" className={s.center}>{formatEur(i.capitalAportado, true)}</td>
+                  <td data-label="Valor actual" className={s.center}>{formatEur(i.capitalTotal, true)}</td>
                   <td
+                    data-label="Plusvalía"
                     className={s.center}
                     style={{ color: Number(i.plusvalia) >= 0 ? 'var(--up)' : 'var(--down)' }}
                   >
                     {formatEur(i.plusvalia, true)}
                   </td>
                   <td
+                    data-label="%"
                     className={s.center}
                     style={{ color: Number(i.porcentajePlusvalia) >= 0 ? 'var(--up)' : 'var(--down)' }}
                   >

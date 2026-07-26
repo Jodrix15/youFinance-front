@@ -25,8 +25,8 @@ export default function CuentasWidget() {
         <tbody>
           {data.map((c) => (
             <tr key={c.id}>
-              <td>{c.nombreCuenta}</td>
-              <td style={{ textAlign: 'right' }}>{formatEur(c.importe, true)}</td>
+              <td data-label="Cuenta">{c.nombreCuenta}</td>
+              <td data-label="Saldo" style={{ textAlign: 'right' }}>{formatEur(c.importe, true)}</td>
             </tr>
           ))}
         </tbody>

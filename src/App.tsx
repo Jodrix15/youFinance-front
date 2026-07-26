@@ -17,6 +17,7 @@ const CuentaMovimientos = lazy(() => import('@/pages/CuentaMovimientos'))
 const Presupuestos = lazy(() => import('@/pages/Presupuestos'))
 const Ajustes = lazy(() => import('@/pages/Ajustes'))
 const Incidencias = lazy(() => import('@/pages/Incidencias'))
+const Logros = lazy(() => import('@/pages/Logros'))
 const Placeholder = lazy(() => import('@/pages/Placeholder'))
 
 function RequireAuth({ children }: { children: ReactElement }) {
@@ -61,6 +62,7 @@ export default function App() {
         <Route path="/inversiones" element={<Inversiones />} />
         <Route path="/presupuestos" element={<Presupuestos />} />
         <Route path="/ajustes" element={<Ajustes />} />
+        <Route path="/logros" element={<Logros />} />
         <Route
           path="/incidencias"
           element={
