@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type FormEvent } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
 import { Bar, Doughnut } from 'react-chartjs-2'
 import {
   useActualizarInversion,
@@ -10,6 +10,8 @@ import {
   useInversionTotales,
 } from '@/hooks/useFinance'
 import { useTheme } from '@/context/ThemeContext'
+import Modal from '@/components/ui/Modal'
+import IconButton from '@/components/ui/IconButton'
 import { useConfirm } from '@/components/ui/ConfirmProvider'
 import Skeleton from '@/components/ui/Skeleton'
 import EmptyState from '@/components/ui/EmptyState'
@@ -17,7 +19,6 @@ import { notifyOk, notifyError } from '@/lib/notify'
 import { PALETTE, chartTheme } from '@/lib/chartSetup'
 import { formatEur, formatPct, currencySymbol } from '@/lib/format'
 import { apiErrorMessage } from '@/lib/api'
-import Select from '@/components/ui/Select'
 import MoneyInput from '@/components/ui/MoneyInput'
 import CategoriaSelect from '@/components/ui/CategoriaSelect'
 import { StatCard, StatGrid } from '@/components/ui/StatCard'
@@ -25,7 +26,10 @@ import s from './Inversiones.module.css'
 
 const num = (v: string) => (v.trim() === '' ? NaN : Number(v.replace(',', '.')))
 
-type Mode = 'nueva' | 'actualizar'
+/** Ids de los formularios de cada modal: el botón de guardar vive en el footer. */
+const FORM_NUEVA = 'form-inversion-nueva'
+const FORM_EDITAR = 'form-inversion-editar'
+
 type SortField = 'categoria' | 'aportado' | 'total' | 'plusvalia' | 'pct'
 
 export default function Inversiones() {
@@ -51,33 +55,49 @@ export default function Inversiones() {
     [categorias],
   )
 
-  const [mode, setMode] = useState<Mode>('nueva')
   const [err, setErr] = useState<{ field: string; msg: string } | null>(null)
   const fieldErr = (f: string) =>
     err?.field === f ? <div className={s.fieldError}>{err.msg}</div> : null
 
-  // Nueva inversión
+  // Modal de nueva inversión
+  const [nuevaOpen, setNuevaOpen] = useState(false)
   const [catName, setCatName] = useState('')
   const [aportado, setAportado] = useState('')
   const [total, setTotal] = useState('')
 
-  // Actualizar
-  const [updId, setUpdId] = useState('')
+  // Modal de edición: updId null = cerrado
+  const [updId, setUpdId] = useState<number | null>(null)
   const [updAportacion, setUpdAportacion] = useState('')
   const [updValor, setUpdValor] = useState('')
 
   const [sortField, setSortField] = useState<SortField | null>(null)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
 
-  const formRef = useRef<HTMLDivElement>(null)
-  function irAlFormulario() {
-    setMode('nueva')
+  function abrirNueva() {
+    setCatName('')
+    setAportado('')
+    setTotal('')
     setErr(null)
-    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    window.setTimeout(
-      () => formRef.current?.querySelector<HTMLInputElement>('input')?.focus({ preventScroll: true }),
-      350,
-    )
+    setNuevaOpen(true)
+  }
+
+  function cerrarNueva() {
+    setNuevaOpen(false)
+    setErr(null)
+  }
+
+  function abrirEditar(id: number) {
+    setUpdId(id)
+    setUpdAportacion('')
+    setUpdValor('')
+    setErr(null)
+  }
+
+  function cerrarEditar() {
+    setUpdId(null)
+    setUpdAportacion('')
+    setUpdValor('')
+    setErr(null)
   }
 
   function toggleSort(field: SortField) {
@@ -207,9 +227,7 @@ export default function Inversiones() {
         capitalTotal: tot,
       })
       notifyOk('Inversión creada')
-      setCatName('')
-      setAportado('')
-      setTotal('')
+      cerrarNueva()
     } catch (error) {
       notifyError(error)
     }
@@ -218,7 +236,7 @@ export default function Inversiones() {
   async function submitActualizar(e: FormEvent) {
     e.preventDefault()
     setErr(null)
-    if (!updId) return setErr({ field: 'updId', msg: 'Selecciona una inversión.' })
+    if (updId === null) return
     const ap = num(updAportacion)
     const val = num(updValor)
     const hasAp = !Number.isNaN(ap)
@@ -234,31 +252,20 @@ export default function Inversiones() {
       return setErr({ field: 'updValor', msg: 'El valor actual no puede ser negativo.' })
     try {
       await actualizarInversion.mutateAsync({
-        id: Number(updId),
+        id: updId,
         ...(hasAp ? { aportacion: ap } : {}),
         ...(hasVal ? { valorActual: val } : {}),
       })
       notifyOk('Inversión actualizada')
-      setUpdAportacion('')
-      setUpdValor('')
+      cerrarEditar()
     } catch (error) {
       notifyError(error)
     }
   }
 
-  function selectInversion(id: number) {
-    setMode('actualizar')
-    setUpdId(String(id))
-    setUpdAportacion('')
-    setUpdValor('')
-    setErr(null)
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
-  }
-
-  async function handleDelete() {
-    if (!updId) return
-    const inv = list.find((x) => x.id === Number(updId))
-    const nombre = inv?.categoriaNombre ?? `#${updId}`
+  async function handleDelete(id: number) {
+    const inv = list.find((x) => x.id === id)
+    const nombre = inv?.categoriaNombre ?? `#${id}`
     const ok = await confirm({
       title: 'Eliminar inversión',
       message: (
@@ -272,11 +279,9 @@ export default function Inversiones() {
     })
     if (!ok) return
     try {
-      await eliminarInversion.mutateAsync(Number(updId))
+      await eliminarInversion.mutateAsync(id)
       notifyOk('Inversión eliminada')
-      setUpdId('')
-      setUpdAportacion('')
-      setUpdValor('')
+      if (updId === id) cerrarEditar()
     } catch (err) {
       notifyError(err)
     }
@@ -373,12 +378,17 @@ export default function Inversiones() {
       )}
 
       <div className={`card ${s.cardBlock}`}>
-        <div className="sec-title">Mis inversiones</div>
+        <div className="block-head">
+          <div className="sec-title">Mis inversiones</div>
+          <button type="button" className={s.btn} onClick={abrirNueva} disabled={saving}>
+            + Añadir inversión
+          </button>
+        </div>
         {list.length === 0 ? (
           <EmptyState
             message="Aún no tienes inversiones. Crea la primera para seguir su rentabilidad."
             actionLabel="Añadir tu primera inversión"
-            onAction={irAlFormulario}
+            onAction={abrirNueva}
           />
         ) : (
           <table className={`tbl ${s.table}`} style={{ tableLayout: 'fixed' }}>
@@ -399,11 +409,12 @@ export default function Inversiones() {
                 <th className={`${s.center} ${s.sortable}`} onClick={() => toggleSort('pct')}>
                   %{sortInd('pct')}
                 </th>
+                <th className={s.center}>Acciones</th>
               </tr>
             </thead>
             <tbody>
               {sorted.map((i) => (
-                <tr key={i.id} onClick={() => selectInversion(i.id)}>
+                <tr key={i.id} onClick={() => abrirEditar(i.id)}>
                   <td data-label="Categoría">{i.categoriaNombre ?? `#${i.id}`}</td>
                   <td data-label="Aportado" className={s.center}>{formatEur(i.capitalAportado, true)}</td>
                   <td data-label="Valor actual" className={s.center}>{formatEur(i.capitalTotal, true)}</td>
@@ -421,6 +432,29 @@ export default function Inversiones() {
                   >
                     {formatPct(i.porcentajePlusvalia)}
                   </td>
+                  <td data-label="Acciones" className={s.center}>
+                    <div className={s.rowActions}>
+                      <IconButton
+                        icon="edit"
+                        label={`Editar ${i.categoriaNombre ?? 'inversión'}`}
+                        disabled={saving}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          abrirEditar(i.id)
+                        }}
+                      />
+                      <IconButton
+                        icon="delete"
+                        label={`Eliminar ${i.categoriaNombre ?? 'inversión'}`}
+                        danger
+                        disabled={saving}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDelete(i.id)
+                        }}
+                      />
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -428,171 +462,131 @@ export default function Inversiones() {
         )}
       </div>
 
-      <div ref={formRef} className={`card ${s.cardBlock}`}>
-        <div className={s.tabs}>
-          <button
-            type="button"
-            className={`${s.tab} ${mode === 'nueva' ? s.tabActive : ''}`}
-            onClick={() => {
-              setMode('nueva')
-              setErr(null)
-            }}
-          >
-            Nueva inversión
-          </button>
-          <button
-            type="button"
-            className={`${s.tab} ${mode === 'actualizar' ? s.tabActive : ''}`}
-            onClick={() => {
-              setMode('actualizar')
-              setErr(null)
-            }}
-          >
-            Actualizar
-          </button>
-        </div>
-
-        {mode === 'nueva' ? (
-          <form onSubmit={submitNueva} noValidate>
-            <div className={s.row}>
-              <div className={s.field}>
-                <label>Categoría</label>
-                <CategoriaSelect
-                  value={catName}
-                  categorias={invCats}
-                  invalid={err?.field === 'catName'}
-                  onChange={(v) => {
-                    setCatName(v)
-                    setErr(null)
-                  }}
-                />
-                {fieldErr('catName')}
-              </div>
-              <div className={s.field}>
-                <label>Capital aportado</label>
-                <MoneyInput
-                  step="0.01"
-                  min="0"
-                  placeholder="0,00"
-                  value={aportado}
-                  aria-invalid={err?.field === 'aportado'}
-                  onChange={(e) => {
-                    setAportado(e.target.value)
-                    setErr(null)
-                  }}
-                />
-                {fieldErr('aportado')}
-              </div>
-              <div className={s.field}>
-                <label>Valor actual</label>
-                <MoneyInput
-                  step="0.01"
-                  min="0"
-                  placeholder="0,00"
-                  value={total}
-                  aria-invalid={err?.field === 'total'}
-                  onChange={(e) => {
-                    setTotal(e.target.value)
-                    setErr(null)
-                  }}
-                />
-                {fieldErr('total')}
-              </div>
-            </div>
-            <p className={s.hint}>
-              Si la categoría no existe, se crea automáticamente (tipo Inversión).
-            </p>
-            <button className={s.btn} type="submit" disabled={saving} style={{ marginTop: 4 }}>
+      <Modal
+        open={nuevaOpen}
+        onClose={cerrarNueva}
+        maxWidth={520}
+        title="Nueva inversión"
+        footer={
+          <>
+            <button type="button" className="btn-ghost" onClick={cerrarNueva} disabled={saving}>
+              Cancelar
+            </button>
+            <button className={s.btn} type="submit" form={FORM_NUEVA} disabled={saving}>
               {saving ? 'Guardando…' : 'Añadir inversión'}
             </button>
-          </form>
-        ) : (
-          <form onSubmit={submitActualizar} noValidate>
-            {list.length === 0 ? (
-              <p className={s.hint}>No tienes inversiones que actualizar todavía.</p>
-            ) : (
-              <>
-                <div className={s.row}>
-                  <div className={s.field}>
-                    <label>Categoría</label>
-                    <Select
-                      value={updId}
-                      options={list.map((i) => ({
-                        value: String(i.id),
-                        label: i.categoriaNombre ?? `#${i.id}`,
-                      }))}
-                      placeholder="Selecciona"
-                      invalid={err?.field === 'updId'}
-                      onChange={(v) => {
-                        setUpdId(v)
-                        setErr(null)
-                      }}
-                    />
-                    {fieldErr('updId')}
-                  </div>
-                  <div className={s.field}>
-                    <label>Nueva aportación</label>
-                    <MoneyInput
-                      step="0.01"
-                      min="0"
-                      placeholder="Opcional"
-                      value={updAportacion}
-                      aria-invalid={err?.field === 'updAportacion'}
-                      onChange={(e) => {
-                        setUpdAportacion(e.target.value)
-                        setErr(null)
-                      }}
-                    />
-                    {fieldErr('updAportacion')}
-                  </div>
-                  <div className={s.field}>
-                    <label>Valor actual</label>
-                    <MoneyInput
-                      step="0.01"
-                      min="0"
-                      placeholder="0,00"
-                      value={updValor}
-                      aria-invalid={err?.field === 'updValor'}
-                      onChange={(e) => {
-                        setUpdValor(e.target.value)
-                        setErr(null)
-                      }}
-                    />
-                    {fieldErr('updValor')}
-                  </div>
-                </div>
-                <p className={s.hint}>
-                  La aportación se suma al capital; el valor actual fija el total del momento (la plusvalía se calcula sola).
-                </p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
-                  <button className={s.btn} type="submit" disabled={saving}>
-                    {saving ? 'Guardando…' : 'Actualizar inversión'}
-                  </button>
-                  {updId && (
-                    <button
-                      type="button"
-                      onClick={handleDelete}
-                      disabled={saving}
-                      style={{
-                        padding: '9px 16px',
-                        fontSize: 14,
-                        fontWeight: 600,
-                        background: 'transparent',
-                        color: 'var(--down)',
-                        border: '1px solid var(--down)',
-                        borderRadius: 'var(--r-md)',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Eliminar
-                    </button>
-                  )}
-                </div>
-              </>
-            )}
-          </form>
-        )}
-      </div>
+          </>
+        }
+      >
+        <form id={FORM_NUEVA} onSubmit={submitNueva} noValidate>
+          <div className={s.row}>
+            <div className={s.field}>
+              <label>Categoría</label>
+              <CategoriaSelect
+                value={catName}
+                categorias={invCats}
+                invalid={err?.field === 'catName'}
+                onChange={(v) => {
+                  setCatName(v)
+                  setErr(null)
+                }}
+              />
+              {fieldErr('catName')}
+            </div>
+          </div>
+          <div className={s.row}>
+            <div className={s.field}>
+              <label>Capital aportado</label>
+              <MoneyInput
+                step="0.01"
+                min="0"
+                placeholder="0,00"
+                value={aportado}
+                aria-invalid={err?.field === 'aportado'}
+                onChange={(e) => {
+                  setAportado(e.target.value)
+                  setErr(null)
+                }}
+              />
+              {fieldErr('aportado')}
+            </div>
+            <div className={s.field}>
+              <label>Valor actual</label>
+              <MoneyInput
+                step="0.01"
+                min="0"
+                placeholder="0,00"
+                value={total}
+                aria-invalid={err?.field === 'total'}
+                onChange={(e) => {
+                  setTotal(e.target.value)
+                  setErr(null)
+                }}
+              />
+              {fieldErr('total')}
+            </div>
+          </div>
+          <p className={s.hint}>
+            Si la categoría no existe, se crea automáticamente (tipo Inversión).
+          </p>
+        </form>
+      </Modal>
+
+      <Modal
+        open={updId !== null}
+        onClose={cerrarEditar}
+        maxWidth={520}
+        title={`Actualizar ${list.find((i) => i.id === updId)?.categoriaNombre ?? 'inversión'}`}
+        footer={
+          <>
+            <button type="button" className="btn-ghost" onClick={cerrarEditar} disabled={saving}>
+              Cancelar
+            </button>
+            <button className={s.btn} type="submit" form={FORM_EDITAR} disabled={saving}>
+              {saving ? 'Guardando…' : 'Guardar cambios'}
+            </button>
+          </>
+        }
+      >
+        <form id={FORM_EDITAR} onSubmit={submitActualizar} noValidate>
+          <div className={s.row}>
+            <div className={s.field}>
+              <label>Nueva aportación</label>
+              <MoneyInput
+                step="0.01"
+                min="0"
+                placeholder="Opcional"
+                value={updAportacion}
+                aria-invalid={err?.field === 'updAportacion'}
+                onChange={(e) => {
+                  setUpdAportacion(e.target.value)
+                  setErr(null)
+                }}
+              />
+              {fieldErr('updAportacion')}
+            </div>
+            <div className={s.field}>
+              <label>Valor actual</label>
+              <MoneyInput
+                step="0.01"
+                min="0"
+                placeholder="0,00"
+                value={updValor}
+                aria-invalid={err?.field === 'updValor'}
+                onChange={(e) => {
+                  setUpdValor(e.target.value)
+                  setErr(null)
+                }}
+              />
+              {fieldErr('updValor')}
+            </div>
+          </div>
+          <p className={s.hint}>
+            La aportación se suma al capital; el valor actual fija el total del momento
+            (la plusvalía se calcula sola).
+          </p>
+        </form>
+      </Modal>
     </div>
   )
 }

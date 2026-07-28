@@ -11,7 +11,7 @@ import Select from '@/components/ui/Select'
 import { Tabs } from '@/components/ui/Tabs'
 import { StatCard, StatGrid } from '@/components/ui/StatCard'
 import { DonutChart } from '@/components/ui/DonutChart'
-import { chartTheme } from '@/lib/chartSetup'
+import { chartTheme, crosshairPlugin, hoverIndex, puntoHover, tooltipTheme } from '@/lib/chartSetup'
 import { formatEur, formatPct } from '@/lib/format'
 import { apiErrorMessage } from '@/lib/api'
 import type { OrigenIngreso } from '@/types/api'
@@ -47,6 +47,28 @@ const pad = (n: number) => String(n).padStart(2, '0')
 
 function meta(familia: OrigenIngreso | null) {
   return FAMILIAS.find((f) => f.key === familia) ?? SIN_CLASIFICAR
+}
+
+// Campo de la serie de evolución que corresponde a cada familia.
+const CAMPO_EVOLUCION: Record<OrigenIngreso, 'activo' | 'pasivo' | 'inversion'> = {
+  ACTIVO: 'activo',
+  PASIVO: 'pasivo',
+  INVERSION: 'inversion',
+}
+
+type MesEvolucion = {
+  activo: number
+  pasivo: number
+  inversion: number
+  sinClasificar: number
+}
+
+/** Partes no nulas de un mes, en el orden de FAMILIAS y con "Sin clasificar" al final. */
+function desgloseMes(e: MesEvolucion) {
+  return [
+    ...FAMILIAS.map((f) => ({ label: f.label, valor: e[CAMPO_EVOLUCION[f.key]] })),
+    { label: SIN_CLASIFICAR.label, valor: e.sinClasificar },
+  ].filter((p) => p.valor > 0)
 }
 
 export default function Ingresos() {
@@ -87,9 +109,7 @@ export default function Ingresos() {
   // Serie mensual continua sobre TODO el rango elegido: rellenamos a cero los
   // meses sin ingresos para que la línea no se quede en un punto suelto.
   const monthKey = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}`
-  const evoMap = new Map(
-    (evolucion.data ?? []).map((e) => [e.mes.slice(0, 7), Number(e.total || 0)]),
-  )
+  const evoMap = new Map((evolucion.data ?? []).map((e) => [e.mes.slice(0, 7), e]))
   const evoEnd = new Date(NOW.getFullYear(), NOW.getMonth(), 1)
   let evoStart: Date
   if (range === 'YTD') evoStart = new Date(NOW.getFullYear(), 0, 1)
@@ -102,11 +122,20 @@ export default function Ingresos() {
       ? new Date(Number(first.mes.slice(0, 4)), Number(first.mes.slice(5, 7)) - 1, 1)
       : evoEnd
   }
-  const evoFiltrada: { mes: string; total: number }[] = []
+  const evoVacio = { total: 0, activo: 0, pasivo: 0, inversion: 0, sinClasificar: 0 }
+  const evoFiltrada: (typeof evoVacio & { mes: string })[] = []
   const evoCur = new Date(evoStart)
   while (evoCur <= evoEnd) {
     const k = monthKey(evoCur)
-    evoFiltrada.push({ mes: `${k}-01`, total: evoMap.get(k) ?? 0 })
+    const e = evoMap.get(k)
+    evoFiltrada.push({
+      mes: `${k}-01`,
+      total: Number(e?.total || 0),
+      activo: Number(e?.activo || 0),
+      pasivo: Number(e?.pasivo || 0),
+      inversion: Number(e?.inversion || 0),
+      sinClasificar: Number(e?.sinClasificar || 0),
+    })
     evoCur.setMonth(evoCur.getMonth() + 1)
   }
   const evoLabels = evoFiltrada.map((e) => `${e.mes.slice(5, 7)}/${e.mes.slice(2, 4)}`)
@@ -213,6 +242,7 @@ export default function Ingresos() {
               ) : (
                 <Line
                   key={`ing-${theme}-${range}`}
+                  plugins={[crosshairPlugin]}
                   data={{
                     labels: evoLabels,
                     datasets: [
@@ -226,6 +256,7 @@ export default function Ingresos() {
                         pointRadius: evoPuntos,
                         pointBackgroundColor: '#1d9e75',
                         borderWidth: 2,
+                        ...puntoHover(),
                       },
                     ],
                   }}
@@ -233,10 +264,23 @@ export default function Ingresos() {
                     responsive: true,
                     maintainAspectRatio: false,
                     animation: false,
+                    // El hover engancha la columna entera y marca el punto.
+                    interaction: hoverIndex,
                     plugins: {
                       legend: { display: false },
                       tooltip: {
-                        callbacks: { label: (c) => ` ${formatEur(Number(c.parsed.y))}` },
+                        ...tooltipTheme(),
+                        callbacks: {
+                          label: (c) => ` Total: ${formatEur(Number(c.parsed.y))}`,
+                          // Desglose por familia del mes bajo el puntero.
+                          afterBody: (items) => {
+                            const e = evoFiltrada[items[0]?.dataIndex ?? -1]
+                            if (!e) return []
+                            return desgloseMes(e).map(
+                              (p) => `   ${p.label}: ${formatEur(p.valor)}`,
+                            )
+                          },
+                        },
                       },
                     },
                     scales: {

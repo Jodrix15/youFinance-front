@@ -259,10 +259,16 @@ export interface IngresoCategoriaResponse {
   total: number
 }
 
-// Ingresos totales de un mes (mes = primer día, 'YYYY-MM-DD') para la evolución.
+// Ingresos de un mes (mes = primer día, 'YYYY-MM-DD') para la evolución:
+// total y desglose por familia. Las partes suman siempre el total; los ingresos
+// de categorías sin familia caen en `sinClasificar`.
 export interface EvolucionIngresoResponse {
   mes: string
   total: number
+  activo: number
+  pasivo: number
+  inversion: number
+  sinClasificar: number
 }
 
 // Foto mensual del patrimonio (mes = primer día del mes, 'YYYY-MM-DD')
@@ -301,6 +307,16 @@ export interface GastosFijosMesResponse {
   recurrentes: number
   cuotasDeuda: number
   total: number
+}
+
+// Rango del usuario y progreso hacia el siguiente (barra XP de la barra lateral).
+export interface RangoResponse {
+  nivel: number
+  nombre: string
+  experienciaTotal: number
+  xpRangoActual: number
+  xpSiguiente: number | null
+  progreso: number
 }
 
 // ── Logros ──

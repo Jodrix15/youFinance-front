@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type FormEvent } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
 import { Bar, Line } from 'react-chartjs-2'
 import {
   useActualizarRecurrente,
@@ -29,7 +29,8 @@ import s from './Recurrentes.module.css'
 const num = (v: string) => (v.trim() === '' ? NaN : Number(v.replace(',', '.')))
 const today = () => new Date().toISOString().slice(0, 10)
 
-type Mode = 'nueva' | 'actualizar'
+/** Id del formulario del modal: permite que el botón de guardar viva en el footer. */
+const FORM_ID = 'form-recurrente'
 
 const EMPTY = {
   nombre: '',
@@ -58,23 +59,14 @@ export default function Recurrentes() {
     [categorias],
   )
 
-  const [mode, setMode] = useState<Mode>('nueva')
-  const [selId, setSelId] = useState('')
+  // Formulario en modal: editId null = alta, número = edición de ese gasto.
+  const [formOpen, setFormOpen] = useState(false)
+  const [editId, setEditId] = useState<number | null>(null)
   const [form, setForm] = useState({ ...EMPTY })
   const [err, setErr] = useState<{ field: string; msg: string } | null>(null)
   const fieldErr = (f: string) =>
     err?.field === f ? <div className={s.fieldError}>{err.msg}</div> : null
   const [detail, setDetail] = useState<GastoRecurrenteResponse | null>(null)
-
-  const formRef = useRef<HTMLDivElement>(null)
-  function irAlFormulario() {
-    switchMode('nueva')
-    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    window.setTimeout(
-      () => formRef.current?.querySelector<HTMLInputElement>('input')?.focus({ preventScroll: true }),
-      350,
-    )
-  }
 
   if (isLoading || resumenLoading) {
     return (
@@ -168,26 +160,32 @@ export default function Recurrentes() {
     setErr(null)
   }
 
-  function switchMode(m: Mode) {
-    setMode(m)
-    setErr(null)
-    setSelId('')
+  function abrirNueva() {
+    setEditId(null)
     setForm({ ...EMPTY })
+    setErr(null)
+    setFormOpen(true)
   }
 
-  function loadRec(id: string) {
-    setSelId(id)
-    const rec = recs.find((x) => x.id === Number(id))
-    if (rec) {
-      setForm({
-        nombre: rec.nombre,
-        catName: rec.categoriaNombre ?? '',
-        frecuencia: rec.frecuencia,
-        importe: rec.importeActual != null ? String(rec.importeActual) : '',
-        fechaPrimerPago: rec.fechaPrimerPago ?? today(),
-        active: rec.active,
-      })
-    }
+  function abrirEditar(rec: GastoRecurrenteResponse) {
+    setEditId(rec.id)
+    setForm({
+      nombre: rec.nombre,
+      catName: rec.categoriaNombre ?? '',
+      frecuencia: rec.frecuencia,
+      importe: rec.importeActual != null ? String(rec.importeActual) : '',
+      fechaPrimerPago: rec.fechaPrimerPago ?? today(),
+      active: rec.active,
+    })
+    setErr(null)
+    setFormOpen(true)
+  }
+
+  function cerrarForm() {
+    setFormOpen(false)
+    setEditId(null)
+    setErr(null)
+    setForm({ ...EMPTY })
   }
 
   async function resolverCategoriaId(name: string): Promise<number> {
@@ -203,8 +201,6 @@ export default function Recurrentes() {
     const nombre = form.nombre.trim()
     const catName = form.catName.trim()
     const importe = num(form.importe)
-    if (mode === 'actualizar' && !selId)
-      return setErr({ field: 'selId', msg: 'Selecciona un gasto recurrente.' })
     if (!nombre) return setErr({ field: 'nombre', msg: 'Indica el nombre del gasto recurrente.' })
     if (!catName) return setErr({ field: 'catName', msg: 'Indica una categoría.' })
     if (Number.isNaN(importe) || importe <= 0)
@@ -214,7 +210,7 @@ export default function Recurrentes() {
 
     try {
       const categoriaId = await resolverCategoriaId(catName)
-      if (mode === 'nueva') {
+      if (editId === null) {
         await crearRecurrente.mutateAsync({
           nombre,
           categoriaId,
@@ -226,9 +222,9 @@ export default function Recurrentes() {
           importeInicial: importe,
         })
       } else {
-        const rec = recs.find((x) => x.id === Number(selId))
+        const rec = recs.find((x) => x.id === editId)
         await actualizarRecurrente.mutateAsync({
-          id: Number(selId),
+          id: editId,
           nombre,
           categoriaId,
           tipoPago: 'RECURRENTE',
@@ -239,14 +235,14 @@ export default function Recurrentes() {
         })
         if (rec && Number(rec.importeActual || 0) !== importe) {
           await nuevoPrecio.mutateAsync({
-            id: Number(selId),
+            id: editId,
             importe,
             fechaVariacionImporte: today(),
           })
         }
       }
-      notifyOk(mode === 'nueva' ? 'Gasto recurrente creado' : 'Gasto recurrente actualizado')
-      switchMode(mode)
+      notifyOk(editId === null ? 'Gasto recurrente creado' : 'Gasto recurrente actualizado')
+      cerrarForm()
     } catch (error) {
       notifyError(error)
     }
@@ -268,7 +264,7 @@ export default function Recurrentes() {
     try {
       await eliminarRecurrente.mutateAsync(rec.id)
       notifyOk('Gasto recurrente eliminado')
-      if (Number(selId) === rec.id) switchMode('actualizar')
+      if (editId === rec.id) cerrarForm()
     } catch (err) {
       notifyError(err)
     }
@@ -336,12 +332,17 @@ export default function Recurrentes() {
       )}
 
       <div className={`card ${s.cardBlock}`}>
-        <div className="sec-title">Mis gastos recurrentes</div>
+        <div className="block-head">
+          <div className="sec-title">Mis gastos recurrentes</div>
+          <button type="button" className={s.btn} onClick={abrirNueva} disabled={saving}>
+            + Añadir recurrente
+          </button>
+        </div>
         {recs.length === 0 ? (
           <EmptyState
             message="No tienes gastos recurrentes registrados. Añade el primero para ver tu gasto fijo mensual."
             actionLabel="Añadir tu primer recurrente"
-            onAction={irAlFormulario}
+            onAction={abrirNueva}
           />
         ) : (
           <div className={s.recGrid}>
@@ -369,145 +370,128 @@ export default function Recurrentes() {
                 </div>
                 <div className={s.recMeta}>Próximo pago: {r.fechaProximoPago ?? '—'}</div>
                 <div className={s.clickHint}>Clic para ver el historial de precios →</div>
-                <button
-                  type="button"
-                  className={s.cardDeleteBtn}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    deleteRec(r)
-                  }}
-                  disabled={saving}
-                >
-                  Eliminar
-                </button>
+                <div className="card-actions">
+                  <button
+                    type="button"
+                    className="btn-card"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      abrirEditar(r)
+                    }}
+                    disabled={saving}
+                  >
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    className={s.cardDeleteBtn}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      deleteRec(r)
+                    }}
+                    disabled={saving}
+                  >
+                    Eliminar
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         )}
       </div>
 
-      <div ref={formRef} className={`card ${s.cardBlock}`}>
-        <div className={s.tabs}>
-          <button
-            type="button"
-            className={`${s.tab} ${mode === 'nueva' ? s.tabActive : ''}`}
-            onClick={() => switchMode('nueva')}
-          >
-            Nuevo recurrente
-          </button>
-          <button
-            type="button"
-            className={`${s.tab} ${mode === 'actualizar' ? s.tabActive : ''}`}
-            onClick={() => switchMode('actualizar')}
-          >
-            Actualizar
-          </button>
-        </div>
-
-        <form onSubmit={submit} noValidate>
-          {mode === 'actualizar' && (
-            <div className={s.row}>
-              <div className={s.field}>
-                <label>Gasto a actualizar</label>
-                <Select
-                  value={selId}
-                  options={recs.map((r) => ({ value: String(r.id), label: r.nombre }))}
-                  placeholder="Selecciona"
-                  invalid={err?.field === 'selId'}
-                  onChange={(v) => {
-                    loadRec(v)
-                    setErr(null)
-                  }}
-                />
-                {fieldErr('selId')}
-              </div>
+      <Modal
+        open={formOpen}
+        onClose={cerrarForm}
+        maxWidth={560}
+        title={editId === null ? 'Nuevo gasto recurrente' : 'Editar gasto recurrente'}
+        footer={
+          <>
+            <button type="button" className="btn-ghost" onClick={cerrarForm} disabled={saving}>
+              Cancelar
+            </button>
+            <button className={s.btn} type="submit" form={FORM_ID} disabled={saving}>
+              {saving ? 'Guardando…' : editId === null ? 'Añadir recurrente' : 'Guardar cambios'}
+            </button>
+          </>
+        }
+      >
+        <form id={FORM_ID} onSubmit={submit} noValidate>
+          <div className={s.row}>
+            <div className={s.field}>
+              <label>Nombre</label>
+              <input
+                type="text"
+                placeholder="Ej: Alquiler"
+                value={form.nombre}
+                aria-invalid={err?.field === 'nombre'}
+                onChange={(e) => set('nombre', e.target.value)}
+              />
+              {fieldErr('nombre')}
             </div>
-          )}
-
-          {(mode === 'nueva' || selId) && (
-            <>
-              <div className={s.row}>
-                <div className={s.field}>
-                  <label>Nombre</label>
-                  <input
-                    type="text"
-                    placeholder="Ej: Alquiler"
-                    value={form.nombre}
-                    aria-invalid={err?.field === 'nombre'}
-                    onChange={(e) => set('nombre', e.target.value)}
-                  />
-                  {fieldErr('nombre')}
-                </div>
-                <div className={s.field}>
-                  <label>Categoría</label>
-                  <CategoriaSelect
-                    value={form.catName}
-                    categorias={gastoCats}
-                    invalid={err?.field === 'catName'}
-                    onChange={(v) => set('catName', v)}
-                  />
-                  {fieldErr('catName')}
-                </div>
-              </div>
-              <div className={s.row}>
-                <div className={s.field}>
-                  <label>Frecuencia</label>
-                  <Select
-                    value={form.frecuencia}
-                    options={[
-                      { value: 'MENSUAL', label: 'Mensual' },
-                      { value: 'ANUAL', label: 'Anual' },
-                    ]}
-                    onChange={(v) => set('frecuencia', v as Frecuencia)}
-                    ariaLabel="Frecuencia"
-                  />
-                </div>
-                <div className={s.field}>
-                  <label>Importe</label>
-                  <MoneyInput
-                    step="0.01"
-                    min="0"
-                    placeholder="0,00"
-                    value={form.importe}
-                    aria-invalid={err?.field === 'importe'}
-                    onChange={(e) => set('importe', e.target.value)}
-                  />
-                  {fieldErr('importe')}
-                </div>
-                <div className={s.field}>
-                  <label>Fecha primer pago</label>
-                  <input
-                    type="date"
-                    value={form.fechaPrimerPago}
-                    aria-invalid={err?.field === 'fechaPrimerPago'}
-                    onChange={(e) => set('fechaPrimerPago', e.target.value)}
-                  />
-                  {fieldErr('fechaPrimerPago')}
-                </div>
-                <label className={s.check}>
-                  <input
-                    type="checkbox"
-                    checked={form.active}
-                    onChange={(e) => set('active', e.target.checked)}
-                  />
-                  Activo
-                </label>
-              </div>
-              <p className={s.hint}>
-                Si la categoría no existe, se crea automáticamente (tipo Gasto). Al
-                actualizar, si cambias el importe se registra como nueva variación de precio.
-              </p>
-              <button className={s.btn} type="submit" disabled={saving} style={{ marginTop: 4 }}>
-                {saving
-                  ? 'Guardando…'
-                  : mode === 'nueva'
-                    ? 'Añadir recurrente'
-                    : 'Actualizar recurrente'}
-              </button>
-            </>
-          )}
+            <div className={s.field}>
+              <label>Categoría</label>
+              <CategoriaSelect
+                value={form.catName}
+                categorias={gastoCats}
+                invalid={err?.field === 'catName'}
+                onChange={(v) => set('catName', v)}
+              />
+              {fieldErr('catName')}
+            </div>
+          </div>
+          <div className={s.row}>
+            <div className={s.field}>
+              <label>Frecuencia</label>
+              <Select
+                value={form.frecuencia}
+                options={[
+                  { value: 'MENSUAL', label: 'Mensual' },
+                  { value: 'ANUAL', label: 'Anual' },
+                ]}
+                onChange={(v) => set('frecuencia', v as Frecuencia)}
+                ariaLabel="Frecuencia"
+              />
+            </div>
+            <div className={s.field}>
+              <label>Importe</label>
+              <MoneyInput
+                step="0.01"
+                min="0"
+                placeholder="0,00"
+                value={form.importe}
+                aria-invalid={err?.field === 'importe'}
+                onChange={(e) => set('importe', e.target.value)}
+              />
+              {fieldErr('importe')}
+            </div>
+          </div>
+          <div className={s.row}>
+            <div className={s.field}>
+              <label>Fecha primer pago</label>
+              <input
+                type="date"
+                value={form.fechaPrimerPago}
+                aria-invalid={err?.field === 'fechaPrimerPago'}
+                onChange={(e) => set('fechaPrimerPago', e.target.value)}
+              />
+              {fieldErr('fechaPrimerPago')}
+            </div>
+            <label className={s.check}>
+              <input
+                type="checkbox"
+                checked={form.active}
+                onChange={(e) => set('active', e.target.checked)}
+              />
+              Activo
+            </label>
+          </div>
+          <p className={s.hint}>
+            Si la categoría no existe, se crea automáticamente (tipo Gasto). Al
+            actualizar, si cambias el importe se registra como nueva variación de precio.
+          </p>
         </form>
-      </div>
+      </Modal>
 
       <Modal open={detail !== null} onClose={() => setDetail(null)} maxWidth={560}>
         {detail && (

@@ -3,7 +3,7 @@ import { Chart as ChartJS } from 'chart.js'
 import { Line } from 'react-chartjs-2'
 import { usePatrimonioHistorico } from '@/hooks/useFinance'
 import { useTheme } from '@/context/ThemeContext'
-import { chartTheme } from '@/lib/chartSetup'
+import { chartTheme, crosshairPlugin, hoverIndex, puntoHover, tooltipTheme } from '@/lib/chartSetup'
 import { formatEur } from '@/lib/format'
 import { Tabs } from '@/components/ui/Tabs'
 import { WidgetError, WidgetLoading } from './WidgetState'
@@ -94,6 +94,7 @@ export default function PatrimonioEvolucionWidget() {
   const puntos = filtered.length <= 2 ? 4 : 0
 
   const t = chartTheme()
+  const hover = puntoHover()
   const data = {
     labels,
     datasets: [
@@ -107,6 +108,7 @@ export default function PatrimonioEvolucionWidget() {
         pointRadius: puntos,
         pointBackgroundColor: '#2f81f7',
         borderWidth: 2,
+        ...hover,
       },
       {
         label: 'Inversiones',
@@ -118,6 +120,7 @@ export default function PatrimonioEvolucionWidget() {
         pointRadius: puntos,
         pointBackgroundColor: '#1d9e75',
         borderWidth: 2,
+        ...hover,
       },
       {
         label: 'Ahorros',
@@ -129,6 +132,7 @@ export default function PatrimonioEvolucionWidget() {
         pointRadius: puntos,
         pointBackgroundColor: '#d29922',
         borderWidth: 2,
+        ...hover,
       },
     ],
   }
@@ -140,12 +144,15 @@ export default function PatrimonioEvolucionWidget() {
         <Line
           key={`${theme}-${range}`}
           data={data}
+          plugins={[crosshairPlugin]}
           options={{
             responsive: true,
             maintainAspectRatio: false,
             // Sin animación: el punto/curva aparece ya en su sitio, sin el
             // pequeño movimiento de entrada al abrir la sección.
             animation: false,
+            // El hover engancha la columna entera y marca el punto de cada serie.
+            interaction: hoverIndex,
             plugins: {
               legend: {
                 display: true,
@@ -166,6 +173,7 @@ export default function PatrimonioEvolucionWidget() {
                 },
               },
               tooltip: {
+                ...tooltipTheme(),
                 callbacks: {
                   label: (c) => ` ${c.dataset.label}: ${formatEur(Number(c.parsed.y))}`,
                 },

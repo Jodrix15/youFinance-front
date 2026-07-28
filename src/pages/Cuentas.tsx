@@ -1,6 +1,7 @@
-import { useRef, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCrearCuenta, useCuentas, useEliminarCuenta, useResumenCuenta } from '@/hooks/useFinance'
+import Modal from '@/components/ui/Modal'
 import Skeleton from '@/components/ui/Skeleton'
 import EmptyState from '@/components/ui/EmptyState'
 import { useConfirm } from '@/components/ui/ConfirmProvider'
@@ -13,6 +14,8 @@ import { StatCard, StatGrid } from '@/components/ui/StatCard'
 import s from './Cuentas.module.css'
 
 const num = (v: string) => (v.trim() === '' ? NaN : Number(v.replace(',', '.')))
+/** Id del formulario del modal: permite que el botón de guardar viva en el footer. */
+const FORM_ID = 'form-cuenta'
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
 const NOW = new Date()
 const CUR_MES = String(NOW.getMonth() + 1).padStart(2, '0')
@@ -33,19 +36,24 @@ export default function Cuentas() {
     fAnio === '' ? undefined : Number(fAnio),
     fMes === '' ? undefined : Number(fMes),
   )
+  // Formulario de alta en modal.
+  const [formOpen, setFormOpen] = useState(false)
   const [nombre, setNombre] = useState('')
   const [importe, setImporte] = useState('')
   const [err, setErr] = useState<{ field: string; msg: string } | null>(null)
   const fieldErr = (f: string) =>
     err?.field === f ? <div className={s.fieldError}>{err.msg}</div> : null
 
-  const formRef = useRef<HTMLFormElement>(null)
-  function irAlFormulario() {
-    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    window.setTimeout(
-      () => formRef.current?.querySelector<HTMLInputElement>('input')?.focus({ preventScroll: true }),
-      350,
-    )
+  function abrirNueva() {
+    setNombre('')
+    setImporte('')
+    setErr(null)
+    setFormOpen(true)
+  }
+
+  function cerrarForm() {
+    setFormOpen(false)
+    setErr(null)
   }
 
   if (isLoading || resumenLoading) {
@@ -96,6 +104,7 @@ export default function Cuentas() {
       notifyOk('Cuenta creada')
       setNombre('')
       setImporte('')
+      cerrarForm()
     } catch (error) {
       notifyError(error)
     }
@@ -161,12 +170,22 @@ export default function Cuentas() {
       </StatGrid>
 
       <div className={`card ${s.cardBlock}`}>
-        <div className="sec-title">Mis cuentas</div>
+        <div className="block-head">
+          <div className="sec-title">Mis cuentas</div>
+          <button
+            type="button"
+            className={s.btn}
+            onClick={abrirNueva}
+            disabled={crearCuenta.isPending}
+          >
+            + Añadir cuenta
+          </button>
+        </div>
         {list.length === 0 ? (
           <EmptyState
             message="Aún no tienes cuentas. Empieza creando la primera para ver aquí tu saldo."
             actionLabel="Añadir tu primera cuenta"
-            onAction={irAlFormulario}
+            onAction={abrirNueva}
           />
         ) : (
           <div className={s.grid}>
@@ -194,14 +213,61 @@ export default function Cuentas() {
         )}
       </div>
 
-      <form ref={formRef} className={`card ${s.cardBlock}`} onSubmit={submit} noValidate>
-        <div className="sec-title">Añadir cuenta</div>
-        <div className={s.row}>
-          <div className={s.field}><label>Nombre</label><input type="text" placeholder="Ej: Cuenta corriente" value={nombre} aria-invalid={err?.field === 'nombre'} onChange={(e) => { setNombre(e.target.value); setErr(null) }} />{fieldErr('nombre')}</div>
-          <div className={s.field}><label>Saldo inicial</label><MoneyInput step="0.01" min="0" placeholder="0,00" value={importe} aria-invalid={err?.field === 'importe'} onChange={(e) => { setImporte(e.target.value); setErr(null) }} />{fieldErr('importe')}</div>
-        </div>
-        <button className={s.btn} type="submit" disabled={crearCuenta.isPending} style={{ marginTop: 4 }}>{crearCuenta.isPending ? 'Guardando…' : 'Añadir cuenta'}</button>
-      </form>
+      <Modal
+        open={formOpen}
+        onClose={cerrarForm}
+        maxWidth={480}
+        title="Nueva cuenta"
+        footer={
+          <>
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={cerrarForm}
+              disabled={crearCuenta.isPending}
+            >
+              Cancelar
+            </button>
+            <button className={s.btn} type="submit" form={FORM_ID} disabled={crearCuenta.isPending}>
+              {crearCuenta.isPending ? 'Guardando…' : 'Añadir cuenta'}
+            </button>
+          </>
+        }
+      >
+        <form id={FORM_ID} onSubmit={submit} noValidate>
+          <div className={s.row}>
+            <div className={s.field}>
+              <label>Nombre</label>
+              <input
+                type="text"
+                placeholder="Ej: Cuenta corriente"
+                value={nombre}
+                aria-invalid={err?.field === 'nombre'}
+                onChange={(e) => {
+                  setNombre(e.target.value)
+                  setErr(null)
+                }}
+              />
+              {fieldErr('nombre')}
+            </div>
+            <div className={s.field}>
+              <label>Saldo inicial</label>
+              <MoneyInput
+                step="0.01"
+                min="0"
+                placeholder="0,00"
+                value={importe}
+                aria-invalid={err?.field === 'importe'}
+                onChange={(e) => {
+                  setImporte(e.target.value)
+                  setErr(null)
+                }}
+              />
+              {fieldErr('importe')}
+            </div>
+          </div>
+        </form>
+      </Modal>
     </div>
   )
 }

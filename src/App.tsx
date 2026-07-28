@@ -16,6 +16,7 @@ const Recurrentes = lazy(() => import('@/pages/Recurrentes'))
 const Cuentas = lazy(() => import('@/pages/Cuentas'))
 const CuentaMovimientos = lazy(() => import('@/pages/CuentaMovimientos'))
 const Ingresos = lazy(() => import('@/pages/Ingresos'))
+const CarreraRata = lazy(() => import('@/pages/CarreraRata'))
 const Presupuestos = lazy(() => import('@/pages/Presupuestos'))
 const Ajustes = lazy(() => import('@/pages/Ajustes'))
 const Incidencias = lazy(() => import('@/pages/Incidencias'))
@@ -68,6 +69,7 @@ export default function App() {
         <Route path="/presupuestos" element={<Presupuestos />} />
         <Route path="/ajustes" element={<Ajustes />} />
         <Route path="/logros" element={<Logros />} />
+        <Route path="/carrera-rata" element={<CarreraRata />} />
         <Route
           path="/incidencias"
           element={

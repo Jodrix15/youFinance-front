@@ -2,7 +2,7 @@
    En móvil (<=768px) se oculta y se usa una barra superior con drawer. */
 
 .sidebar {
-  width: 224px;
+  width: 250px;
   flex: none;
   /* Un tono más claro que el fondo de la app para diferenciar la barra. */
   background: var(--bg1);
@@ -12,10 +12,13 @@
   position: sticky;
   top: 0;
   height: 100vh;
+  /* Por encima del encabezado de sección (sticky, z-index 50) para que el
+     botón flotante que sobresale por el borde no quede tapado. */
+  z-index: 60;
   transition: width 0.15s ease;
 }
 .collapsed {
-  width: 66px;
+  width: 74px;
 }
 
 .head {
@@ -67,43 +70,44 @@
   padding: 0;
 }
 
-/* Botón de plegar/desplegar: fila propia bajo el logo, siempre accesible. */
-.toggle {
+/* Botón de plegar/desplegar: flotante en el borde derecho, siempre visible. */
+.collapseFloat {
+  position: absolute;
+  top: 15px;
+  right: -13px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  color: var(--tx2);
   display: flex;
   align-items: center;
-  gap: 11px;
-  margin: 2px 8px 4px;
-  padding: 8px 11px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--tx3);
-  background: transparent;
-  border: none;
-  border-radius: var(--r-md);
-  cursor: pointer;
-}
-.toggle:hover {
-  color: var(--tx1);
-  background: var(--bg2);
-}
-.toggle svg {
-  width: 16px;
-  height: 16px;
-  fill: currentColor;
-  flex-shrink: 0;
-}
-.collapsed .toggle {
   justify-content: center;
-  padding: 8px 0;
+  cursor: pointer;
+  z-index: 60;
+  transition: all 0.12s;
 }
-.collapsed .toggleLabel {
-  display: none;
+.collapseFloat:hover {
+  color: var(--tx1);
+  background: var(--bg3);
+  border-color: var(--border2);
+}
+.collapseFloat svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
 }
 
-.nav {
+/* Zona superior desplazable: nav principal + configuración justo debajo. */
+.scrollArea {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.nav {
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -112,9 +116,9 @@
 .navBtn {
   display: flex;
   align-items: center;
-  gap: 11px;
-  padding: 9px 11px;
-  font-size: 13px;
+  gap: 12px;
+  padding: 10px 12px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--tx2);
   background: transparent;
@@ -134,8 +138,8 @@
   background: var(--bg2);
 }
 .navIcon {
-  width: 16px;
-  height: 16px;
+  width: 19px;
+  height: 19px;
   fill: currentColor;
   flex-shrink: 0;
 }
@@ -200,6 +204,8 @@
 .avatarInfo {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-align: left;
 }
@@ -212,32 +218,63 @@
   text-overflow: ellipsis;
 }
 .avatarRole {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 11px;
   color: var(--tx2);
+  white-space: nowrap;
+}
+/* Insignia de nivel (Nv N). */
+.rangoNivel {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--up);
+  background: rgba(29, 158, 117, 0.15);
+  border-radius: 10px;
+  padding: 0 6px;
+}
+/* Mini barra de experiencia hacia el siguiente rango. */
+.xpBar {
+  display: block;
+  width: 100%;
+  height: 5px;
+  margin-top: 5px;
+  background: var(--bg3);
+  border-radius: 20px;
+  overflow: hidden;
+}
+.xpFill {
+  display: block;
+  height: 100%;
+  background: var(--up);
+  border-radius: 20px;
+  transition: width 0.3s ease;
 }
 .collapsed .avatarInfo {
   display: none;
 }
 
-/* Grupo de configuración dentro de la barra (Ajustes, feedback, tema…). */
+/* Grupo de configuración, justo debajo de la nav principal (separador arriba). */
 .footerNav {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding-bottom: 6px;
-  margin-bottom: 6px;
-  border-bottom: 1px solid var(--border);
+  padding: 8px;
+  border-top: 1px solid var(--border);
 }
+/* Fila de usuario, anclada abajo del todo con su propio separador. */
 .userRow {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px;
-  border-radius: var(--r-md);
+  padding: 10px 12px;
+  flex-shrink: 0;
+  border-top: 1px solid var(--border);
 }
 .collapsed .userRow {
   justify-content: center;
-  padding: 8px 0;
+  padding: 10px 0;
 }
 .logoutBtn {
   margin-left: auto;

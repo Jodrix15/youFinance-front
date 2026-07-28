@@ -8,6 +8,7 @@ import {
   useMovimientosPaginados,
 } from '@/hooks/useFinance'
 import { useConfirm } from '@/components/ui/ConfirmProvider'
+import Modal from '@/components/ui/Modal'
 import Skeleton from '@/components/ui/Skeleton'
 import { notifyOk, notifyError } from '@/lib/notify'
 import { formatEur } from '@/lib/format'
@@ -39,7 +40,8 @@ const TIPO_LABEL: Record<TipoMovimiento, string> = { GASTO: 'Gasto', INGRESO: 'I
 const BADGE: Record<TipoMovimiento, string> = { GASTO: 'bGasto', INGRESO: 'bIngreso', INVERSION: 'bInversion' }
 const esNegativo = (t: TipoMovimiento) => t === 'GASTO' || t === 'INVERSION'
 
-type Mode = 'nueva' | 'actualizar'
+/** Id del formulario del modal: permite que el botón de guardar viva en el footer. */
+const FORM_ID = 'form-movimiento'
 const EMPTY = { tipo: 'GASTO' as TipoMovimiento, catName: '', importe: '', descripcion: '', fecha: today() }
 
 interface Props { cuenta: CuentaResponse; onBack: () => void }
@@ -62,8 +64,9 @@ export default function CuentaMovimientosDetalle({ cuenta, onBack }: Props) {
   const [sortField, setSortField] = useState<SortField>('fechaTransaccion')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
 
-  const [mode, setMode] = useState<Mode>('nueva')
-  const [selId, setSelId] = useState('')
+  // Formulario en modal: editId null = alta, número = edición de ese movimiento.
+  const [formOpen, setFormOpen] = useState(false)
+  const [editId, setEditId] = useState<number | null>(null)
   const [form, setForm] = useState({ ...EMPTY })
   const [err, setErr] = useState<{ field: string; msg: string } | null>(null)
   const fieldErr = (f: string) =>
@@ -128,19 +131,16 @@ export default function CuentaMovimientosDetalle({ cuenta, onBack }: Props) {
     setErr(null)
   }
 
-  function resetForm() {
-    setSelId('')
+  function abrirNueva() {
+    setEditId(null)
     setForm({ ...EMPTY })
     setErr(null)
+    setFormOpen(true)
   }
-  function switchMode(m: Mode) {
-    setMode(m)
-    resetForm()
-  }
-  // Clic en una fila del historial → abre "Actualizar" con esa transacción cargada.
-  function startEdit(m: Movimiento) {
-    setMode('actualizar')
-    setSelId(String(m.id))
+
+  // Clic en una fila del historial → abre el modal con esa transacción cargada.
+  function abrirEditar(m: Movimiento) {
+    setEditId(m.id)
     setErr(null)
     setForm({
       tipo: m.tipoMovimiento,
@@ -149,11 +149,18 @@ export default function CuentaMovimientosDetalle({ cuenta, onBack }: Props) {
       descripcion: m.descripcion ?? '',
       fecha: m.fechaTransaccion ?? today(),
     })
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
+    setFormOpen(true)
+  }
+
+  function cerrarForm() {
+    setFormOpen(false)
+    setEditId(null)
+    setForm({ ...EMPTY })
+    setErr(null)
   }
 
   async function handleDelete() {
-    if (!selId) return
+    if (editId === null) return
     const ok = await confirm({
       title: 'Eliminar movimiento',
       message: '¿Seguro que quieres eliminar este movimiento? No se puede deshacer.',
@@ -162,9 +169,9 @@ export default function CuentaMovimientosDetalle({ cuenta, onBack }: Props) {
     })
     if (!ok) return
     try {
-      await eliminar.mutateAsync({ cuentaId: cuenta.id, id: Number(selId) })
+      await eliminar.mutateAsync({ cuentaId: cuenta.id, id: editId })
       notifyOk('Movimiento eliminado')
-      resetForm()
+      cerrarForm()
     } catch (err) {
       notifyError(err)
     }
@@ -182,10 +189,6 @@ export default function CuentaMovimientosDetalle({ cuenta, onBack }: Props) {
     setErr(null)
     const importe = num(form.importe)
     const catName = form.catName.trim()
-    if (mode === 'actualizar' && !selId) {
-      notifyError('Selecciona una transacción del historial.')
-      return
-    }
     if (!catName) return setErr({ field: 'catName', msg: 'Indica una categoría.' })
     if (Number.isNaN(importe) || importe <= 0)
       return setErr({ field: 'importe', msg: 'El importe debe ser mayor que 0.' })
@@ -193,14 +196,14 @@ export default function CuentaMovimientosDetalle({ cuenta, onBack }: Props) {
     try {
       const categoriaId = await resolverCategoriaId(catName)
       const dto = { tipoMovimiento: form.tipo, categoriaId, importe, descripcion: form.descripcion.trim() || undefined, fecha: form.fecha }
-      if (mode === 'actualizar') {
-        await actualizar.mutateAsync({ cuentaId: cuenta.id, id: Number(selId), ...dto })
+      if (editId !== null) {
+        await actualizar.mutateAsync({ cuentaId: cuenta.id, id: editId, ...dto })
         notifyOk('Transacción actualizada')
       } else {
         await crear.mutateAsync({ cuentaId: cuenta.id, ...dto })
         notifyOk('Transacción añadida')
       }
-      resetForm()
+      cerrarForm()
     } catch (error) {
       notifyError(error)
     }
@@ -253,6 +256,9 @@ export default function CuentaMovimientosDetalle({ cuenta, onBack }: Props) {
       <div className={`card ${s.cardBlock}`}>
         <div className={s.cardHead}>
           <div className="sec-title" style={{ marginBottom: 0 }}>Historial ({totalElementos})</div>
+          <button type="button" className={s.btn} onClick={abrirNueva} disabled={saving}>
+            + Añadir movimiento
+          </button>
           <div className={s.filters}>
             <div className={s.filterSelect}>
               <Select
@@ -316,7 +322,7 @@ export default function CuentaMovimientosDetalle({ cuenta, onBack }: Props) {
             </thead>
             <tbody>
               {rows.map((m) => (
-                <tr key={m.id} onClick={() => startEdit(m)}>
+                <tr key={m.id} onClick={() => abrirEditar(m)}>
                   <td data-label="Fecha">{m.fechaTransaccion ?? '—'}</td>
                   <td data-label="Descripción">{m.descripcion || '—'}</td>
                   <td data-label="Categoría">{m.categoriaNombre ?? '—'}</td>
@@ -340,60 +346,98 @@ export default function CuentaMovimientosDetalle({ cuenta, onBack }: Props) {
           </div>
         )}
       </div>
-      <div className={`card ${s.cardBlock}`}>
-        <div className={s.tabs}>
-          <button type="button" className={`${s.tab} ${mode === 'nueva' ? s.tabActive : ''}`} onClick={() => switchMode('nueva')}>Nueva transacción</button>
-          <button type="button" className={`${s.tab} ${mode === 'actualizar' ? s.tabActive : ''}`} onClick={() => switchMode('actualizar')}>Actualizar</button>
-        </div>
-        <form onSubmit={submit} noValidate>
-          {mode === 'actualizar' && !selId && (
-            <p className={s.hint}>Haz clic en una fila del historial para editarla o eliminarla.</p>
-          )}
-
-          {(mode === 'nueva' || selId) && (
-            <>
-              <div className={s.row}>
-                <div className={s.field}>
-                  <label>Tipo</label>
-                  <Select
-                    value={form.tipo}
-                    options={tipoOptions.map((t) => ({ value: t, label: TIPO_LABEL[t] }))}
-                    onChange={(v) => {
-                      set('tipo', v)
-                      set('catName', '')
-                    }}
-                    ariaLabel="Tipo"
-                  />
-                </div>
-                <div className={s.field}>
-                  <label>Categoría</label>
-                  <CategoriaSelect
-                    value={form.catName}
-                    categorias={catsDelTipo}
-                    invalid={err?.field === 'catName'}
-                    onChange={(v) => set('catName', v)}
-                  />
-                  {fieldErr('catName')}
-                </div>
-              </div>
-              <div className={s.row}>
-                <div className={s.field}><label>Importe</label><MoneyInput step="0.01" min="0" placeholder="0,00" value={form.importe} aria-invalid={err?.field === 'importe'} onChange={(e) => set('importe', e.target.value)} />{fieldErr('importe')}</div>
-                <div className={s.field}><label>Fecha</label><input type="date" value={form.fecha} aria-invalid={err?.field === 'fecha'} onChange={(e) => set('fecha', e.target.value)} />{fieldErr('fecha')}</div>
-                <div className={s.field}><label>Descripción</label><input type="text" placeholder="Opcional" value={form.descripcion} onChange={(e) => set('descripcion', e.target.value)} /></div>
-              </div>
-              <p className={s.hint}>
-                Si la categoría no existe, se crea automáticamente con el tipo elegido. También puedes hacer clic en una fila del historial para editarla.
-              </p>
-              <div className={s.actions} style={{ marginTop: 4 }}>
-                <button className={s.btn} type="submit" disabled={saving}>{saving ? 'Guardando…' : mode === 'nueva' ? 'Añadir transacción' : 'Guardar cambios'}</button>
-                {mode === 'actualizar' && selId && (
-                  <button type="button" onClick={handleDelete} disabled={saving} style={{ padding: '9px 16px', fontSize: 14, fontWeight: 600, background: 'transparent', color: 'var(--down)', border: '1px solid var(--down)', borderRadius: 'var(--r-md)', cursor: 'pointer' }}>Eliminar</button>
-                )}
-              </div>
-            </>
-          )}
+      <Modal
+        open={formOpen}
+        onClose={cerrarForm}
+        maxWidth={560}
+        title={editId === null ? 'Nuevo movimiento' : 'Editar movimiento'}
+        footer={
+          <>
+            {editId !== null && (
+              <button
+                type="button"
+                className="btn-ghost btn-ghost-danger"
+                style={{ marginRight: 'auto' }}
+                onClick={handleDelete}
+                disabled={saving}
+              >
+                Eliminar
+              </button>
+            )}
+            <button type="button" className="btn-ghost" onClick={cerrarForm} disabled={saving}>
+              Cancelar
+            </button>
+            <button className={s.btn} type="submit" form={FORM_ID} disabled={saving}>
+              {saving ? 'Guardando…' : editId === null ? 'Añadir movimiento' : 'Guardar cambios'}
+            </button>
+          </>
+        }
+      >
+        <form id={FORM_ID} onSubmit={submit} noValidate>
+          <div className={s.row}>
+            <div className={s.field}>
+              <label>Tipo</label>
+              <Select
+                value={form.tipo}
+                options={tipoOptions.map((t) => ({ value: t, label: TIPO_LABEL[t] }))}
+                onChange={(v) => {
+                  set('tipo', v)
+                  set('catName', '')
+                }}
+                ariaLabel="Tipo"
+              />
+            </div>
+            <div className={s.field}>
+              <label>Categoría</label>
+              <CategoriaSelect
+                value={form.catName}
+                categorias={catsDelTipo}
+                invalid={err?.field === 'catName'}
+                onChange={(v) => set('catName', v)}
+              />
+              {fieldErr('catName')}
+            </div>
+          </div>
+          <div className={s.row}>
+            <div className={s.field}>
+              <label>Importe</label>
+              <MoneyInput
+                step="0.01"
+                min="0"
+                placeholder="0,00"
+                value={form.importe}
+                aria-invalid={err?.field === 'importe'}
+                onChange={(e) => set('importe', e.target.value)}
+              />
+              {fieldErr('importe')}
+            </div>
+            <div className={s.field}>
+              <label>Fecha</label>
+              <input
+                type="date"
+                value={form.fecha}
+                aria-invalid={err?.field === 'fecha'}
+                onChange={(e) => set('fecha', e.target.value)}
+              />
+              {fieldErr('fecha')}
+            </div>
+          </div>
+          <div className={s.row}>
+            <div className={s.field}>
+              <label>Descripción</label>
+              <input
+                type="text"
+                placeholder="Opcional"
+                value={form.descripcion}
+                onChange={(e) => set('descripcion', e.target.value)}
+              />
+            </div>
+          </div>
+          <p className={s.hint}>
+            Si la categoría no existe, se crea automáticamente con el tipo elegido.
+          </p>
         </form>
-      </div>
+      </Modal>
     </div>
   )
 }

@@ -24,6 +24,7 @@ const ca = {
     inversiones: 'Inversions',
     presupuestos: 'Pressupostos',
     logros: 'Assoliments',
+    carreraRata: 'Cursa de la rata',
   },
   menu: {
     settings: 'Configuració',
