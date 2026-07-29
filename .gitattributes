@@ -1,6 +1,9 @@
-# vercel.json: cada rama tiene el suyo (main -> back PRO, develop -> back UAT).
-# Al mergear, git mantiene SIEMPRE la version de la rama destino e ignora la que
-# entra. Requiere definir el driver 'ours' en la config LOCAL de git, una vez por
-# clon:
-#   git config merge.ours.driver true
-vercel.json merge=ours
+# vercel.json ya NO diverge por rama: es el mismo fichero en main y en develop y
+# decide el backend por el host de la petición (ver el bloque "has" de dentro).
+#
+# Antes llevaba `merge=ours` para que cada rama conservara el suyo, pero esa
+# protección es engañosa: el driver de merge solo se ejecuta cuando AMBOS lados
+# han tocado el fichero. En cuanto develop mergea main, la base del siguiente
+# merge pasa a ser main y git resuelve el fichero de forma trivial cogiendo el
+# de develop, sin llegar a llamar al driver. Es decir, fallaba justo en el caso
+# que tenía que cubrir.

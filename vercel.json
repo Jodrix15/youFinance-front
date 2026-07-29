@@ -2,6 +2,11 @@
   "rewrites": [
     {
       "source": "/api/:path*",
+      "has": [{ "type": "host", "value": "you-finance.vercel.app" }],
+      "destination": "https://youfinance-back-pro.onrender.com/api/:path*"
+    },
+    {
+      "source": "/api/:path*",
       "destination": "https://youfinance-back.onrender.com/api/:path*"
     },
     {
