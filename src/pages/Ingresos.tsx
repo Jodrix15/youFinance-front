@@ -290,7 +290,7 @@ export default function Ingresos() {
                       },
                       y: {
                         grid: { color: t.grid },
-                        ticks: { color: t.tick, font: { size: 10 }, callback: (v) => formatEur(Number(v)) },
+                        ticks: { color: t.tick, font: { size: 10 }, callback: (v) => formatEur(Number(v), false) },
                       },
                     },
                   }}

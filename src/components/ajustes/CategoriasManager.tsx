@@ -1,4 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react'
+import { FAMILIA_OPTIONS, familiaLabel } from '@/lib/familias'
 import {
   useActualizarCategoria,
   useCategorias,
@@ -30,22 +31,12 @@ const GRUPOS: { tipo: TipoMovimiento; label: string }[] = [
   { tipo: 'INVERSION', label: 'Inversiones' },
 ]
 
-// Familia del ingreso según el esfuerzo. Solo se pide cuando el tipo es Ingreso.
-const FAMILIAS: { value: OrigenIngreso; label: string }[] = [
-  { value: 'ACTIVO', label: 'Activo' },
-  { value: 'PASIVO', label: 'Pasivo' },
-  { value: 'INVERSION', label: 'Inversión' },
-]
-
 const FAMILIA_COLOR: Record<OrigenIngreso, string> = {
   ACTIVO: 'var(--teal)',
   PASIVO: 'var(--blue)',
   INVERSION: 'var(--purple)',
 }
 
-function familiaLabel(o: OrigenIngreso): string {
-  return FAMILIAS.find((f) => f.value === o)?.label ?? o
-}
 
 function FamiliaBadge({ familia }: { familia: OrigenIngreso }) {
   return (
@@ -274,7 +265,7 @@ export default function CategoriasManager() {
               <label>Familia del ingreso</label>
               <Select
                 value={origen}
-                options={FAMILIAS}
+                options={FAMILIA_OPTIONS}
                 onChange={setOrigen}
                 ariaLabel="Familia del ingreso"
               />

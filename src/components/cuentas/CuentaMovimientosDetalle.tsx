@@ -16,7 +16,8 @@ import { apiErrorMessage } from '@/lib/api'
 import Select from '@/components/ui/Select'
 import MoneyInput from '@/components/ui/MoneyInput'
 import CategoriaSelect from '@/components/ui/CategoriaSelect'
-import type { CuentaResponse, Movimiento, TipoMovimiento } from '@/types/api'
+import { FAMILIA_OPTIONS } from '@/lib/familias'
+import type { CuentaResponse, Movimiento, OrigenIngreso, TipoMovimiento } from '@/types/api'
 import s from '@/pages/Movimientos.module.css'
 
 const num = (v: string) => (v.trim() === '' ? NaN : Number(v.replace(',', '.')))
@@ -42,7 +43,14 @@ const esNegativo = (t: TipoMovimiento) => t === 'GASTO' || t === 'INVERSION'
 
 /** Id del formulario del modal: permite que el botón de guardar viva en el footer. */
 const FORM_ID = 'form-movimiento'
-const EMPTY = { tipo: 'GASTO' as TipoMovimiento, catName: '', importe: '', descripcion: '', fecha: today() }
+const EMPTY = {
+  tipo: 'GASTO' as TipoMovimiento,
+  catName: '',
+  importe: '',
+  descripcion: '',
+  fecha: today(),
+  origen: 'ACTIVO' as OrigenIngreso,
+}
 
 interface Props { cuenta: CuentaResponse; onBack: () => void }
 
@@ -71,6 +79,13 @@ export default function CuentaMovimientosDetalle({ cuenta, onBack }: Props) {
   const [err, setErr] = useState<{ field: string; msg: string } | null>(null)
   const fieldErr = (f: string) =>
     err?.field === f ? <div className={s.fieldError}>{err.msg}</div> : null
+
+  // Si el nombre tecleado no coincide con ninguna categoría existente del tipo,
+  // al guardar se creará una nueva; solo entonces hace falta pedir la familia.
+  const categoriaEsNueva = useMemo(() => {
+    const n = form.catName.trim().toLowerCase()
+    return n !== '' && !(categorias ?? []).some((c) => c.tipo === form.tipo && c.nombre.toLowerCase() === n)
+  }, [categorias, form.catName, form.tipo])
 
   const catsDelTipo = useMemo(
     () => (categorias ?? []).filter((c) => c.tipo === form.tipo),
@@ -143,6 +158,7 @@ export default function CuentaMovimientosDetalle({ cuenta, onBack }: Props) {
     setEditId(m.id)
     setErr(null)
     setForm({
+      ...EMPTY,
       tipo: m.tipoMovimiento,
       catName: m.categoriaNombre ?? '',
       importe: m.importe != null ? String(Math.abs(m.importe)) : '',
@@ -180,7 +196,12 @@ export default function CuentaMovimientosDetalle({ cuenta, onBack }: Props) {
   async function resolverCategoriaId(name: string): Promise<number> {
     const existing = catsDelTipo.find((c) => c.nombre.toLowerCase() === name.trim().toLowerCase())
     if (existing) return existing.id
-    const created = await crearCategoria.mutateAsync({ nombre: name.trim(), tipo: form.tipo })
+    // Una categoría de ingreso sin familia la rechaza el backend.
+    const created = await crearCategoria.mutateAsync({
+      nombre: name.trim(),
+      tipo: form.tipo,
+      origenIngreso: form.tipo === 'INGRESO' ? form.origen : undefined,
+    })
     return created.id
   }
 
@@ -398,6 +419,22 @@ export default function CuentaMovimientosDetalle({ cuenta, onBack }: Props) {
               {fieldErr('catName')}
             </div>
           </div>
+          {form.tipo === 'INGRESO' && categoriaEsNueva && (
+            <div className={s.row}>
+              <div className={s.field}>
+                <label>Familia del ingreso</label>
+                <Select
+                  value={form.origen}
+                  options={FAMILIA_OPTIONS}
+                  onChange={(v) => set('origen', v)}
+                  ariaLabel="Familia del ingreso"
+                />
+                <small style={{ color: 'var(--tx3)', fontSize: 11 }}>
+                  «{form.catName.trim()}» es una categoría nueva y necesita familia.
+                </small>
+              </div>
+            </div>
+          )}
           <div className={s.row}>
             <div className={s.field}>
               <label>Importe</label>

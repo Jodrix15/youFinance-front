@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://youfinance-back-pro.onrender.com/api/:path*"
+      "destination": "https://youfinance-back.onrender.com/api/:path*"
     },
     {
       "source": "/(.*)",

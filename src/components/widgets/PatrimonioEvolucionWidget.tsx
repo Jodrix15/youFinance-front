@@ -189,7 +189,7 @@ export default function PatrimonioEvolucionWidget() {
                 ticks: {
                   color: t.tick,
                   font: { size: 10 },
-                  callback: (v) => formatEur(Number(v)),
+                  callback: (v) => formatEur(Number(v), false),
                 },
               },
             },

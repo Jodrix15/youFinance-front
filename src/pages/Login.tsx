@@ -8,6 +8,16 @@ import s from './Login.module.css'
 
 type Tab = 'signin' | 'signup'
 
+// El acceso rápido con la cuenta de demostración (admin/admin123) solo debe
+// existir en desarrollo y en UAT, nunca en producción.
+//   - `vite dev` en local  -> import.meta.env.DEV es true, se ve sin configurar nada.
+//   - UAT (preview Vercel) -> definir VITE_DEMO_LOGIN=true en el entorno Preview.
+//   - PRO                  -> no definir la variable; queda oculto por defecto.
+// El valor por defecto es "oculto" a propósito: si algún día se despliega un
+// entorno nuevo sin configurar, el botón no aparece.
+const DEMO_LOGIN_ENABLED =
+  import.meta.env.DEV || import.meta.env.VITE_DEMO_LOGIN === 'true'
+
 export default function Login() {
   const { login, register } = useAuth()
   const { t } = useTranslation()
@@ -115,10 +125,14 @@ export default function Login() {
           </button>
         </form>
 
-        <div className={s.divider}>o</div>
-        <button type="button" className={s.demo} onClick={demo} disabled={loading}>
-          {t('login.demo')}
-        </button>
+        {DEMO_LOGIN_ENABLED && (
+          <>
+            <div className={s.divider}>o</div>
+            <button type="button" className={s.demo} onClick={demo} disabled={loading}>
+              {t('login.demo')}
+            </button>
+          </>
+        )}
 
         {error && <div className={s.error}>{error}</div>}
 

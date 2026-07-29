@@ -8,3 +8,7 @@ dist-ssr
 .DS_Store
 .idea
 *.log
+
+# Ficheros temporales que genera Vite al recargar vite.config.ts.
+# Hay ~15 commiteados por error en develop; ver guia de despliegue para limpiarlos.
+vite.config.ts.timestamp-*.mjs

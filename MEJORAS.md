@@ -61,6 +61,20 @@ al backend).
 
 ## 🔵 Seguridad (importante si sale de local)
 
+- **Cerrar el registro público** ⚠️ *prioritario*: hoy `SecurityConfig` deja
+  `/api/auth/**` en `permitAll`, así que cualquiera puede darse de alta en la instancia
+  publicada. Implementar whitelist o registro por invitación (opciones: lista de emails
+  permitidos en configuración, código de invitación obligatorio en el `signup`, o
+  alta solo por un admin). **Motivo**: en cuanto se registra alguien ajeno, la app deja
+  de ser "actividad personal o doméstica" (art. 2.2.c RGPD) y pasas a ser responsable
+  del tratamiento de datos financieros de terceros, con todo lo que conlleva
+  (política de privacidad, derechos de acceso/supresión, registro de actividades,
+  notificación de brechas a la AEPD en 72 h). Ver "Antes de abrir el registro" abajo.
+- **Antes de abrir el registro al público** (si algún día se decide): política de
+  privacidad y aviso legal, aviso de cookies (LSSI), hosting en la UE con contrato de
+  encargado del tratamiento, cifrado en tránsito y reposo, borrado de cuenta funcional,
+  2FA, backups y un plan de respuesta ante brechas. Alternativa de menor riesgo:
+  publicar solo el código y que cada usuario se lo autoaloje (modelo Firefly III).
 - **Secretos en claro**: `jwt.secret` y la contraseña de MySQL están en
   `application.yaml`. Deberían ir en variables de entorno.
 - **Token en `localStorage`**: cómodo pero vulnerable a XSS; valorar cookie `httpOnly`.

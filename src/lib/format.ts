@@ -67,10 +67,15 @@ export function currencySymbol(): string {
 
 /**
  * Formatea un importe con la moneda activa del usuario. Mantiene el nombre
- * histórico `formatEur` para no tocar los ~80 puntos de uso; ya no está atado
+ * histórico `formatEur` para no tocar los ~100 puntos de uso; ya no está atado
  * al euro.
+ *
+ * Por defecto muestra SIEMPRE dos decimales: en una app de finanzas redondear a
+ * la unidad hace que los importes no cuadren con lo que el usuario introdujo.
+ * Para los pocos sitios donde interesa la versión compacta (ejes de gráficos,
+ * cifras grandes de cabecera) hay que pedirlo explícitamente con `false`.
  */
-export function formatEur(value: number | null | undefined, withCents = false): string {
+export function formatEur(value: number | null | undefined, withCents = true): string {
   if (value == null || Number.isNaN(value)) return '—'
   return withCents ? cents(activeCurrency).format(value) : whole(activeCurrency).format(value)
 }
