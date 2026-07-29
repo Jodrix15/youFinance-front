@@ -11,12 +11,27 @@
   margin-bottom: 1.25rem;
 }
 
-/* ── Alta ── */
-.crear {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
+/* ── Campos del modal de alta/edición ── */
+.modalField {
+  margin-bottom: 12px;
+}
+.modalField label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--tx2);
+  margin-bottom: 5px;
+}
+.modalField .input {
+  width: 100%;
+}
+.readonly {
+  padding: 9px 12px;
+  font-size: 14px;
+  color: var(--tx2);
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
 }
 .input,
 .select {
@@ -135,67 +150,6 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-.rowInput {
-  flex: 1;
-  min-width: 0;
-  padding: 6px 8px;
-  font-size: 13px;
-  font-family: inherit;
-  background: var(--input-bg);
-  color: var(--tx1);
-  border: 1px solid var(--border2);
-  border-radius: var(--r-sm);
-}
-.rowInput:focus {
-  outline: none;
-  border-color: var(--accent);
-}
-.rowSelect {
-  padding: 6px 8px;
-  font-size: 12px;
-  font-family: inherit;
-  background: var(--input-bg);
-  color: var(--tx1);
-  border: 1px solid var(--border2);
-  border-radius: var(--r-sm);
-}
-.iconBtn {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  background: transparent;
-  border: none;
-  border-radius: var(--r-sm);
-  color: var(--tx2);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.iconBtn svg {
-  width: 15px;
-  height: 15px;
-  fill: currentColor;
-}
-.iconBtn:hover {
-  background: var(--bg3);
-  color: var(--tx1);
-}
-.iconDanger:hover {
-  color: var(--down);
-}
-.iconOk {
-  color: var(--up, #26a269);
-}
-.iconOk:hover {
-  color: var(--up, #26a269);
-  background: var(--bg3);
-}
-.iconBtn:disabled {
-  opacity: 0.45;
-  cursor: default;
 }
 .error {
   color: var(--down);

@@ -1,5 +1,4 @@
 import {
-  useEffect,
   useRef,
   useState,
   type FormEvent,
@@ -14,6 +13,7 @@ import {
   useResumenDeuda,
 } from '@/hooks/useFinance'
 import { useTheme } from '@/context/ThemeContext'
+import Modal from '@/components/ui/Modal'
 import { useConfirm } from '@/components/ui/ConfirmProvider'
 import Skeleton from '@/components/ui/Skeleton'
 import EmptyState from '@/components/ui/EmptyState'
@@ -29,7 +29,8 @@ import s from './Deudas.module.css'
 
 const num = (v: string) => (v.trim() === '' ? NaN : Number(v.replace(',', '.')))
 
-type Mode = 'nueva' | 'actualizar'
+/** Id del formulario del modal: permite que el botón de guardar viva en el footer. */
+const FORM_ID = 'form-deuda'
 
 const EMPTY = {
   nombre: '',
@@ -51,21 +52,42 @@ export default function Deudas() {
   const actualizarDeuda = useActualizarDeuda()
   const eliminarDeuda = useEliminarDeuda()
 
-  const [mode, setMode] = useState<Mode>('nueva')
-  const [selId, setSelId] = useState('')
+  // Formulario en modal: editId null = alta, número = edición de esa deuda.
+  const [formOpen, setFormOpen] = useState(false)
+  const [editId, setEditId] = useState<number | null>(null)
   const [form, setForm] = useState({ ...EMPTY })
   const [err, setErr] = useState<{ field: string; msg: string } | null>(null)
   const fieldErr = (f: string) =>
     err?.field === f ? <div className={s.fieldError}>{err.msg}</div> : null
 
-  const formRef = useRef<HTMLDivElement>(null)
-  function irAlFormulario() {
-    switchMode('nueva')
-    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    window.setTimeout(
-      () => formRef.current?.querySelector<HTMLInputElement>('input')?.focus({ preventScroll: true }),
-      350,
-    )
+  function abrirNueva() {
+    setEditId(null)
+    setForm({ ...EMPTY })
+    setErr(null)
+    setFormOpen(true)
+  }
+
+  function abrirEditar(d: DeudaResponse) {
+    setEditId(d.id)
+    setForm({
+      nombre: d.nombreDeuda,
+      acreedor: d.acreedor,
+      importe: String(d.importe ?? ''),
+      interesPct: d.interes != null ? String(d.interes) : '',
+      pagada: String(d.cantidadPagada ?? ''),
+      cuota: d.cuota != null ? String(d.cuota) : '',
+      frecuencia: d.frecuencia ?? 'MENSUAL',
+      vencimiento: d.fechaVencimiento ?? '',
+    })
+    setErr(null)
+    setFormOpen(true)
+  }
+
+  function cerrarForm() {
+    setFormOpen(false)
+    setEditId(null)
+    setErr(null)
+    setForm({ ...EMPTY })
   }
 
   // Arrastrar-para-desplazar la fila de tarjetas de deuda
@@ -87,24 +109,6 @@ export default function Deudas() {
     drag.current.down = false
     gridRef.current?.classList.remove(s.dragging)
   }
-
-  // Al elegir una deuda en "Actualizar", precargamos sus datos.
-  useEffect(() => {
-    if (mode !== 'actualizar' || !selId || !deudas) return
-    const d = deudas.find((x) => x.id === Number(selId))
-    if (d) {
-      setForm({
-        nombre: d.nombreDeuda,
-        acreedor: d.acreedor,
-        importe: String(d.importe ?? ''),
-        interesPct: d.interes != null ? String(d.interes) : '',
-        pagada: String(d.cantidadPagada ?? ''),
-        cuota: d.cuota != null ? String(d.cuota) : '',
-        frecuencia: d.frecuencia ?? 'MENSUAL',
-        vencimiento: d.fechaVencimiento ?? '',
-      })
-    }
-  }, [selId, mode, deudas])
 
   if (isLoading || resumenLoading) {
     return (
@@ -160,21 +164,11 @@ export default function Deudas() {
     setErr(null)
   }
 
-  function switchMode(m: Mode) {
-    setMode(m)
-    setErr(null)
-    setSelId('')
-    setForm({ ...EMPTY })
-  }
-
   async function submit(e: FormEvent) {
     e.preventDefault()
     setErr(null)
-    if (mode === 'actualizar' && !selId)
-      return setErr({ field: 'selId', msg: 'Selecciona una deuda.' })
-    const selDebt =
-      mode === 'actualizar' ? list.find((d) => d.id === Number(selId)) : undefined
-    // En "Actualizar" el nombre es opcional: si se deja vacío, se conserva el actual.
+    const selDebt = editId !== null ? list.find((d) => d.id === editId) : undefined
+    // Al editar el nombre es opcional: si se deja vacío, se conserva el actual.
     const nombre = form.nombre.trim() || selDebt?.nombreDeuda || ''
     const acreedor = form.acreedor.trim()
     const importe = num(form.importe)
@@ -200,14 +194,14 @@ export default function Deudas() {
     }
 
     try {
-      if (mode === 'nueva') {
+      if (editId === null) {
         await crearDeuda.mutateAsync(body)
         notifyOk('Deuda creada')
       } else {
-        await actualizarDeuda.mutateAsync({ id: Number(selId), ...body })
+        await actualizarDeuda.mutateAsync({ id: editId, ...body })
         notifyOk('Deuda actualizada')
       }
-      switchMode(mode)
+      cerrarForm()
     } catch (error) {
       notifyError(error)
     }
@@ -229,7 +223,7 @@ export default function Deudas() {
     try {
       await eliminarDeuda.mutateAsync(d.id)
       notifyOk('Deuda eliminada')
-      if (Number(selId) === d.id) switchMode('actualizar')
+      if (editId === d.id) cerrarForm()
     } catch (err) {
       notifyError(err)
     }
@@ -284,12 +278,17 @@ export default function Deudas() {
       )}
 
       <div className={`card ${s.cardBlock}`}>
-        <div className="sec-title">Mis deudas</div>
+        <div className="block-head">
+          <div className="sec-title">Mis deudas</div>
+          <button type="button" className={s.btn} onClick={abrirNueva} disabled={saving}>
+            + Añadir deuda
+          </button>
+        </div>
         {list.length === 0 ? (
           <EmptyState
             message="No tienes deudas registradas. Añade la primera para llevar el control de lo que debes."
             actionLabel="Añadir tu primera deuda"
-            onAction={irAlFormulario}
+            onAction={abrirNueva}
           />
         ) : (
           <div
@@ -327,15 +326,26 @@ export default function Deudas() {
                     <span>Pagado {Math.round(pct)}%</span>
                     <span>Total {formatEur(totalDeuda)}</span>
                   </div>
-                  <button
-                    type="button"
-                    className={s.cardDeleteBtn}
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onClick={() => deleteDeuda(d)}
-                    disabled={saving}
-                  >
-                    Eliminar
-                  </button>
+                  <div className="card-actions">
+                    <button
+                      type="button"
+                      className="btn-card"
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onClick={() => abrirEditar(d)}
+                      disabled={saving}
+                    >
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      className={s.cardDeleteBtn}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onClick={() => deleteDeuda(d)}
+                      disabled={saving}
+                    >
+                      Eliminar
+                    </button>
+                  </div>
                 </div>
               )
             })}
@@ -343,159 +353,122 @@ export default function Deudas() {
         )}
       </div>
 
-      <div ref={formRef} className={`card ${s.cardBlock}`}>
-        <div className={s.tabs}>
-          <button
-            type="button"
-            className={`${s.tab} ${mode === 'nueva' ? s.tabActive : ''}`}
-            onClick={() => switchMode('nueva')}
-          >
-            Nueva deuda
-          </button>
-          <button
-            type="button"
-            className={`${s.tab} ${mode === 'actualizar' ? s.tabActive : ''}`}
-            onClick={() => switchMode('actualizar')}
-          >
-            Actualizar
-          </button>
-        </div>
-
-        <form onSubmit={submit} noValidate>
-          {mode === 'actualizar' && (
-            <div className={s.row}>
-              <div className={s.field}>
-                <label>Deuda a actualizar</label>
-                <Select
-                  value={selId}
-                  options={list.map((d) => ({
-                    value: String(d.id),
-                    label: `${d.nombreDeuda} — ${d.acreedor}`,
-                  }))}
-                  placeholder="Selecciona"
-                  invalid={err?.field === 'selId'}
-                  onChange={(v) => {
-                    setSelId(v)
-                    setErr(null)
-                  }}
-                />
-                {fieldErr('selId')}
-              </div>
+      <Modal
+        open={formOpen}
+        onClose={cerrarForm}
+        maxWidth={560}
+        title={editId === null ? 'Nueva deuda' : 'Editar deuda'}
+        footer={
+          <>
+            <button type="button" className="btn-ghost" onClick={cerrarForm} disabled={saving}>
+              Cancelar
+            </button>
+            <button className={s.btn} type="submit" form={FORM_ID} disabled={saving}>
+              {saving ? 'Guardando…' : editId === null ? 'Añadir deuda' : 'Guardar cambios'}
+            </button>
+          </>
+        }
+      >
+        <form id={FORM_ID} onSubmit={submit} noValidate>
+          <div className={s.row}>
+            <div className={s.field}>
+              <label>{editId !== null ? 'Nombre (opcional)' : 'Nombre'}</label>
+              <input
+                type="text"
+                placeholder="Ej: Hipoteca"
+                value={form.nombre}
+                aria-invalid={err?.field === 'nombre'}
+                onChange={(e) => set('nombre', e.target.value)}
+              />
+              {fieldErr('nombre')}
             </div>
-          )}
-
-          {(mode === 'nueva' || selId) && (
-            <>
-              <div className={s.row}>
-                <div className={s.field}>
-                  <label>{mode === 'actualizar' ? 'Nombre (opcional)' : 'Nombre'}</label>
-                  <input
-                    type="text"
-                    placeholder="Ej: Hipoteca"
-                    value={form.nombre}
-                    aria-invalid={err?.field === 'nombre'}
-                    onChange={(e) => set('nombre', e.target.value)}
-                  />
-                  {fieldErr('nombre')}
-                </div>
-                <div className={s.field}>
-                  <label>Acreedor</label>
-                  <input
-                    type="text"
-                    placeholder="Ej: BBVA"
-                    value={form.acreedor}
-                    aria-invalid={err?.field === 'acreedor'}
-                    onChange={(e) => set('acreedor', e.target.value)}
-                  />
-                  {fieldErr('acreedor')}
-                </div>
-              </div>
-              <div className={s.row}>
-                <div className={s.field}>
-                  <label>Importe</label>
-                  <MoneyInput
-                    step="0.01"
-                    min="0"
-                    placeholder="0,00"
-                    value={form.importe}
-                    aria-invalid={err?.field === 'importe'}
-                    onChange={(e) => set('importe', e.target.value)}
-                  />
-                  {fieldErr('importe')}
-                </div>
-                <div className={s.field}>
-                  <label>Interés (%)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="Ej: 5"
-                    value={form.interesPct}
-                    onChange={(e) => set('interesPct', e.target.value)}
-                  />
-                </div>
-                <div className={s.field}>
-                  <label>Cantidad pagada</label>
-                  <MoneyInput
-                    step="0.01"
-                    min="0"
-                    placeholder="0,00"
-                    value={form.pagada}
-                    onChange={(e) => set('pagada', e.target.value)}
-                  />
-                </div>
-                <div className={s.field}>
-                  <label>Vencimiento</label>
-                  <input
-                    type="date"
-                    value={form.vencimiento}
-                    onChange={(e) => set('vencimiento', e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className={s.row}>
-                <div className={s.field}>
-                  <label>Cuota</label>
-                  <MoneyInput
-                    step="0.01"
-                    min="0"
-                    placeholder="0,00"
-                    value={form.cuota}
-                    onChange={(e) => set('cuota', e.target.value)}
-                  />
-                </div>
-                <div className={s.field}>
-                  <label>Frecuencia de la cuota</label>
-                  <Select
-                    value={form.frecuencia}
-                    options={[
-                      { value: 'MENSUAL', label: 'Mensual' },
-                      { value: 'ANUAL', label: 'Anual' },
-                    ]}
-                    onChange={(v) => set('frecuencia', v)}
-                    ariaLabel="Frecuencia de la cuota"
-                  />
-                </div>
-              </div>
-              <p className={s.hint}>
-                El total con intereses y lo pendiente se calculan solos a partir del
-                importe, el interés y lo pagado.
-              </p>
-              <button className={s.btn} type="submit" disabled={saving} style={{ marginTop: 4 }}>
-                {saving
-                  ? 'Guardando…'
-                  : mode === 'nueva'
-                    ? 'Añadir deuda'
-                    : 'Actualizar deuda'}
-              </button>
-            </>
-          )}
-
-          {mode === 'actualizar' && list.length === 0 && (
-            <p className={s.hint}>No tienes deudas que actualizar todavía.</p>
-          )}
+            <div className={s.field}>
+              <label>Acreedor</label>
+              <input
+                type="text"
+                placeholder="Ej: BBVA"
+                value={form.acreedor}
+                aria-invalid={err?.field === 'acreedor'}
+                onChange={(e) => set('acreedor', e.target.value)}
+              />
+              {fieldErr('acreedor')}
+            </div>
+          </div>
+          <div className={s.row}>
+            <div className={s.field}>
+              <label>Importe</label>
+              <MoneyInput
+                step="0.01"
+                min="0"
+                placeholder="0,00"
+                value={form.importe}
+                aria-invalid={err?.field === 'importe'}
+                onChange={(e) => set('importe', e.target.value)}
+              />
+              {fieldErr('importe')}
+            </div>
+            <div className={s.field}>
+              <label>Interés (%)</label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="Ej: 5"
+                value={form.interesPct}
+                onChange={(e) => set('interesPct', e.target.value)}
+              />
+            </div>
+          </div>
+          <div className={s.row}>
+            <div className={s.field}>
+              <label>Cantidad pagada</label>
+              <MoneyInput
+                step="0.01"
+                min="0"
+                placeholder="0,00"
+                value={form.pagada}
+                onChange={(e) => set('pagada', e.target.value)}
+              />
+            </div>
+            <div className={s.field}>
+              <label>Vencimiento</label>
+              <input
+                type="date"
+                value={form.vencimiento}
+                onChange={(e) => set('vencimiento', e.target.value)}
+              />
+            </div>
+          </div>
+          <div className={s.row}>
+            <div className={s.field}>
+              <label>Cuota</label>
+              <MoneyInput
+                step="0.01"
+                min="0"
+                placeholder="0,00"
+                value={form.cuota}
+                onChange={(e) => set('cuota', e.target.value)}
+              />
+            </div>
+            <div className={s.field}>
+              <label>Frecuencia de la cuota</label>
+              <Select
+                value={form.frecuencia}
+                options={[
+                  { value: 'MENSUAL', label: 'Mensual' },
+                  { value: 'ANUAL', label: 'Anual' },
+                ]}
+                onChange={(v) => set('frecuencia', v)}
+                ariaLabel="Frecuencia de la cuota"
+              />
+            </div>
+          </div>
+          <p className={s.hint}>
+            El total con intereses y lo pendiente se calculan solos a partir del
+            importe, el interés y lo pagado.
+          </p>
         </form>
-      </div>
+      </Modal>
     </div>
   )
 }

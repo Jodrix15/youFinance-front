@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type FormEvent } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
 import {
   useActualizarPresupuesto,
   useCategorias,
@@ -10,6 +10,8 @@ import {
   useRecurrentes,
 } from '@/hooks/useFinance'
 import { useConfirm } from '@/components/ui/ConfirmProvider'
+import Modal from '@/components/ui/Modal'
+import IconButton from '@/components/ui/IconButton'
 import Skeleton from '@/components/ui/Skeleton'
 import EmptyState from '@/components/ui/EmptyState'
 import Select from '@/components/ui/Select'
@@ -41,6 +43,9 @@ const PLANTILLAS: { value: string; label: string }[] = [
   { value: 'regla', label: 'Regla 50 / 30 / 20' },
   { value: 'basico', label: 'Básico (categorías comunes)' },
 ]
+
+/** Id del formulario del modal: permite que el botón de guardar viva en el footer. */
+const FORM_ID = 'form-presupuesto'
 
 const pad = (n: number) => String(n).padStart(2, '0')
 const num = (v: string) => (v.trim() === '' ? 0 : Number(v.replace(',', '.')))
@@ -198,24 +203,17 @@ function BudgetCard({
           </div>
         </div>
         <div className={s.headActions}>
-          <button
-            type="button"
-            className={s.iconBtn}
-            aria-label={`Editar presupuesto ${p.nombre}`}
-            title="Editar"
+          <IconButton
+            icon="edit"
+            label={`Editar presupuesto ${p.nombre}`}
             onClick={() => onEdit(p)}
-          >
-            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293z" /></svg>
-          </button>
-          <button
-            type="button"
-            className={`${s.iconBtn} ${s.iconDanger}`}
-            aria-label={`Eliminar presupuesto ${p.nombre}`}
-            title="Eliminar"
+          />
+          <IconButton
+            icon="delete"
+            label={`Eliminar presupuesto ${p.nombre}`}
+            danger
             onClick={() => onDelete(p)}
-          >
-            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" /><path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" /></svg>
-          </button>
+          />
         </div>
       </div>
 
@@ -336,7 +334,6 @@ export default function Presupuestos() {
   const actualizar = useActualizarPresupuesto()
   const eliminar = useEliminarPresupuesto()
   const confirm = useConfirm()
-  const formRef = useRef<HTMLFormElement>(null)
 
   const gfTotal = useMemo(
     () => calcularGastosFijos(rec.data, deu.data).total,
@@ -350,7 +347,8 @@ export default function Presupuestos() {
     [categorias.data],
   )
 
-  // ── Estado del formulario ──
+  // ── Estado del formulario (en modal) ──
+  const [formOpen, setFormOpen] = useState(false)
   const [editId, setEditId] = useState<number | null>(null)
   const [nombre, setNombre] = useState('')
   const [periodo, setPeriodo] = useState<PeriodoPresupuesto>('MENSUAL')
@@ -384,6 +382,16 @@ export default function Presupuestos() {
     setPlantilla('personalizado')
     setPartidas([])
     setErr(null)
+  }
+
+  function abrirNuevo() {
+    resetForm()
+    setFormOpen(true)
+  }
+
+  function cerrarForm() {
+    setFormOpen(false)
+    resetForm()
   }
 
   function aplicarPlantilla(value: string) {
@@ -426,7 +434,7 @@ export default function Presupuestos() {
       ),
     )
     setErr(null)
-    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    setFormOpen(true)
   }
 
   async function onDelete(p: PresupuestoResponse) {
@@ -439,7 +447,7 @@ export default function Presupuestos() {
     if (!ok) return
     try {
       await eliminar.mutateAsync(p.id)
-      if (editId === p.id) resetForm()
+      if (editId === p.id) cerrarForm()
       notifyOk('Presupuesto eliminado')
     } catch (e) {
       notifyError(e)
@@ -486,7 +494,7 @@ export default function Presupuestos() {
       if (editId) await actualizar.mutateAsync({ id: editId, ...body })
       else await crear.mutateAsync(body)
       notifyOk(editId ? 'Presupuesto actualizado' : 'Presupuesto creado')
-      resetForm()
+      cerrarForm()
     } catch (e) {
       notifyError(e)
     }
@@ -509,6 +517,18 @@ export default function Presupuestos() {
         </div>
       </div>
 
+      <div className="block-head">
+        <div className="sec-title">Mis presupuestos</div>
+        <button
+          type="button"
+          className={s.btn}
+          onClick={abrirNuevo}
+          disabled={crear.isPending || actualizar.isPending}
+        >
+          + Nuevo presupuesto
+        </button>
+      </div>
+
       {cargando ? (
         <div className={s.grid}>
           {Array.from({ length: 3 }).map((_, i) => (
@@ -522,9 +542,9 @@ export default function Presupuestos() {
         <p className={s.error}>{apiErrorMessage(presupuestos.error)}</p>
       ) : (presupuestos.data ?? []).length === 0 ? (
         <EmptyState
-          message="Aún no tienes presupuestos. Crea el primero con el formulario de abajo."
+          message="Aún no tienes presupuestos. Crea el primero para repartir tu dinero por partidas."
           actionLabel="Crear mi primer presupuesto"
-          onAction={() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          onAction={abrirNuevo}
         />
       ) : (
         <div className={s.grid}>
@@ -541,176 +561,190 @@ export default function Presupuestos() {
         </div>
       )}
 
-      <form ref={formRef} className={`card ${s.cardBlock}`} onSubmit={submit} noValidate style={{ marginTop: '1.25rem' }}>
-        <div className="sec-title">{editId ? 'Editar presupuesto' : 'Nuevo presupuesto'}</div>
-
-        <div className={s.row}>
-          <div className={s.field}>
-            <label>Nombre</label>
-            <input
-              type="text"
-              placeholder="Ej: Presupuesto de octubre"
-              value={nombre}
-              aria-invalid={!!err && !nombre.trim()}
-              onChange={(e) => { setNombre(e.target.value); setErr(null) }}
-            />
-          </div>
-          <div className={s.field}>
-            <label>Periodo</label>
-            <Select value={periodo} options={PERIODOS} onChange={setPeriodo} ariaLabel="Periodo" />
-          </div>
-          <div className={s.field}>
-            <label>Mes</label>
-            <Select
-              value={mes}
-              options={MESES.map((m, i) => ({ value: pad(i + 1), label: m }))}
-              onChange={setMes}
-              ariaLabel="Mes"
-            />
-          </div>
-          <div className={s.field}>
-            <label>Año</label>
-            <Select
-              value={anio}
-              options={ANIOS.map((y) => ({ value: y, label: y }))}
-              onChange={setAnio}
-              ariaLabel="Año"
-            />
-          </div>
-          {periodo === 'SEMANAL' && (
+      <Modal
+        open={formOpen}
+        onClose={cerrarForm}
+        maxWidth={720}
+        title={editId ? 'Editar presupuesto' : 'Nuevo presupuesto'}
+        footer={
+          <>
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={cerrarForm}
+              disabled={crear.isPending || actualizar.isPending}
+            >
+              Cancelar
+            </button>
+            <button
+              className={s.btn}
+              type="submit"
+              form={FORM_ID}
+              disabled={crear.isPending || actualizar.isPending}
+            >
+              {crear.isPending || actualizar.isPending
+                ? 'Guardando…'
+                : editId
+                  ? 'Guardar cambios'
+                  : 'Crear presupuesto'}
+            </button>
+          </>
+        }
+      >
+        <form id={FORM_ID} onSubmit={submit} noValidate>
+          <div className={s.row}>
             <div className={s.field}>
-              <label>Semana del mes</label>
-              <Select
-                value={semana}
-                options={Array.from({ length: semanas }, (_, i) => ({
-                  value: String(i + 1),
-                  label: `Semana ${i + 1} (días ${rangoSemana(i + 1, anioN, mesN)})`,
-                }))}
-                onChange={setSemana}
-                ariaLabel="Semana del mes"
+              <label>Nombre</label>
+              <input
+                type="text"
+                placeholder="Ej: Presupuesto de octubre"
+                value={nombre}
+                aria-invalid={!!err && !nombre.trim()}
+                onChange={(e) => { setNombre(e.target.value); setErr(null) }}
               />
             </div>
-          )}
-        </div>
-
-        <div className={s.row}>
-          <div className={s.field}>
-            <label>Cantidad a presupuestar</label>
-            <MoneyInput
-              step="0.01"
-              min="0"
-              placeholder="0,00"
-              value={base}
-              onChange={(e) => { setBase(e.target.value); setErr(null) }}
-            />
-          </div>
-          <div className={s.field}>
-            <label>Plantilla típica</label>
-            <Select value={plantilla} options={PLANTILLAS} onChange={aplicarPlantilla} ariaLabel="Plantilla" />
-          </div>
-          <div className={s.field} style={{ display: 'flex', alignItems: 'flex-end' }}>
-            <label className={s.check}>
-              <input
-                type="checkbox"
-                checked={descontar}
-                onChange={(e) => setDescontar(e.target.checked)}
-              />
-              Descontar gastos fijos {periodo === 'SEMANAL' ? '(parte semanal)' : 'del mes'}
-            </label>
-          </div>
-        </div>
-
-        <div className={s.partidaEditor}>
-          {partidas.map((p) => (
-            <div key={p.key} className={s.partidaEditRow}>
+            <div className={s.field}>
+              <label>Periodo</label>
+              <Select value={periodo} options={PERIODOS} onChange={setPeriodo} ariaLabel="Periodo" />
+            </div>
+            <div className={s.field}>
+              <label>Mes</label>
               <Select
-                value={p.tipo}
-                options={[
-                  { value: 'categoria', label: 'Categoría' },
-                  { value: 'libre', label: 'Línea libre' },
-                ]}
-                onChange={(v) => updatePartida(p.key, { tipo: v as 'categoria' | 'libre' })}
-                ariaLabel="Tipo de partida"
+                value={mes}
+                options={MESES.map((m, i) => ({ value: pad(i + 1), label: m }))}
+                onChange={setMes}
+                ariaLabel="Mes"
               />
-              {p.tipo === 'categoria' ? (
+            </div>
+            <div className={s.field}>
+              <label>Año</label>
+              <Select
+                value={anio}
+                options={ANIOS.map((y) => ({ value: y, label: y }))}
+                onChange={setAnio}
+                ariaLabel="Año"
+              />
+            </div>
+            {periodo === 'SEMANAL' && (
+              <div className={s.field}>
+                <label>Semana del mes</label>
                 <Select
-                  value={p.categoriaId}
-                  options={catOptions}
-                  placeholder={catOptions.length ? 'Selecciona categoría' : 'Sin categorías de gasto'}
-                  onChange={(v) => updatePartida(p.key, { categoriaId: v })}
-                  ariaLabel="Categoría de la partida"
+                  value={semana}
+                  options={Array.from({ length: semanas }, (_, i) => ({
+                    value: String(i + 1),
+                    label: `Semana ${i + 1} (días ${rangoSemana(i + 1, anioN, mesN)})`,
+                  }))}
+                  onChange={setSemana}
+                  ariaLabel="Semana del mes"
                 />
-              ) : (
-                <div className={s.field}>
-                  <input
-                    type="text"
-                    placeholder="Nombre de la partida"
-                    value={p.nombre}
-                    onChange={(e) => updatePartida(p.key, { nombre: e.target.value })}
-                  />
-                </div>
-              )}
+              </div>
+            )}
+          </div>
+
+          <div className={s.row}>
+            <div className={s.field}>
+              <label>Cantidad a presupuestar</label>
               <MoneyInput
                 step="0.01"
                 min="0"
                 placeholder="0,00"
-                value={p.importe}
-                onChange={(e) => updatePartida(p.key, { importe: e.target.value })}
+                value={base}
+                onChange={(e) => { setBase(e.target.value); setErr(null) }}
               />
+            </div>
+            <div className={s.field}>
+              <label>Plantilla típica</label>
+              <Select value={plantilla} options={PLANTILLAS} onChange={aplicarPlantilla} ariaLabel="Plantilla" />
+            </div>
+            <div className={s.field} style={{ display: 'flex', alignItems: 'flex-end' }}>
+              <label className={s.check}>
+                <input
+                  type="checkbox"
+                  checked={descontar}
+                  onChange={(e) => setDescontar(e.target.checked)}
+                />
+                Descontar gastos fijos {periodo === 'SEMANAL' ? '(parte semanal)' : 'del mes'}
+              </label>
+            </div>
+          </div>
+
+          <div className={s.partidaEditor}>
+            {partidas.map((p) => (
+              <div key={p.key} className={s.partidaEditRow}>
+                <Select
+                  value={p.tipo}
+                  options={[
+                    { value: 'categoria', label: 'Categoría' },
+                    { value: 'libre', label: 'Línea libre' },
+                  ]}
+                  onChange={(v) => updatePartida(p.key, { tipo: v as 'categoria' | 'libre' })}
+                  ariaLabel="Tipo de partida"
+                />
+                {p.tipo === 'categoria' ? (
+                  <Select
+                    value={p.categoriaId}
+                    options={catOptions}
+                    placeholder={catOptions.length ? 'Selecciona categoría' : 'Sin categorías de gasto'}
+                    onChange={(v) => updatePartida(p.key, { categoriaId: v })}
+                    ariaLabel="Categoría de la partida"
+                  />
+                ) : (
+                  <div className={s.field}>
+                    <input
+                      type="text"
+                      placeholder="Nombre de la partida"
+                      value={p.nombre}
+                      onChange={(e) => updatePartida(p.key, { nombre: e.target.value })}
+                    />
+                  </div>
+                )}
+                <MoneyInput
+                  step="0.01"
+                  min="0"
+                  placeholder="0,00"
+                  value={p.importe}
+                  onChange={(e) => updatePartida(p.key, { importe: e.target.value })}
+                />
+                <button
+                  type="button"
+                  className={s.removeBtn}
+                  aria-label="Quitar partida"
+                  title="Quitar"
+                  onClick={() => setPartidas((prev) => prev.filter((x) => x.key !== p.key))}
+                >
+                  <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z" /></svg>
+                </button>
+              </div>
+            ))}
+            <div className={s.addRow}>
               <button
                 type="button"
-                className={s.removeBtn}
-                aria-label="Quitar partida"
-                title="Quitar"
-                onClick={() => setPartidas((prev) => prev.filter((x) => x.key !== p.key))}
+                className={s.btnGhost}
+                onClick={() => setPartidas((prev) => [...prev, nuevaFila('categoria')])}
               >
-                <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z" /></svg>
+                + Partida por categoría
+              </button>
+              <button
+                type="button"
+                className={s.btnGhost}
+                onClick={() => setPartidas((prev) => [...prev, nuevaFila('libre')])}
+              >
+                + Línea libre
               </button>
             </div>
-          ))}
-          <div className={s.addRow}>
-            <button
-              type="button"
-              className={s.btnGhost}
-              onClick={() => setPartidas((prev) => [...prev, nuevaFila('categoria')])}
-            >
-              + Partida por categoría
-            </button>
-            <button
-              type="button"
-              className={s.btnGhost}
-              onClick={() => setPartidas((prev) => [...prev, nuevaFila('libre')])}
-            >
-              + Línea libre
-            </button>
           </div>
-        </div>
 
-        <div className={s.summaryBar}>
-          <span>Disponible: <b>{formatEur(disponibleForm, true)}</b></span>
-          <span>Asignado: <b>{formatEur(asignado, true)}</b></span>
-          <span className={sinAsignar < 0 ? s.neg : ''}>
-            Sin asignar: <b>{formatEur(sinAsignar, true)}</b>
-          </span>
-        </div>
+          <div className={s.summaryBar}>
+            <span>Disponible: <b>{formatEur(disponibleForm, true)}</b></span>
+            <span>Asignado: <b>{formatEur(asignado, true)}</b></span>
+            <span className={sinAsignar < 0 ? s.neg : ''}>
+              Sin asignar: <b>{formatEur(sinAsignar, true)}</b>
+            </span>
+          </div>
 
-        {err && <div className={s.error}>{err}</div>}
-
-        <div className={s.formActions}>
-          <button className={s.btn} type="submit" disabled={crear.isPending || actualizar.isPending}>
-            {crear.isPending || actualizar.isPending
-              ? 'Guardando…'
-              : editId
-                ? 'Guardar cambios'
-                : 'Crear presupuesto'}
-          </button>
-          {editId && (
-            <button type="button" className={s.btnCancel} onClick={resetForm}>
-              Cancelar
-            </button>
-          )}
-        </div>
-      </form>
+          {err && <div className={s.error}>{err}</div>}
+        </form>
+      </Modal>
     </div>
   )
 }

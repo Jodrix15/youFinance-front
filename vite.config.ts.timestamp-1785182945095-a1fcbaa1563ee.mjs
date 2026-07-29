@@ -1,0 +1,32 @@
+// vite.config.ts
+import { defineConfig } from "file:///sessions/gracious-modest-mayer/mnt/YouFinance/youFinance-front/node_modules/vite/dist/node/index.js";
+import react from "file:///sessions/gracious-modest-mayer/mnt/YouFinance/youFinance-front/node_modules/@vitejs/plugin-react/dist/index.js";
+import path from "node:path";
+var __vite_injected_original_dirname = "/sessions/gracious-modest-mayer/mnt/YouFinance/youFinance-front";
+var vite_config_default = defineConfig({
+  plugins: [react()],
+  // react-grid-layout / react-draggable acceden a `process.env.*` en el navegador.
+  // Vite no define `process`, así que lo mapeamos a un objeto vacío para evitar
+  // "ReferenceError: process is not defined" al iniciar drag/resize.
+  define: {
+    "process.env": {}
+  },
+  resolve: {
+    alias: {
+      "@": path.resolve(__vite_injected_original_dirname, "./src")
+    }
+  },
+  server: {
+    port: 5173,
+    proxy: {
+      "/api": {
+        target: process.env.VITE_API_TARGET ?? "http://localhost:8080",
+        changeOrigin: true
+      }
+    }
+  }
+});
+export {
+  vite_config_default as default
+};
+//# sourceMappingURL=data:application/json;base64,ewogICJ2ZXJzaW9uIjogMywKICAic291cmNlcyI6IFsidml0ZS5jb25maWcudHMiXSwKICAic291cmNlc0NvbnRlbnQiOiBbImNvbnN0IF9fdml0ZV9pbmplY3RlZF9vcmlnaW5hbF9kaXJuYW1lID0gXCIvc2Vzc2lvbnMvZ3JhY2lvdXMtbW9kZXN0LW1heWVyL21udC9Zb3VGaW5hbmNlL3lvdUZpbmFuY2UtZnJvbnRcIjtjb25zdCBfX3ZpdGVfaW5qZWN0ZWRfb3JpZ2luYWxfZmlsZW5hbWUgPSBcIi9zZXNzaW9ucy9ncmFjaW91cy1tb2Rlc3QtbWF5ZXIvbW50L1lvdUZpbmFuY2UveW91RmluYW5jZS1mcm9udC92aXRlLmNvbmZpZy50c1wiO2NvbnN0IF9fdml0ZV9pbmplY3RlZF9vcmlnaW5hbF9pbXBvcnRfbWV0YV91cmwgPSBcImZpbGU6Ly8vc2Vzc2lvbnMvZ3JhY2lvdXMtbW9kZXN0LW1heWVyL21udC9Zb3VGaW5hbmNlL3lvdUZpbmFuY2UtZnJvbnQvdml0ZS5jb25maWcudHNcIjtpbXBvcnQgeyBkZWZpbmVDb25maWcgfSBmcm9tICd2aXRlJ1xuaW1wb3J0IHJlYWN0IGZyb20gJ0B2aXRlanMvcGx1Z2luLXJlYWN0J1xuaW1wb3J0IHBhdGggZnJvbSAnbm9kZTpwYXRoJ1xuXG4vLyBFbCBiYWNrZW5kIFNwcmluZyAoaHR0cDovL2xvY2FsaG9zdDo4MDgwKSB5YSB0aWVuZSBDT1JTIGNvbmZpZ3VyYWRvIGVuXG4vLyBTZWN1cml0eUNvbmZpZyAob3JcdTAwRURnZW5lcyBwb3IgYGNvcnMuYWxsb3dlZC1vcmlnaW5zYCkuIEF1biBhc1x1MDBFRCwgZW4gZGVzYXJyb2xsb1xuLy8gcHJveGVhbW9zIC9hcGkgaGFjaWEgZWwgYmFja2VuZCBwYXJhIHRyYWJhamFyIGVuIGVsIG1pc21vIG9yaWdlbjogYXNcdTAwRUQgbGFcbi8vIGNvb2tpZSBkZSBzZXNpXHUwMEYzbiAoU2FtZVNpdGU9TGF4KSB5IGVsIENTUkYgZnVuY2lvbmFuIHNpbiBhanVzdGVzIGNyb3NzLXNpdGUuXG5leHBvcnQgZGVmYXVsdCBkZWZpbmVDb25maWcoe1xuICBwbHVnaW5zOiBbcmVhY3QoKV0sXG4gIC8vIHJlYWN0LWdyaWQtbGF5b3V0IC8gcmVhY3QtZHJhZ2dhYmxlIGFjY2VkZW4gYSBgcHJvY2Vzcy5lbnYuKmAgZW4gZWwgbmF2ZWdhZG9yLlxuICAvLyBWaXRlIG5vIGRlZmluZSBgcHJvY2Vzc2AsIGFzXHUwMEVEIHF1ZSBsbyBtYXBlYW1vcyBhIHVuIG9iamV0byB2YWNcdTAwRURvIHBhcmEgZXZpdGFyXG4gIC8vIFwiUmVmZXJlbmNlRXJyb3I6IHByb2Nlc3MgaXMgbm90IGRlZmluZWRcIiBhbCBpbmljaWFyIGRyYWcvcmVzaXplLlxuICBkZWZpbmU6IHtcbiAgICAncHJvY2Vzcy5lbnYnOiB7fSxcbiAgfSxcbiAgcmVzb2x2ZToge1xuICAgIGFsaWFzOiB7XG4gICAgICAnQCc6IHBhdGgucmVzb2x2ZShfX2Rpcm5hbWUsICcuL3NyYycpLFxuICAgIH0sXG4gIH0sXG4gIHNlcnZlcjoge1xuICAgIHBvcnQ6IDUxNzMsXG4gICAgcHJveHk6IHtcbiAgICAgICcvYXBpJzoge1xuICAgICAgICB0YXJnZXQ6IHByb2Nlc3MuZW52LlZJVEVfQVBJX1RBUkdFVCA/PyAnaHR0cDovL2xvY2FsaG9zdDo4MDgwJyxcbiAgICAgICAgY2hhbmdlT3JpZ2luOiB0cnVlLFxuICAgICAgfSxcbiAgICB9LFxuICB9LFxufSlcbiJdLAogICJtYXBwaW5ncyI6ICI7QUFBK1csU0FBUyxvQkFBb0I7QUFDNVksT0FBTyxXQUFXO0FBQ2xCLE9BQU8sVUFBVTtBQUZqQixJQUFNLG1DQUFtQztBQVF6QyxJQUFPLHNCQUFRLGFBQWE7QUFBQSxFQUMxQixTQUFTLENBQUMsTUFBTSxDQUFDO0FBQUE7QUFBQTtBQUFBO0FBQUEsRUFJakIsUUFBUTtBQUFBLElBQ04sZUFBZSxDQUFDO0FBQUEsRUFDbEI7QUFBQSxFQUNBLFNBQVM7QUFBQSxJQUNQLE9BQU87QUFBQSxNQUNMLEtBQUssS0FBSyxRQUFRLGtDQUFXLE9BQU87QUFBQSxJQUN0QztBQUFBLEVBQ0Y7QUFBQSxFQUNBLFFBQVE7QUFBQSxJQUNOLE1BQU07QUFBQSxJQUNOLE9BQU87QUFBQSxNQUNMLFFBQVE7QUFBQSxRQUNOLFFBQVEsUUFBUSxJQUFJLG1CQUFtQjtBQUFBLFFBQ3ZDLGNBQWM7QUFBQSxNQUNoQjtBQUFBLElBQ0Y7QUFBQSxFQUNGO0FBQ0YsQ0FBQzsiLAogICJuYW1lcyI6IFtdCn0K

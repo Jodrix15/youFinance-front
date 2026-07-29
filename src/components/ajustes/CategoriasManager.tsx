@@ -6,12 +6,17 @@ import {
   useEliminarCategoria,
 } from '@/hooks/useFinance'
 import { useConfirm } from '@/components/ui/ConfirmProvider'
+import Modal from '@/components/ui/Modal'
+import IconButton from '@/components/ui/IconButton'
 import { notifyOk, notifyError } from '@/lib/notify'
 import { apiErrorMessage } from '@/lib/api'
 import Skeleton from '@/components/ui/Skeleton'
 import Select from '@/components/ui/Select'
 import type { CategoriaResponse, OrigenIngreso, TipoMovimiento } from '@/types/api'
 import s from './CategoriasManager.module.css'
+
+/** Id del formulario del modal: permite que el botón de guardar viva en el footer. */
+const FORM_ID = 'form-categoria'
 
 const TIPOS: { value: TipoMovimiento; label: string }[] = [
   { value: 'GASTO', label: 'Gasto' },
@@ -66,15 +71,12 @@ export default function CategoriasManager() {
   const eliminar = useEliminarCategoria()
   const confirm = useConfirm()
 
-  // Alta
+  // Alta y edición comparten el mismo modal. editCat null = alta.
+  const [formOpen, setFormOpen] = useState(false)
+  const [editCat, setEditCat] = useState<CategoriaResponse | null>(null)
   const [nombre, setNombre] = useState('')
   const [tipo, setTipo] = useState<TipoMovimiento>('GASTO')
   const [origen, setOrigen] = useState<OrigenIngreso>('ACTIVO')
-
-  // Edición inline (nombre y, en ingresos, familia; el tipo se conserva)
-  const [editId, setEditId] = useState<number | null>(null)
-  const [editNombre, setEditNombre] = useState('')
-  const [editOrigen, setEditOrigen] = useState<OrigenIngreso>('ACTIVO')
 
   const porTipo = useMemo(() => {
     const map: Record<TipoMovimiento, CategoriaResponse[]> = {
@@ -86,41 +88,43 @@ export default function CategoriasManager() {
     return map
   }, [categorias])
 
-  async function onCrear(e: FormEvent) {
+  function abrirNueva() {
+    setEditCat(null)
+    setNombre('')
+    setTipo('GASTO')
+    setOrigen('ACTIVO')
+    setFormOpen(true)
+  }
+
+  function abrirEditar(c: CategoriaResponse) {
+    setEditCat(c)
+    setNombre(c.nombre)
+    // El tipo de una categoría no se cambia desde aquí: se conserva el suyo.
+    setTipo(c.tipo)
+    setOrigen(c.origenIngreso ?? 'ACTIVO')
+    setFormOpen(true)
+  }
+
+  function cerrarForm() {
+    setFormOpen(false)
+    setEditCat(null)
+    setNombre('')
+  }
+
+  async function submit(e: FormEvent) {
     e.preventDefault()
     const n = nombre.trim()
     if (!n) return
+    const origenIngreso = tipo === 'INGRESO' ? origen : undefined
     try {
-      await crear.mutateAsync({
-        nombre: n,
-        tipo,
-        origenIngreso: tipo === 'INGRESO' ? origen : undefined,
-      })
-      setNombre('')
-      notifyOk('Categoría creada')
-    } catch (err) {
-      notifyError(err)
-    }
-  }
-
-  function startEdit(c: CategoriaResponse) {
-    setEditId(c.id)
-    setEditNombre(c.nombre)
-    setEditOrigen(c.origenIngreso ?? 'ACTIVO')
-  }
-
-  async function saveEdit(c: CategoriaResponse) {
-    const n = editNombre.trim()
-    if (!n) return
-    try {
-      await actualizar.mutateAsync({
-        id: c.id,
-        nombre: n,
-        tipo: c.tipo,
-        origenIngreso: c.tipo === 'INGRESO' ? editOrigen : undefined,
-      })
-      setEditId(null)
-      notifyOk('Categoría actualizada')
+      if (editCat) {
+        await actualizar.mutateAsync({ id: editCat.id, nombre: n, tipo: editCat.tipo, origenIngreso })
+        notifyOk('Categoría actualizada')
+      } else {
+        await crear.mutateAsync({ nombre: n, tipo, origenIngreso })
+        notifyOk('Categoría creada')
+      }
+      cerrarForm()
     } catch (err) {
       notifyError(err)
     }
@@ -137,6 +141,7 @@ export default function CategoriasManager() {
     try {
       await eliminar.mutateAsync(c.id)
       notifyOk('Categoría eliminada')
+      if (editCat?.id === c.id) cerrarForm()
     } catch (err) {
       notifyError(err)
     }
@@ -144,39 +149,14 @@ export default function CategoriasManager() {
 
   return (
     <section className={s.card}>
-      <h2 className={s.cardTitle}>Gestión de categorías</h2>
-
-      {/* Alta */}
-      <form className={s.crear} onSubmit={onCrear}>
-        <input
-          className={s.input}
-          type="text"
-          placeholder="Nueva categoría…"
-          value={nombre}
-          maxLength={40}
-          onChange={(e) => setNombre(e.target.value)}
-        />
-        <div className={s.selectWrap}>
-          <Select value={tipo} options={TIPOS} onChange={setTipo} ariaLabel="Tipo" />
-        </div>
-        {tipo === 'INGRESO' && (
-          <div className={s.selectWrap}>
-            <Select
-              value={origen}
-              options={FAMILIAS}
-              onChange={setOrigen}
-              ariaLabel="Familia del ingreso"
-            />
-          </div>
-        )}
-        <button
-          className={s.btn}
-          type="submit"
-          disabled={crear.isPending || !nombre.trim()}
-        >
-          Añadir
+      <div className="block-head">
+        <h2 className={s.cardTitle} style={{ marginBottom: 0 }}>
+          Gestión de categorías
+        </h2>
+        <button type="button" className={s.btn} onClick={abrirNueva} disabled={crear.isPending}>
+          + Añadir categoría
         </button>
-      </form>
+      </div>
 
       {isLoading ? (
         <Skeleton width="100%" height={160} style={{ borderRadius: 12 }} />
@@ -196,53 +176,7 @@ export default function CategoriasManager() {
                 <div className={s.vacio}>Sin categorías</div>
               ) : (
                 <ul className={s.lista}>
-                  {porTipo[g.tipo].map((c) =>
-                    editId === c.id ? (
-                      <li key={c.id} className={s.row}>
-                        <input
-                          className={s.rowInput}
-                          value={editNombre}
-                          maxLength={40}
-                          autoFocus
-                          onChange={(e) => setEditNombre(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') saveEdit(c)
-                            if (e.key === 'Escape') setEditId(null)
-                          }}
-                        />
-                        {c.tipo === 'INGRESO' && (
-                          <div className={s.selectWrap}>
-                            <Select
-                              value={editOrigen}
-                              options={FAMILIAS}
-                              onChange={setEditOrigen}
-                              ariaLabel="Familia del ingreso"
-                            />
-                          </div>
-                        )}
-                        <button
-                          className={`${s.iconBtn} ${s.iconOk}`}
-                          title="Guardar"
-                          aria-label="Guardar"
-                          onClick={() => saveEdit(c)}
-                          disabled={actualizar.isPending || !editNombre.trim()}
-                        >
-                          <svg viewBox="0 0 16 16" aria-hidden="true">
-                            <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z" />
-                          </svg>
-                        </button>
-                        <button
-                          className={s.iconBtn}
-                          title="Cancelar"
-                          aria-label="Cancelar"
-                          onClick={() => setEditId(null)}
-                        >
-                          <svg viewBox="0 0 16 16" aria-hidden="true">
-                            <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z" />
-                          </svg>
-                        </button>
-                      </li>
-                    ) : (
+                  {porTipo[g.tipo].map((c) => (
                       <li key={c.id} className={s.row}>
                         <span className={s.rowName}>{c.nombre}</span>
                         {c.tipo === 'INGRESO' &&
@@ -262,36 +196,92 @@ export default function CategoriasManager() {
                               Sin clasificar
                             </span>
                           ))}
-                        <button
-                          className={s.iconBtn}
-                          title="Editar"
-                          aria-label="Editar"
-                          onClick={() => startEdit(c)}
-                        >
-                          <svg viewBox="0 0 16 16" aria-hidden="true">
-                            <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293z" />
-                          </svg>
-                        </button>
-                        <button
-                          className={`${s.iconBtn} ${s.iconDanger}`}
-                          title="Eliminar"
-                          aria-label="Eliminar"
+                        <IconButton
+                          icon="edit"
+                          label={`Editar ${c.nombre}`}
+                          onClick={() => abrirEditar(c)}
+                        />
+                        <IconButton
+                          icon="delete"
+                          label={`Eliminar ${c.nombre}`}
+                          danger
                           onClick={() => onEliminar(c)}
-                        >
-                          <svg viewBox="0 0 16 16" aria-hidden="true">
-                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
-                            <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
-                          </svg>
-                        </button>
+                        />
                       </li>
-                    ),
-                  )}
+                  ))}
                 </ul>
               )}
             </div>
           ))}
         </div>
       )}
+
+      <Modal
+        open={formOpen}
+        onClose={cerrarForm}
+        maxWidth={440}
+        title={editCat ? 'Editar categoría' : 'Nueva categoría'}
+        footer={
+          <>
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={cerrarForm}
+              disabled={crear.isPending || actualizar.isPending}
+            >
+              Cancelar
+            </button>
+            <button
+              className={s.btn}
+              type="submit"
+              form={FORM_ID}
+              disabled={crear.isPending || actualizar.isPending || !nombre.trim()}
+            >
+              {crear.isPending || actualizar.isPending
+                ? 'Guardando…'
+                : editCat
+                  ? 'Guardar cambios'
+                  : 'Añadir categoría'}
+            </button>
+          </>
+        }
+      >
+        <form id={FORM_ID} onSubmit={submit}>
+          <div className={s.modalField}>
+            <label>Nombre</label>
+            <input
+              className={s.input}
+              type="text"
+              placeholder="Ej: Alimentación"
+              value={nombre}
+              maxLength={40}
+              onChange={(e) => setNombre(e.target.value)}
+            />
+          </div>
+          <div className={s.modalField}>
+            <label>Tipo</label>
+            {editCat ? (
+              // El tipo no se puede cambiar: condicionaría el signo de los importes.
+              <div className={s.readonly}>
+                {TIPOS.find((t) => t.value === editCat.tipo)?.label ?? editCat.tipo}
+              </div>
+            ) : (
+              <Select value={tipo} options={TIPOS} onChange={setTipo} ariaLabel="Tipo" />
+            )}
+          </div>
+          {tipo === 'INGRESO' && (
+            <div className={s.modalField}>
+              <label>Familia del ingreso</label>
+              <Select
+                value={origen}
+                options={FAMILIAS}
+                onChange={setOrigen}
+                ariaLabel="Familia del ingreso"
+              />
+            </div>
+          )}
+        </form>
+      </Modal>
     </section>
   )
 }

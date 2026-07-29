@@ -42,16 +42,6 @@
 }
 .badgeWeek { background: rgba(210, 153, 34, 0.18); color: var(--amber); }
 .headActions { margin-left: auto; display: flex; gap: 6px; }
-.iconBtn {
-  width: 30px; height: 30px;
-  display: flex; align-items: center; justify-content: center;
-  background: transparent; border: 1px solid var(--border2);
-  border-radius: var(--r-md); color: var(--tx2); cursor: pointer;
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
-}
-.iconBtn svg { width: 15px; height: 15px; fill: currentColor; }
-.iconBtn:hover { color: var(--tx1); border-color: var(--accent); }
-.iconDanger:hover { color: #fff; background: var(--down); border-color: var(--down); }
 
 /* Resumen de disponible */
 .figures { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }

@@ -55,17 +55,20 @@ export default function AppShell() {
   // Evalúa logros al entrar y avisa con un toast de los recién desbloqueados.
   const { data: logros } = useLogros()
   useEffect(() => {
-    ;(logros ?? [])
-      .filter((l) => l.nuevo)
-      .forEach((l) =>
-        notifyOk(
-          t('logros.unlockedToast', {
-            icon: l.icono,
-            name: t(`logros.items.${l.codigo}.nombre`, l.nombre),
-          }),
-        ),
-      )
-  }, [logros, t])
+    const nuevos = (logros ?? []).filter((l) => l.nuevo)
+    nuevos.forEach((l) =>
+      notifyOk(
+        t('logros.unlockedToast', {
+          icon: l.icono,
+          name: t(`logros.items.${l.codigo}.nombre`, l.nombre),
+        }),
+      ),
+    )
+    // Al desbloquear un logro cambia la XP; refresca el rango de la barra lateral.
+    if (nuevos.length > 0) {
+      queryClient.invalidateQueries({ queryKey: ['rango'] })
+    }
+  }, [logros, t, queryClient])
 
   // Precargamos los datos de las secciones al entrar en la zona autenticada.
   // Así, al navegar entre secciones, ya están en caché y se pinta el contenido
@@ -86,6 +89,7 @@ export default function AppShell() {
       { queryKey: ['categorias'], queryFn: financeApi.categorias },
       { queryKey: ['movimientos'], queryFn: financeApi.movimientos },
       { queryKey: ['patrimonioHistorico'], queryFn: financeApi.patrimonioHistorico },
+      { queryKey: ['rango'], queryFn: financeApi.rango },
       // Resúmenes / KPIs
       { queryKey: ['deudaResumen'], queryFn: financeApi.deudaResumen },
       { queryKey: ['inversionResumen'], queryFn: financeApi.inversionResumen },

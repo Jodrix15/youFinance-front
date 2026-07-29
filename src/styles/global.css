@@ -77,6 +77,121 @@ textarea:focus-visible {
   margin-bottom: 12px;
 }
 
+/* Cabecera de bloque: título a la izquierda, acción de alta a la derecha.
+   Los formularios de alta/edición viven en un modal, no en la página. */
+.block-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.block-head .sec-title {
+  margin-bottom: 0;
+}
+
+/* Botón de acción compacto (solo icono) — ver components/ui/IconButton.tsx. */
+.icon-btn {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--r-sm);
+  color: var(--tx2);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.icon-btn svg {
+  width: 15px;
+  height: 15px;
+  fill: currentColor;
+}
+.icon-btn:hover {
+  background: var(--bg3);
+  color: var(--tx1);
+}
+.icon-btn-danger:hover {
+  background: var(--bg3);
+  color: var(--down);
+}
+.icon-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* Fila de acciones al pie de una tarjeta de lista (Editar / Eliminar). */
+.card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.card-actions > button {
+  flex: 1;
+  margin-top: 0;
+}
+.btn-card {
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  background: transparent;
+  color: var(--tx2);
+  border: 1px solid var(--border2);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-card:hover {
+  background: var(--bg3);
+  color: var(--tx1);
+}
+.btn-card:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.btn-card-danger {
+  color: var(--down);
+  border-color: var(--down);
+}
+.btn-card-danger:hover {
+  background: var(--down);
+  color: #fff;
+}
+
+/* Acción secundaria del footer de los modales (Cancelar). */
+.btn-ghost {
+  padding: 9px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  background: transparent;
+  color: var(--tx2);
+  border: 1px solid var(--border2);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-ghost:hover {
+  background: var(--bg2);
+  color: var(--tx1);
+}
+.btn-ghost:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.btn-ghost-danger {
+  color: var(--down);
+  border-color: var(--down);
+}
+.btn-ghost-danger:hover {
+  background: var(--down);
+  color: #fff;
+}
+
 .tbl {
   width: 100%;
   border-collapse: collapse;

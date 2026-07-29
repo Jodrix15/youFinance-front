@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/context/AuthContext'
 import { useTheme } from '@/context/ThemeContext'
+import { useRango } from '@/hooks/useFinance'
 import { LogoIcon } from '@/components/ui/LogoIcon'
 import FeedbackModal from '@/components/ui/FeedbackModal'
 import s from './Topbar.module.css'
@@ -101,6 +102,7 @@ export default function Topbar() {
   const { user, logout } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const { t } = useTranslation()
+  const { data: rango, isError: rangoError } = useRango()
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [navOpen, setNavOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(() => {
@@ -165,7 +167,7 @@ export default function Topbar() {
         <div className={s.head}>{brand}</div>
 
         <button
-          className={s.toggle}
+          className={s.collapseFloat}
           onClick={toggleCollapsed}
           aria-label={collapsed ? 'Expandir menú' : 'Plegar menú'}
           title={collapsed ? 'Expandir menú' : 'Plegar menú'}
@@ -177,12 +179,10 @@ export default function Topbar() {
               <path d="M10 3.5 5.5 8 10 12.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             )}
           </svg>
-          <span className={s.toggleLabel}>Plegar menú</span>
         </button>
 
-        <nav className={s.nav}>{navLinks()}</nav>
-
-        <div className={s.footer}>
+        <div className={s.scrollArea}>
+          <nav className={s.nav}>{navLinks()}</nav>
           <div className={s.footerNav}>
             <NavLink
               to="/ajustes"
@@ -230,8 +230,9 @@ export default function Topbar() {
               <span className={s.navLabel}>{themeLabel}</span>
             </button>
           </div>
+        </div>
 
-          <div className={s.userRow} title={collapsed ? user?.username ?? '' : undefined}>
+        <div className={s.userRow} title={collapsed ? user?.username ?? '' : undefined}>
             <span className={s.avatar}>
               {user?.fotoPerfil ? (
                 <img className={s.avatarImg} src={user.fotoPerfil} alt="" />
@@ -241,7 +242,33 @@ export default function Topbar() {
             </span>
             <span className={s.avatarInfo}>
               <span className={s.avatarName}>{user?.username}</span>
-              <span className={s.avatarRole}>{user?.role}</span>
+              {rango ? (
+                <>
+                  <span className={s.avatarRole}>
+                    <span className={s.rangoNivel}>Nv {rango.nivel}</span>
+                    {rango.nombre}
+                  </span>
+                  <span
+                    className={s.xpBar}
+                    title={
+                      rango.xpSiguiente != null
+                        ? `${rango.experienciaTotal} XP · faltan ${
+                            rango.xpSiguiente - rango.experienciaTotal
+                          } XP para el siguiente rango`
+                        : `${rango.experienciaTotal} XP · rango máximo`
+                    }
+                  >
+                    <span className={s.xpFill} style={{ width: `${rango.progreso}%` }} />
+                  </span>
+                </>
+              ) : rangoError ? (
+                <span className={s.avatarRole}>{user?.role}</span>
+              ) : (
+                <>
+                  <span className={s.avatarRole}>&nbsp;</span>
+                  <span className={s.xpBar} />
+                </>
+              )}
             </span>
             <button className={s.logoutBtn} onClick={logout} aria-label={t('menu.logout')} title={t('menu.logout')}>
               <svg viewBox="0 0 16 16" aria-hidden="true">
@@ -249,7 +276,6 @@ export default function Topbar() {
               </svg>
             </button>
           </div>
-        </div>
       </aside>
 
       <div className={s.mobileTopbar}>

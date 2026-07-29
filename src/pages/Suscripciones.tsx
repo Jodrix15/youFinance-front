@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type FormEvent } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
 import { Line } from 'react-chartjs-2'
 import {
   useActualizarRecurrente,
@@ -29,7 +29,8 @@ import s from './Suscripciones.module.css'
 const num = (v: string) => (v.trim() === '' ? NaN : Number(v.replace(',', '.')))
 const today = () => new Date().toISOString().slice(0, 10)
 
-type Mode = 'nueva' | 'actualizar'
+/** Id del formulario del modal: permite que el botón de guardar viva en el footer. */
+const FORM_ID = 'form-suscripcion'
 
 const EMPTY = {
   nombre: '',
@@ -58,23 +59,14 @@ export default function Suscripciones() {
     [categorias],
   )
 
-  const [mode, setMode] = useState<Mode>('nueva')
-  const [selId, setSelId] = useState('')
+  // Formulario en modal: editId null = alta, número = edición de esa suscripción.
+  const [formOpen, setFormOpen] = useState(false)
+  const [editId, setEditId] = useState<number | null>(null)
   const [form, setForm] = useState({ ...EMPTY })
   const [err, setErr] = useState<{ field: string; msg: string } | null>(null)
   const fieldErr = (f: string) =>
     err?.field === f ? <div className={s.fieldError}>{err.msg}</div> : null
   const [detailSub, setDetailSub] = useState<GastoRecurrenteResponse | null>(null)
-
-  const formRef = useRef<HTMLDivElement>(null)
-  function irAlFormulario() {
-    switchMode('nueva')
-    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    window.setTimeout(
-      () => formRef.current?.querySelector<HTMLInputElement>('input')?.focus({ preventScroll: true }),
-      350,
-    )
-  }
 
   if (isLoading || resumenLoading) {
     return (
@@ -115,26 +107,32 @@ export default function Suscripciones() {
     setErr(null)
   }
 
-  function switchMode(m: Mode) {
-    setMode(m)
-    setErr(null)
-    setSelId('')
+  function abrirNueva() {
+    setEditId(null)
     setForm({ ...EMPTY })
+    setErr(null)
+    setFormOpen(true)
   }
 
-  function loadSub(id: string) {
-    setSelId(id)
-    const sub = subs.find((x) => x.id === Number(id))
-    if (sub) {
-      setForm({
-        nombre: sub.nombre,
-        catName: sub.categoriaNombre ?? '',
-        frecuencia: sub.frecuencia,
-        importe: sub.importeActual != null ? String(sub.importeActual) : '',
-        fechaPrimerPago: sub.fechaPrimerPago ?? today(),
-        active: sub.active,
-      })
-    }
+  function abrirEditar(sub: GastoRecurrenteResponse) {
+    setEditId(sub.id)
+    setForm({
+      nombre: sub.nombre,
+      catName: sub.categoriaNombre ?? '',
+      frecuencia: sub.frecuencia,
+      importe: sub.importeActual != null ? String(sub.importeActual) : '',
+      fechaPrimerPago: sub.fechaPrimerPago ?? today(),
+      active: sub.active,
+    })
+    setErr(null)
+    setFormOpen(true)
+  }
+
+  function cerrarForm() {
+    setFormOpen(false)
+    setEditId(null)
+    setErr(null)
+    setForm({ ...EMPTY })
   }
 
   async function resolverCategoriaId(name: string): Promise<number> {
@@ -150,8 +148,6 @@ export default function Suscripciones() {
     const nombre = form.nombre.trim()
     const catName = form.catName.trim()
     const importe = num(form.importe)
-    if (mode === 'actualizar' && !selId)
-      return setErr({ field: 'selId', msg: 'Selecciona una suscripción.' })
     if (!nombre) return setErr({ field: 'nombre', msg: 'Indica el nombre de la suscripción.' })
     if (!catName) return setErr({ field: 'catName', msg: 'Indica una categoría.' })
     if (Number.isNaN(importe) || importe <= 0)
@@ -161,7 +157,7 @@ export default function Suscripciones() {
 
     try {
       const categoriaId = await resolverCategoriaId(catName)
-      if (mode === 'nueva') {
+      if (editId === null) {
         await crearRecurrente.mutateAsync({
           nombre,
           categoriaId,
@@ -173,9 +169,9 @@ export default function Suscripciones() {
           importeInicial: importe,
         })
       } else {
-        const sub = subs.find((x) => x.id === Number(selId))
+        const sub = subs.find((x) => x.id === editId)
         await actualizarRecurrente.mutateAsync({
-          id: Number(selId),
+          id: editId,
           nombre,
           categoriaId,
           tipoPago: 'SUSCRIPCION',
@@ -186,14 +182,14 @@ export default function Suscripciones() {
         })
         if (sub && Number(sub.importeActual || 0) !== importe) {
           await nuevoPrecio.mutateAsync({
-            id: Number(selId),
+            id: editId,
             importe,
             fechaVariacionImporte: today(),
           })
         }
       }
-      notifyOk(mode === 'nueva' ? 'Suscripción creada' : 'Suscripción actualizada')
-      switchMode(mode)
+      notifyOk(editId === null ? 'Suscripción creada' : 'Suscripción actualizada')
+      cerrarForm()
     } catch (error) {
       notifyError(error)
     }
@@ -215,7 +211,7 @@ export default function Suscripciones() {
     try {
       await eliminarRecurrente.mutateAsync(sub.id)
       notifyOk('Suscripción eliminada')
-      if (Number(selId) === sub.id) switchMode('actualizar')
+      if (editId === sub.id) cerrarForm()
     } catch (err) {
       notifyError(err)
     }
@@ -264,12 +260,17 @@ export default function Suscripciones() {
       </StatGrid>
 
       <div className={`card ${s.cardBlock}`}>
-        <div className="sec-title">Mis suscripciones</div>
+        <div className="block-head">
+          <div className="sec-title">Mis suscripciones</div>
+          <button type="button" className={s.btn} onClick={abrirNueva} disabled={saving}>
+            + Añadir suscripción
+          </button>
+        </div>
         {subs.length === 0 ? (
           <EmptyState
             message="No tienes suscripciones registradas. Añade la primera para controlar tu gasto mensual."
             actionLabel="Añadir tu primera suscripción"
-            onAction={irAlFormulario}
+            onAction={abrirNueva}
           />
         ) : (
           <div className={s.subGrid}>
@@ -297,145 +298,128 @@ export default function Suscripciones() {
                 </div>
                 <div className={s.subMeta}>Próximo pago: {r.fechaProximoPago ?? '—'}</div>
                 <div className={s.clickHint}>Clic para ver el historial de precios →</div>
-                <button
-                  type="button"
-                  className={s.cardDeleteBtn}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    deleteSub(r)
-                  }}
-                  disabled={saving}
-                >
-                  Eliminar
-                </button>
+                <div className="card-actions">
+                  <button
+                    type="button"
+                    className="btn-card"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      abrirEditar(r)
+                    }}
+                    disabled={saving}
+                  >
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    className={s.cardDeleteBtn}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      deleteSub(r)
+                    }}
+                    disabled={saving}
+                  >
+                    Eliminar
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         )}
       </div>
 
-      <div ref={formRef} className={`card ${s.cardBlock}`}>
-        <div className={s.tabs}>
-          <button
-            type="button"
-            className={`${s.tab} ${mode === 'nueva' ? s.tabActive : ''}`}
-            onClick={() => switchMode('nueva')}
-          >
-            Nueva suscripción
-          </button>
-          <button
-            type="button"
-            className={`${s.tab} ${mode === 'actualizar' ? s.tabActive : ''}`}
-            onClick={() => switchMode('actualizar')}
-          >
-            Actualizar
-          </button>
-        </div>
-
-        <form onSubmit={submit} noValidate>
-          {mode === 'actualizar' && (
-            <div className={s.row}>
-              <div className={s.field}>
-                <label>Suscripción a actualizar</label>
-                <Select
-                  value={selId}
-                  options={subs.map((r) => ({ value: String(r.id), label: r.nombre }))}
-                  placeholder="Selecciona"
-                  invalid={err?.field === 'selId'}
-                  onChange={(v) => {
-                    loadSub(v)
-                    setErr(null)
-                  }}
-                />
-                {fieldErr('selId')}
-              </div>
+      <Modal
+        open={formOpen}
+        onClose={cerrarForm}
+        maxWidth={560}
+        title={editId === null ? 'Nueva suscripción' : 'Editar suscripción'}
+        footer={
+          <>
+            <button type="button" className="btn-ghost" onClick={cerrarForm} disabled={saving}>
+              Cancelar
+            </button>
+            <button className={s.btn} type="submit" form={FORM_ID} disabled={saving}>
+              {saving ? 'Guardando…' : editId === null ? 'Añadir suscripción' : 'Guardar cambios'}
+            </button>
+          </>
+        }
+      >
+        <form id={FORM_ID} onSubmit={submit} noValidate>
+          <div className={s.row}>
+            <div className={s.field}>
+              <label>Nombre</label>
+              <input
+                type="text"
+                placeholder="Ej: Netflix"
+                value={form.nombre}
+                aria-invalid={err?.field === 'nombre'}
+                onChange={(e) => set('nombre', e.target.value)}
+              />
+              {fieldErr('nombre')}
             </div>
-          )}
-
-          {(mode === 'nueva' || selId) && (
-            <>
-              <div className={s.row}>
-                <div className={s.field}>
-                  <label>Nombre</label>
-                  <input
-                    type="text"
-                    placeholder="Ej: Netflix"
-                    value={form.nombre}
-                    aria-invalid={err?.field === 'nombre'}
-                    onChange={(e) => set('nombre', e.target.value)}
-                  />
-                  {fieldErr('nombre')}
-                </div>
-                <div className={s.field}>
-                  <label>Categoría</label>
-                  <CategoriaSelect
-                    value={form.catName}
-                    categorias={gastoCats}
-                    invalid={err?.field === 'catName'}
-                    onChange={(v) => set('catName', v)}
-                  />
-                  {fieldErr('catName')}
-                </div>
-              </div>
-              <div className={s.row}>
-                <div className={s.field}>
-                  <label>Frecuencia</label>
-                  <Select
-                    value={form.frecuencia}
-                    options={[
-                      { value: 'MENSUAL', label: 'Mensual' },
-                      { value: 'ANUAL', label: 'Anual' },
-                    ]}
-                    onChange={(v) => set('frecuencia', v as Frecuencia)}
-                    ariaLabel="Frecuencia"
-                  />
-                </div>
-                <div className={s.field}>
-                  <label>Importe</label>
-                  <MoneyInput
-                    step="0.01"
-                    min="0"
-                    placeholder="0,00"
-                    value={form.importe}
-                    aria-invalid={err?.field === 'importe'}
-                    onChange={(e) => set('importe', e.target.value)}
-                  />
-                  {fieldErr('importe')}
-                </div>
-                <div className={s.field}>
-                  <label>Fecha primer pago</label>
-                  <input
-                    type="date"
-                    value={form.fechaPrimerPago}
-                    aria-invalid={err?.field === 'fechaPrimerPago'}
-                    onChange={(e) => set('fechaPrimerPago', e.target.value)}
-                  />
-                  {fieldErr('fechaPrimerPago')}
-                </div>
-                <label className={s.check}>
-                  <input
-                    type="checkbox"
-                    checked={form.active}
-                    onChange={(e) => set('active', e.target.checked)}
-                  />
-                  Activa
-                </label>
-              </div>
-              <p className={s.hint}>
-                Si la categoría no existe, se crea automáticamente (tipo Gasto). Al
-                actualizar, si cambias el importe se registra como nueva variación de precio.
-              </p>
-              <button className={s.btn} type="submit" disabled={saving} style={{ marginTop: 4 }}>
-                {saving
-                  ? 'Guardando…'
-                  : mode === 'nueva'
-                    ? 'Añadir suscripción'
-                    : 'Actualizar suscripción'}
-              </button>
-            </>
-          )}
+            <div className={s.field}>
+              <label>Categoría</label>
+              <CategoriaSelect
+                value={form.catName}
+                categorias={gastoCats}
+                invalid={err?.field === 'catName'}
+                onChange={(v) => set('catName', v)}
+              />
+              {fieldErr('catName')}
+            </div>
+          </div>
+          <div className={s.row}>
+            <div className={s.field}>
+              <label>Frecuencia</label>
+              <Select
+                value={form.frecuencia}
+                options={[
+                  { value: 'MENSUAL', label: 'Mensual' },
+                  { value: 'ANUAL', label: 'Anual' },
+                ]}
+                onChange={(v) => set('frecuencia', v as Frecuencia)}
+                ariaLabel="Frecuencia"
+              />
+            </div>
+            <div className={s.field}>
+              <label>Importe</label>
+              <MoneyInput
+                step="0.01"
+                min="0"
+                placeholder="0,00"
+                value={form.importe}
+                aria-invalid={err?.field === 'importe'}
+                onChange={(e) => set('importe', e.target.value)}
+              />
+              {fieldErr('importe')}
+            </div>
+          </div>
+          <div className={s.row}>
+            <div className={s.field}>
+              <label>Fecha primer pago</label>
+              <input
+                type="date"
+                value={form.fechaPrimerPago}
+                aria-invalid={err?.field === 'fechaPrimerPago'}
+                onChange={(e) => set('fechaPrimerPago', e.target.value)}
+              />
+              {fieldErr('fechaPrimerPago')}
+            </div>
+            <label className={s.check}>
+              <input
+                type="checkbox"
+                checked={form.active}
+                onChange={(e) => set('active', e.target.checked)}
+              />
+              Activa
+            </label>
+          </div>
+          <p className={s.hint}>
+            Si la categoría no existe, se crea automáticamente (tipo Gasto). Al
+            actualizar, si cambias el importe se registra como nueva variación de precio.
+          </p>
         </form>
-      </div>
+      </Modal>
 
       <Modal open={detailSub !== null} onClose={() => setDetailSub(null)} maxWidth={560}>
         {detailSub && (

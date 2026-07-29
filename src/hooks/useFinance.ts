@@ -21,9 +21,22 @@ import type {
   InversionResponse,
   NuevoPrecioRequest,
   PresupuestoDTO,
+  RangoResponse,
   TipoPago,
   TransaccionDTO,
 } from '@/types/api'
+
+// Último rango conocido, cacheado en localStorage para pintar la barra lateral
+// al instante tras un refresco (evita el pestañeo mientras llega la petición).
+const RANGO_CACHE_KEY = 'yf-rango'
+function readRangoCache(): RangoResponse | undefined {
+  try {
+    const raw = localStorage.getItem(RANGO_CACHE_KEY)
+    return raw ? (JSON.parse(raw) as RangoResponse) : undefined
+  } catch {
+    return undefined
+  }
+}
 
 export function useCuentas() {
   return useQuery({ queryKey: ['cuentas'], queryFn: financeApi.cuentas })
@@ -108,6 +121,25 @@ export function useMovimientos() {
 // Logros del usuario (se evalúan/desbloquean en el backend al pedirlos).
 export function useLogros() {
   return useQuery({ queryKey: ['logros'], queryFn: financeApi.logros })
+}
+
+// Rango del usuario y progreso XP (para la barra lateral). Usa el último valor
+// cacheado como placeholder para que al refrescar no pestañee.
+export function useRango() {
+  return useQuery({
+    queryKey: ['rango'],
+    queryFn: async () => {
+      const data = await financeApi.rango()
+      try {
+        localStorage.setItem(RANGO_CACHE_KEY, JSON.stringify(data))
+      } catch {
+        // Sin persistencia (modo privado); no pasa nada.
+      }
+      return data
+    },
+    placeholderData: readRangoCache,
+    staleTime: 60_000,
+  })
 }
 
 export function useEnviarFeedback() {

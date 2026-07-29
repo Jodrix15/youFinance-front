@@ -32,6 +32,7 @@ import type {
   PresupuestoDTO,
   PresupuestoResponse,
   RecurrentePrecioResponse,
+  RangoResponse,
   RegisterRequest,
   ResumenCuenta,
   ResumenDeuda,
@@ -200,6 +201,7 @@ export const financeApi = {
       .get<EvolucionIngresoResponse[]>('/api/ingresos/evolucion')
       .then((r) => r.data),
   logros: () => api.get<LogroResponse[]>('/api/logros').then((r) => r.data),
+  rango: () => api.get<RangoResponse>('/api/rango').then((r) => r.data),
   enviarFeedback: (body: FeedbackDTO) =>
     api.post<FeedbackResponse>('/api/feedback', body).then((r) => r.data),
   // Gestión (admin)
