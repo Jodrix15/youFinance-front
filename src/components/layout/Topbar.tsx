@@ -45,9 +45,6 @@ const ICONS = {
       <path d="M3 8.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5" />
     </>
   ),
-  carreraRata: (
-    <path d="M2 2v12a.5.5 0 0 0 .5.5H14a.5.5 0 0 0 0-1H3V2a.5.5 0 0 0-1 0m3.5 1a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .416-.777L12.101 5l1.315-1.223A.5.5 0 0 0 13 3z" />
-  ),
   logros: (
     <path
       fill="none"
@@ -99,7 +96,6 @@ const NAV = [
   { to: '/inversiones', key: 'inversiones', icon: ICONS.inversiones },
   { to: '/presupuestos', key: 'presupuestos', icon: ICONS.presupuestos },
   { to: '/logros', key: 'logros', icon: ICONS.logros },
-  { to: '/carrera-rata', key: 'carreraRata', icon: ICONS.carreraRata },
 ]
 
 export default function Topbar() {

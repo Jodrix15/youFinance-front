@@ -24,7 +24,6 @@ const es = {
     inversiones: 'Inversiones',
     presupuestos: 'Presupuestos',
     logros: 'Logros',
-    carreraRata: 'Carrera de la rata',
   },
   menu: {
     settings: 'Ajustes',

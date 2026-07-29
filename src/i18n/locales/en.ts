@@ -24,7 +24,6 @@ const en = {
     inversiones: 'Investments',
     presupuestos: 'Budgets',
     logros: 'Achievements',
-    carreraRata: 'Rat race',
   },
   menu: {
     settings: 'Settings',
