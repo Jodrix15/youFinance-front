@@ -1,0 +1,6 @@
+# vercel.json: cada rama tiene el suyo (main -> back PRO, develop -> back UAT).
+# Al mergear, git mantiene SIEMPRE la version de la rama destino e ignora la que
+# entra. Requiere definir el driver 'ours' en la config LOCAL de git, una vez por
+# clon:
+#   git config merge.ours.driver true
+vercel.json merge=ours
