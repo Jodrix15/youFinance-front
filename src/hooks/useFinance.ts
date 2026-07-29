@@ -5,6 +5,8 @@ import {
   useQueryClient,
 } from '@tanstack/react-query'
 import { financeApi, userApi } from '@/lib/finance'
+import { readRangoCache, writeRangoCache } from '@/lib/rangoCache'
+import { useAuth } from '@/context/AuthContext'
 import type {
   ActualizarGasto,
   ActualizarInversionDTO,
@@ -21,22 +23,10 @@ import type {
   InversionResponse,
   NuevoPrecioRequest,
   PresupuestoDTO,
-  RangoResponse,
   TipoPago,
   TransaccionDTO,
 } from '@/types/api'
 
-// Último rango conocido, cacheado en localStorage para pintar la barra lateral
-// al instante tras un refresco (evita el pestañeo mientras llega la petición).
-const RANGO_CACHE_KEY = 'yf-rango'
-function readRangoCache(): RangoResponse | undefined {
-  try {
-    const raw = localStorage.getItem(RANGO_CACHE_KEY)
-    return raw ? (JSON.parse(raw) as RangoResponse) : undefined
-  } catch {
-    return undefined
-  }
-}
 
 export function useCuentas() {
   return useQuery({ queryKey: ['cuentas'], queryFn: financeApi.cuentas })
@@ -124,20 +114,20 @@ export function useLogros() {
 }
 
 // Rango del usuario y progreso XP (para la barra lateral). Usa el último valor
-// cacheado como placeholder para que al refrescar no pestañee.
+// cacheado como placeholder para que al refrescar no pestañee. Tanto la clave de
+// la query como la de localStorage llevan el username, de modo que el placeholder
+// nunca puede ser el de otra cuenta.
 export function useRango() {
+  const { user } = useAuth()
+  const username = user?.username
   return useQuery({
-    queryKey: ['rango'],
+    queryKey: ['rango', username],
     queryFn: async () => {
       const data = await financeApi.rango()
-      try {
-        localStorage.setItem(RANGO_CACHE_KEY, JSON.stringify(data))
-      } catch {
-        // Sin persistencia (modo privado); no pasa nada.
-      }
+      writeRangoCache(username, data)
       return data
     },
-    placeholderData: readRangoCache,
+    placeholderData: () => readRangoCache(username),
     staleTime: 60_000,
   })
 }

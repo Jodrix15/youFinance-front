@@ -62,13 +62,33 @@ export default function Modal({
     [onClose],
   )
 
+  // El listener se registra una sola vez por apertura, pero necesita llamar
+  // siempre a la última versión de handleKey. Por eso va por ref: si handleKey
+  // fuese dependencia del efecto de abajo, cualquier cambio de `onClose` lo
+  // reiniciaría.
+  const handleKeyRef = useRef(handleKey)
+  useEffect(() => {
+    handleKeyRef.current = handleKey
+  }, [handleKey])
+
+  // IMPORTANTE: este efecto depende SOLO de `open`.
+  //
+  // Antes dependía también de `handleKey`, que se recrea cada vez que cambia
+  // `onClose`. Como los padres pasan `onClose` como función nueva en cada render
+  // (o como useCallback que depende de su estado), cada pulsación de tecla en un
+  // campo del formulario re-renderizaba el padre → nuevo onClose → nuevo
+  // handleKey → React ejecutaba la limpieza y volvía a montar el efecto. La
+  // limpieza hace `prevFocus.current?.focus()` y el efecto vuelve a enfocar el
+  // primer campo del panel: de ahí que el foco saltara a otro campo al escribir
+  // y que no se pudieran teclear números seguidos ni crear una categoría nueva.
   useEffect(() => {
     if (!open) return
     // Guardar el foco previo y bloquear el scroll del body.
     prevFocus.current = document.activeElement as HTMLElement | null
     const prevOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    document.addEventListener('keydown', handleKey, true)
+    const onKeyDown = (e: KeyboardEvent) => handleKeyRef.current(e)
+    document.addEventListener('keydown', onKeyDown, true)
 
     // Enfocar el primer elemento útil del panel (o el panel).
     const raf = requestAnimationFrame(() => {
@@ -80,12 +100,12 @@ export default function Modal({
 
     return () => {
       cancelAnimationFrame(raf)
-      document.removeEventListener('keydown', handleKey, true)
+      document.removeEventListener('keydown', onKeyDown, true)
       document.body.style.overflow = prevOverflow
       // Restaurar el foco al elemento que abrió el modal.
       prevFocus.current?.focus?.()
     }
-  }, [open, handleKey])
+  }, [open])
 
   if (!open) return null
 

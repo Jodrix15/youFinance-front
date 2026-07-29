@@ -82,7 +82,7 @@ export default function FlujoCajaWidget() {
               x: { grid: { display: false }, ticks: { color: t.tick, font: { size: 10 } } },
               y: {
                 grid: { color: t.grid },
-                ticks: { color: t.tick, font: { size: 10 }, callback: (v) => formatEur(Number(v)) },
+                ticks: { color: t.tick, font: { size: 10 }, callback: (v) => formatEur(Number(v), false) },
               },
             },
           }}

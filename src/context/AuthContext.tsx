@@ -9,6 +9,7 @@ import {
 } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { authApi, userApi } from '@/lib/finance'
+import { clearRangoCache } from '@/lib/rangoCache'
 import type {
   LoginRequest,
   Moneda,
@@ -114,6 +115,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
     clearLocal()
     queryClient.clear()
+    // queryClient.clear() no toca localStorage, y de ahí lee el placeholder de
+    // la barra lateral: sin esto el siguiente usuario vería el rango del anterior.
+    clearRangoCache()
   }, [clearLocal, queryClient])
 
   const applyProfile = useCallback(
