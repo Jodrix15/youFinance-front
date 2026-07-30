@@ -134,6 +134,7 @@ export interface InversionResponse {
   id: number
   categoriaId: number | null
   categoriaNombre: string | null
+  categoriaColor: string | null
   capitalAportado: number
   capitalTotal: number
   plusvalia: number
@@ -218,6 +219,9 @@ export interface CategoriaResponse {
   tipo: TipoMovimiento
   // Solo presente en categorías de ingreso; null en gastos/inversiones.
   origenIngreso: OrigenIngreso | null
+  // Hex #rrggbb con el que se pinta la categoría. El backend siempre asigna
+  // uno al crear, pero puede llegar null en datos antiguos.
+  color: string | null
 }
 
 // ── Cuerpos de petición ──
@@ -237,6 +241,9 @@ export interface CrearCategoria {
   tipo: TipoMovimiento
   // Obligatorio cuando tipo === 'INGRESO'; se omite en el resto.
   origenIngreso?: OrigenIngreso | null
+  // Opcional: si no se manda, el backend elige un color de la paleta que no
+  // esté ya usado por otra categoría del mismo tipo.
+  color?: string | null
 }
 
 // Total de ingresos de una familia y su peso sobre el total del periodo.
@@ -256,6 +263,7 @@ export interface ResumenIngresosResponse {
 export interface IngresoCategoriaResponse {
   categoria: string
   familia: OrigenIngreso | null
+  color: string | null
   total: number
 }
 
@@ -298,6 +306,7 @@ export interface FlujoCajaMesResponse {
 // Total gastado por categoría (widget de gastos por categoría).
 export interface GastoCategoriaResponse {
   categoria: string
+  color: string | null
   total: number
 }
 

@@ -32,6 +32,10 @@ const FORM_EDITAR = 'form-inversion-editar'
 
 type SortField = 'categoria' | 'aportado' | 'total' | 'plusvalia' | 'pct'
 
+/** Color de la categoría de una inversión; sin él, la paleta por posición. */
+const colorCategoria = (color: string | null, idx: number) =>
+  color ?? PALETTE[idx % PALETTE.length]
+
 export default function Inversiones() {
   const { theme } = useTheme()
   const confirm = useConfirm()
@@ -182,7 +186,8 @@ export default function Inversiones() {
     datasets: [
       {
         data: list.map((i) => Number(i.capitalTotal || 0)),
-        backgroundColor: list.map((_, idx) => PALETTE[idx % PALETTE.length]),
+        // Color de la categoría; sin él (datos antiguos) se usa la paleta por posición.
+        backgroundColor: list.map((i, idx) => colorCategoria(i.categoriaColor, idx)),
         borderColor: t.border,
         borderWidth: 2,
       },
@@ -194,6 +199,8 @@ export default function Inversiones() {
       {
         label: `Plusvalía (${currencySymbol()})`,
         data: list.map((i) => Number(i.plusvalia || 0)),
+        // Verde/rojo por signo: este gráfico responde a "¿gano o pierdo?", no a
+        // "¿qué categoría es?" (eso ya lo dice la etiqueta y el donut de arriba).
         backgroundColor: list.map((i) =>
           Number(i.plusvalia || 0) >= 0 ? '#1d9e75' : '#f85149',
         ),

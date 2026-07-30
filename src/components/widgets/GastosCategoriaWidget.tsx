@@ -18,7 +18,8 @@ export default function GastosCategoriaWidget() {
     name: d.categoria ?? 'Otros',
     amount: Number(d.total || 0),
     pct: total ? Math.round((Number(d.total || 0) / total) * 100) : 0,
-    color: PALETTE[idx % PALETTE.length],
+    // Color elegido en la categoría; las que aún no tienen uno caen en la paleta.
+    color: d.color ?? PALETTE[idx % PALETTE.length],
   }))
 
   if (items.length === 0) return <WidgetEmpty message="Sin gastos registrados." />

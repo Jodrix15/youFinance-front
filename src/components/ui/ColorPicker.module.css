@@ -1,0 +1,155 @@
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.swatch {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.1s;
+}
+.swatch:hover {
+  transform: scale(1.08);
+}
+.swatch:focus-visible {
+  outline: none;
+  border-color: var(--tx2);
+}
+/* El color real va en un círculo interior para que el anillo de selección
+   quede separado y se distinga también sobre colores oscuros. */
+.fill {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+}
+.selected {
+  border-color: var(--tx1);
+}
+
+/* Opción "automático": sin color fijo, lo elige el backend. */
+.auto .fill {
+  background: var(--input-bg);
+  border: 1px dashed var(--border2);
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--tx3);
+}
+
+/* Marca discreta sobre los colores que ya usa otra categoría del mismo grupo. */
+.usado::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--card-bg);
+  box-shadow: inset 0 0 0 2px var(--tx3);
+}
+
+/* Botón que despliega la paleta ampliada. Muestra un arcoíris salvo cuando
+   hay elegido un color que no está en la paleta corta: entonces lo muestra. */
+.masFill {
+  background: conic-gradient(
+    #ef4444,
+    #f59e0b,
+    #84cc16,
+    #14b8a6,
+    #3b82f6,
+    #a855f7,
+    #ec4899,
+    #ef4444
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.masIcon {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.55);
+}
+
+/* ── Paleta ampliada ── */
+.extendida {
+  margin-top: 10px;
+  padding: 10px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+.rejilla {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 4px;
+}
+.mini {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+  transition: transform 0.1s;
+}
+.mini:hover {
+  transform: scale(1.18);
+}
+.mini:focus-visible {
+  outline: 2px solid var(--tx1);
+  outline-offset: 1px;
+}
+.miniSelected {
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15), 0 0 0 2px var(--card-bg), 0 0 0 4px var(--tx1);
+}
+
+/* Fila del color totalmente libre. */
+.personalizado {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--tx2);
+}
+.inputColor {
+  width: 34px;
+  height: 26px;
+  padding: 0;
+  background: none;
+  border: 1px solid var(--border2);
+  border-radius: var(--r-md);
+  cursor: pointer;
+}
+.hex {
+  margin-left: auto;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--tx3);
+}
+
+.hint {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--tx3);
+}
