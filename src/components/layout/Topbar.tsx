@@ -105,6 +105,10 @@ export default function Topbar() {
   const { data: rango, isError: rangoError } = useRango()
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [navOpen, setNavOpen] = useState(false)
+  // Menú de cuenta del móvil: cuelga del avatar de la barra superior y reúne
+  // lo que en escritorio va bajo la línea (ajustes, incidencias, feedback,
+  // tema) más el cierre de sesión.
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(() => {
     try {
       return localStorage.getItem('yf-sidebar-collapsed') === '1'
@@ -160,6 +164,41 @@ export default function Topbar() {
   const themeLabel = t('menu.changeTheme', {
     mode: theme === 'dark' ? t('menu.light') : t('menu.dark'),
   })
+
+  const avatarContent = user?.fotoPerfil ? (
+    <img className={s.avatarImg} src={user.fotoPerfil} alt="" />
+  ) : (
+    initials
+  )
+
+  /** Nombre, rango y barra de XP. Se reutiliza en la barra lateral y en el móvil. */
+  const rangoInfo = rango ? (
+    <>
+      <span className={s.avatarRole}>
+        <span className={s.rangoNivel}>Nv {rango.nivel}</span>
+        {rango.nombre}
+      </span>
+      <span
+        className={s.xpBar}
+        title={
+          rango.xpSiguiente != null
+            ? `${rango.experienciaTotal} XP · faltan ${
+                rango.xpSiguiente - rango.experienciaTotal
+              } XP para el siguiente rango`
+            : `${rango.experienciaTotal} XP · rango máximo`
+        }
+      >
+        <span className={s.xpFill} style={{ width: `${rango.progreso}%` }} />
+      </span>
+    </>
+  ) : rangoError ? (
+    <span className={s.avatarRole}>{user?.role}</span>
+  ) : (
+    <>
+      <span className={s.avatarRole}>&nbsp;</span>
+      <span className={s.xpBar} />
+    </>
+  )
 
   return (
     <>
@@ -233,42 +272,10 @@ export default function Topbar() {
         </div>
 
         <div className={s.userRow} title={collapsed ? user?.username ?? '' : undefined}>
-            <span className={s.avatar}>
-              {user?.fotoPerfil ? (
-                <img className={s.avatarImg} src={user.fotoPerfil} alt="" />
-              ) : (
-                initials
-              )}
-            </span>
+            <span className={s.avatar}>{avatarContent}</span>
             <span className={s.avatarInfo}>
               <span className={s.avatarName}>{user?.username}</span>
-              {rango ? (
-                <>
-                  <span className={s.avatarRole}>
-                    <span className={s.rangoNivel}>Nv {rango.nivel}</span>
-                    {rango.nombre}
-                  </span>
-                  <span
-                    className={s.xpBar}
-                    title={
-                      rango.xpSiguiente != null
-                        ? `${rango.experienciaTotal} XP · faltan ${
-                            rango.xpSiguiente - rango.experienciaTotal
-                          } XP para el siguiente rango`
-                        : `${rango.experienciaTotal} XP · rango máximo`
-                    }
-                  >
-                    <span className={s.xpFill} style={{ width: `${rango.progreso}%` }} />
-                  </span>
-                </>
-              ) : rangoError ? (
-                <span className={s.avatarRole}>{user?.role}</span>
-              ) : (
-                <>
-                  <span className={s.avatarRole}>&nbsp;</span>
-                  <span className={s.xpBar} />
-                </>
-              )}
+              {rangoInfo}
             </span>
             <button className={s.logoutBtn} onClick={logout} aria-label={t('menu.logout')} title={t('menu.logout')}>
               <svg viewBox="0 0 16 16" aria-hidden="true">
@@ -289,6 +296,15 @@ export default function Topbar() {
           </svg>
         </button>
         {brand}
+        <button
+          className={s.mobileAvatar}
+          onClick={() => setUserMenuOpen(true)}
+          aria-label={`Cuenta de ${user?.username ?? ''}`}
+          aria-haspopup="menu"
+          aria-expanded={userMenuOpen}
+        >
+          {avatarContent}
+        </button>
       </div>
 
       {navOpen && (
@@ -302,54 +318,82 @@ export default function Topbar() {
                 <svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" fill="none" /></svg>
               </button>
             </div>
+            {/* Solo navegación: la configuración y la sesión viven en el menú
+                del avatar de la barra superior. */}
             {navLinks(() => setNavOpen(false), s.drawerItem)}
+          </nav>
+        </div>
+      )}
+
+      {userMenuOpen && (
+        <div className={s.sheetOverlay} onClick={() => setUserMenuOpen(false)}>
+          <div className={s.sheet} role="menu" onClick={(e) => e.stopPropagation()}>
             <NavLink
               to="/ajustes"
-              onClick={() => setNavOpen(false)}
-              className={({ isActive }) => `${s.drawerItem} ${isActive ? s.navActive : ''}`}
+              className={s.sheetUser}
+              onClick={() => setUserMenuOpen(false)}
+              aria-label="Ver perfil en Ajustes"
             >
-              <svg className={s.navIcon} viewBox="0 0 16 16" aria-hidden="true">
-                {CONFIG_ICONS.ajustes}
-              </svg>
-              {t('menu.settings')}
+              <span className={s.sheetAvatar}>{avatarContent}</span>
+              <span className={s.avatarInfo}>
+                <span className={s.avatarName}>{user?.username}</span>
+                {rangoInfo}
+              </span>
             </NavLink>
-            {isAdmin && (
+
+            <div className={s.sheetItems}>
               <NavLink
-                to="/incidencias"
-                onClick={() => setNavOpen(false)}
-                className={({ isActive }) => `${s.drawerItem} ${isActive ? s.navActive : ''}`}
+                to="/ajustes"
+                onClick={() => setUserMenuOpen(false)}
+                className={({ isActive }) => `${s.sheetItem} ${isActive ? s.navActive : ''}`}
               >
                 <svg className={s.navIcon} viewBox="0 0 16 16" aria-hidden="true">
-                  {CONFIG_ICONS.incidencias}
+                  {CONFIG_ICONS.ajustes}
                 </svg>
-                {t('menu.incidencias')}
+                {t('menu.settings')}
               </NavLink>
-            )}
-            <button
-              className={s.drawerItem}
-              onClick={() => {
-                setNavOpen(false)
-                setFeedbackOpen(true)
-              }}
-            >
-              <svg className={s.navIcon} viewBox="0 0 16 16" aria-hidden="true">
-                {CONFIG_ICONS.feedback}
-              </svg>
-              {t('menu.feedback')}
-            </button>
-            <button className={s.drawerItem} onClick={toggleTheme}>
-              <svg className={s.navIcon} viewBox="0 0 16 16" aria-hidden="true">
-                {theme === 'dark' ? CONFIG_ICONS.sun : CONFIG_ICONS.moon}
-              </svg>
-              {themeLabel}
-            </button>
-            <button className={`${s.drawerItem} ${s.danger}`} onClick={logout}>
-              <svg className={s.navIcon} viewBox="0 0 16 16" aria-hidden="true">
-                {CONFIG_ICONS.logout}
-              </svg>
-              {t('menu.logout')}
-            </button>
-          </nav>
+
+              {isAdmin && (
+                <NavLink
+                  to="/incidencias"
+                  onClick={() => setUserMenuOpen(false)}
+                  className={({ isActive }) => `${s.sheetItem} ${isActive ? s.navActive : ''}`}
+                >
+                  <svg className={s.navIcon} viewBox="0 0 16 16" aria-hidden="true">
+                    {CONFIG_ICONS.incidencias}
+                  </svg>
+                  {t('menu.incidencias')}
+                </NavLink>
+              )}
+
+              <button
+                className={s.sheetItem}
+                onClick={() => {
+                  setUserMenuOpen(false)
+                  setFeedbackOpen(true)
+                }}
+              >
+                <svg className={s.navIcon} viewBox="0 0 16 16" aria-hidden="true">
+                  {CONFIG_ICONS.feedback}
+                </svg>
+                {t('menu.feedback')}
+              </button>
+
+              <button className={s.sheetItem} onClick={toggleTheme}>
+                <svg className={s.navIcon} viewBox="0 0 16 16" aria-hidden="true">
+                  {theme === 'dark' ? CONFIG_ICONS.sun : CONFIG_ICONS.moon}
+                </svg>
+                {themeLabel}
+              </button>
+
+              <button className={`${s.sheetItem} ${s.danger}`} onClick={logout}>
+                <svg className={s.navIcon} viewBox="0 0 16 16" aria-hidden="true">
+                  {CONFIG_ICONS.logout}
+                </svg>
+                {t('menu.logout')}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

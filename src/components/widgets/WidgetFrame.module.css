@@ -58,3 +58,18 @@
   overflow: auto;
   min-height: 0;
 }
+
+/* En móvil los widgets se apilan: no hay arrastre ni redimensionado, así que
+   el asa sobra y el contenido manda sobre la altura. */
+@media (max-width: 768px) {
+  .grip {
+    display: none;
+  }
+  .head {
+    cursor: default;
+    padding: 12px;
+  }
+  .title {
+    font-size: 14px;
+  }
+}

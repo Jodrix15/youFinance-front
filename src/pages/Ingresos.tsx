@@ -323,6 +323,9 @@ export default function Ingresos() {
                 <div>
                   {categorias.map((c) => {
                     const m = meta(c.familia)
+                    // El punto y la barra llevan el color propio de la categoría;
+                    // la etiqueta de familia conserva el color de su familia.
+                    const cColor = c.color ?? m.color
                     const pct = total ? (Number(c.total || 0) / total) * 100 : 0
                     return (
                       <div key={`${c.categoria}-${c.familia ?? 'SIN'}`} className={s.row}>
@@ -331,7 +334,7 @@ export default function Ingresos() {
                             width: 9,
                             height: 9,
                             borderRadius: '50%',
-                            background: m.color,
+                            background: cColor,
                             flexShrink: 0,
                           }}
                         />
@@ -345,7 +348,7 @@ export default function Ingresos() {
                         <div className={s.track}>
                           <div
                             className={s.fill}
-                            style={{ width: `${pct}%`, background: m.color }}
+                            style={{ width: `${pct}%`, background: cColor }}
                           />
                         </div>
                         <span className={s.rowAmount}>{formatEur(c.total)}</span>

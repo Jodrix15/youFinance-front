@@ -13,6 +13,8 @@ import { notifyOk, notifyError } from '@/lib/notify'
 import { apiErrorMessage } from '@/lib/api'
 import Skeleton from '@/components/ui/Skeleton'
 import Select from '@/components/ui/Select'
+import ColorPicker from '@/components/ui/ColorPicker'
+import { PALETTE } from '@/lib/chartSetup'
 import type { CategoriaResponse, OrigenIngreso, TipoMovimiento } from '@/types/api'
 import s from './CategoriasManager.module.css'
 
@@ -37,6 +39,15 @@ const FAMILIA_COLOR: Record<OrigenIngreso, string> = {
   INVERSION: 'var(--purple)',
 }
 
+
+/**
+ * Color con el que se pinta la categoría. El backend siempre guarda uno, pero
+ * las categorías anteriores a esta función pueden venir sin él: en ese caso se
+ * recurre a la paleta por posición, igual que hacen los gráficos.
+ */
+function colorDe(c: CategoriaResponse, idx: number) {
+  return c.color ?? PALETTE[idx % PALETTE.length]
+}
 
 function FamiliaBadge({ familia }: { familia: OrigenIngreso }) {
   return (
@@ -68,6 +79,8 @@ export default function CategoriasManager() {
   const [nombre, setNombre] = useState('')
   const [tipo, setTipo] = useState<TipoMovimiento>('GASTO')
   const [origen, setOrigen] = useState<OrigenIngreso>('ACTIVO')
+  // null = sin elegir: el backend asigna un color libre del grupo.
+  const [color, setColor] = useState<string | null>(null)
 
   const porTipo = useMemo(() => {
     const map: Record<TipoMovimiento, CategoriaResponse[]> = {
@@ -79,11 +92,23 @@ export default function CategoriasManager() {
     return map
   }, [categorias])
 
+  // Colores que ya usan las categorías del tipo abierto en el formulario: se
+  // marcan en el selector para no repetirlos sin darse cuenta.
+  const coloresUsados = useMemo(
+    () =>
+      porTipo[tipo]
+        .filter((c) => c.id !== editCat?.id)
+        .map((c) => c.color)
+        .filter((c): c is string => Boolean(c)),
+    [porTipo, tipo, editCat],
+  )
+
   function abrirNueva() {
     setEditCat(null)
     setNombre('')
     setTipo('GASTO')
     setOrigen('ACTIVO')
+    setColor(null)
     setFormOpen(true)
   }
 
@@ -93,6 +118,7 @@ export default function CategoriasManager() {
     // El tipo de una categoría no se cambia desde aquí: se conserva el suyo.
     setTipo(c.tipo)
     setOrigen(c.origenIngreso ?? 'ACTIVO')
+    setColor(c.color)
     setFormOpen(true)
   }
 
@@ -100,6 +126,7 @@ export default function CategoriasManager() {
     setFormOpen(false)
     setEditCat(null)
     setNombre('')
+    setColor(null)
   }
 
   async function submit(e: FormEvent) {
@@ -109,10 +136,16 @@ export default function CategoriasManager() {
     const origenIngreso = tipo === 'INGRESO' ? origen : undefined
     try {
       if (editCat) {
-        await actualizar.mutateAsync({ id: editCat.id, nombre: n, tipo: editCat.tipo, origenIngreso })
+        await actualizar.mutateAsync({
+          id: editCat.id,
+          nombre: n,
+          tipo: editCat.tipo,
+          origenIngreso,
+          color,
+        })
         notifyOk('Categoría actualizada')
       } else {
-        await crear.mutateAsync({ nombre: n, tipo, origenIngreso })
+        await crear.mutateAsync({ nombre: n, tipo, origenIngreso, color })
         notifyOk('Categoría creada')
       }
       cerrarForm()
@@ -167,8 +200,13 @@ export default function CategoriasManager() {
                 <div className={s.vacio}>Sin categorías</div>
               ) : (
                 <ul className={s.lista}>
-                  {porTipo[g.tipo].map((c) => (
+                  {porTipo[g.tipo].map((c, idx) => (
                       <li key={c.id} className={s.row}>
+                        <span
+                          className={s.rowColor}
+                          style={{ background: colorDe(c, idx) }}
+                          aria-hidden="true"
+                        />
                         <span className={s.rowName}>{c.nombre}</span>
                         {c.tipo === 'INGRESO' &&
                           (c.origenIngreso ? (
@@ -271,6 +309,15 @@ export default function CategoriasManager() {
               />
             </div>
           )}
+          <div className={s.modalField}>
+            <label>Color (opcional)</label>
+            <ColorPicker
+              value={color}
+              onChange={setColor}
+              usados={coloresUsados}
+              ariaLabel="Color de la categoría"
+            />
+          </div>
         </form>
       </Modal>
     </section>

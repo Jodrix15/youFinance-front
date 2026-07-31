@@ -87,3 +87,43 @@
   font-size: 11px;
   color: var(--tx3);
 }
+
+/* Widgets apilados en móvil: cada uno crece con su contenido. */
+.mobileList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+@media (max-width: 768px) {
+  .header {
+    gap: 8px;
+    margin-bottom: 0.75rem;
+  }
+  .title {
+    font-size: 19px;
+  }
+  /* El subtítulo explica arrastrar y redimensionar, que en móvil no aplica. */
+  .sub {
+    display: none;
+  }
+  .spacer {
+    flex: 0;
+  }
+  .actions {
+    width: 100%;
+  }
+  .btn {
+    width: 100%;
+    padding: 10px 12px;
+  }
+  .addMenu {
+    left: 0;
+    right: 0;
+    width: auto;
+  }
+  .addItem {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+}
