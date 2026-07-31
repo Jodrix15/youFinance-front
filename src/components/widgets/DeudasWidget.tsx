@@ -1,11 +1,14 @@
 import { useDeudas, useResumenDeuda } from '@/hooks/useFinance'
+import { useIsMobile } from '@/hooks/useMediaQuery'
 import { formatEur } from '@/lib/format'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { WidgetEmpty, WidgetError, WidgetLoading } from './WidgetState'
+import c from './WidgetCard.module.css'
 
 export default function DeudasWidget() {
   const { data, isLoading, isError } = useDeudas()
   const resumen = useResumenDeuda()
+  const isMobile = useIsMobile()
 
   if (isLoading || resumen.isLoading) return <WidgetLoading />
   if (isError || resumen.isError) return <WidgetError />
@@ -16,6 +19,46 @@ export default function DeudasWidget() {
   const pagado = Number(resumen.data?.totalPagado ?? 0)
   const totalConIntereses = Number(resumen.data?.totalConIntereses ?? 0)
   const pct = totalConIntereses > 0 ? Math.min(100, (pagado / totalConIntereses) * 100) : 0
+
+  const resumenGlobal = (
+    <div style={{ marginTop: 20 }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          marginBottom: 6,
+          fontSize: 11,
+          color: 'var(--tx2)',
+        }}
+      >
+        <span>
+          Total: <strong className="down">{formatEur(total, true)}</strong>
+        </span>
+        <span>Pagado {Math.round(pct)}%</span>
+      </div>
+      <ProgressBar value={pct} />
+    </div>
+  )
+
+  // En móvil, una fila por deuda con el pendiente a la derecha; el acreedor y el
+  // resto del detalle viven en la sección de Deudas.
+  if (isMobile) {
+    return (
+      <>
+        <ul className={c.filas}>
+          {data.map((d, i) => (
+            <li key={`${d.nombreDeuda}-${i}`} className={c.fila}>
+              <span className={c.nombre}>{d.nombreDeuda}</span>
+              <span className={`${c.importe} ${c.importeDown}`}>
+                {formatEur(d.cantidadPendiente, true)}
+              </span>
+            </li>
+          ))}
+        </ul>
+        {resumenGlobal}
+      </>
+    )
+  }
 
   return (
     <>
@@ -39,23 +82,7 @@ export default function DeudasWidget() {
           ))}
         </tbody>
       </table>
-      <div style={{ marginTop: 20 }}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            marginBottom: 6,
-            fontSize: 11,
-            color: 'var(--tx2)',
-          }}
-        >
-          <span>
-            Total: <strong className="down">{formatEur(total, true)}</strong>
-          </span>
-          <span>Pagado {Math.round(pct)}%</span>
-        </div>
-        <ProgressBar value={pct} />
-      </div>
+      {resumenGlobal}
     </>
   )
 }

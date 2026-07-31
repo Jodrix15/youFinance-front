@@ -1,0 +1,51 @@
+/* Carrusel horizontal con scroll nativo: el dedo desliza y cada tarjeta encaja
+   en su sitio (scroll-snap). Sin librerías ni listeners de gesto. */
+.viewport {
+  /* Posicionado para que el offsetLeft de las tarjetas sea relativo a él. */
+  position: relative;
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.viewport::-webkit-scrollbar {
+  display: none;
+}
+.slide {
+  flex: 0 0 100%;
+  min-width: 0;
+  scroll-snap-align: center;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 10px;
+  min-height: 8px;
+}
+.dot {
+  width: 6px;
+  height: 6px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--border2);
+  cursor: pointer;
+  transition: width 0.15s, background 0.15s;
+}
+.dotActive {
+  width: 16px;
+  border-radius: 3px;
+  background: var(--accent);
+}
+/* Con muchas tarjetas los puntos estorban: se cuenta en texto. */
+.counter {
+  font-size: 11px;
+  color: var(--tx3);
+  font-variant-numeric: tabular-nums;
+}

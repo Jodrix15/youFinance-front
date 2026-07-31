@@ -193,13 +193,17 @@ export default function Dashboard() {
 
   const hidden = WIDGETS.filter((w) => !visible.includes(w.id))
 
-  // En móvil los widgets se apilan en una columna (sin drag/resize), en el
-  // orden visual del layout guardado.
+  // En móvil los widgets se apilan en una columna (sin drag/resize) siguiendo
+  // el orden de lectura definido en el registro, no las coordenadas del layout
+  // de escritorio: apilada, la rejilla de 12 columnas deja de tener sentido.
   const isMobile = useIsMobile()
   const { t } = useTranslation()
   const mobileWidgets = useMemo(
-    () => [...visibleLayout].sort((a, b) => a.y - b.y || a.x - b.x),
-    [visibleLayout],
+    () =>
+      visible
+        .filter((id) => WIDGET_MAP[id])
+        .sort((a, b) => WIDGET_MAP[a].mobileOrder - WIDGET_MAP[b].mobileOrder),
+    [visible],
   )
 
   return (
@@ -242,14 +246,15 @@ export default function Dashboard() {
       </div>
 
       {isMobile ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {mobileWidgets.map((l) => {
-            const def = WIDGET_MAP[l.i]
-            if (!def) return null
+        <div className={s.mobileList}>
+          {mobileWidgets.map((id) => {
+            const def = WIDGET_MAP[id]
             const Comp = def.component
             return (
-              <div key={l.i} style={{ height: l.h * 30 }}>
-                <WidgetFrame title={t(`widgets.${l.i}`)} onHide={() => hideWidget(l.i)}>
+              // Sin altura definida el widget crece con su contenido; solo los
+              // que llevan un gráfico elástico fijan la suya.
+              <div key={id} style={def.mobileHeight ? { height: def.mobileHeight } : undefined}>
+                <WidgetFrame title={t(`widgets.${id}`)} onHide={() => hideWidget(id)}>
                   <Comp />
                 </WidgetFrame>
               </div>

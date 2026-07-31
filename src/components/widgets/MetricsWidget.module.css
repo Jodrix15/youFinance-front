@@ -25,3 +25,20 @@
   font-weight: 700;
   color: var(--tx1);
 }
+
+/* En móvil el widget crece con su contenido: dos columnas y cifras algo más
+   pequeñas para que no se corten los importes largos. */
+@media (max-width: 768px) {
+  .grid {
+    height: auto;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .card {
+    padding: 10px 12px;
+  }
+  .value {
+    font-size: 17px;
+    overflow-wrap: anywhere;
+  }
+}

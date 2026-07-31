@@ -419,20 +419,123 @@
   margin-bottom: 6px;
   border-bottom: 1px solid var(--border);
 }
+/* Vale tanto para <a> como para <button>: los botones necesitan que se les
+   quite el fondo y el borde nativos, si no se ven como cajas del sistema. */
 .drawerItem {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 12px;
+  width: 100%;
+  padding: 12px;
   font-size: 15px;
+  font-family: inherit;
   font-weight: 500;
+  text-align: left;
   color: var(--tx2);
   text-decoration: none;
+  background: transparent;
+  border: none;
   border-radius: var(--r-md);
+  cursor: pointer;
 }
 .drawerItem:hover {
   color: var(--tx1);
   background: var(--bg2);
+}
+
+/* ── Menú de cuenta del móvil (cuelga del avatar de la barra superior) ── */
+.mobileAvatar {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  overflow: hidden;
+  font-size: 12px;
+  font-family: inherit;
+  font-weight: 700;
+  color: var(--tx1);
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  cursor: pointer;
+}
+.sheetOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(0, 0, 0, 0.5);
+}
+.sheet {
+  position: absolute;
+  top: 58px;
+  right: 8px;
+  width: 260px;
+  max-width: calc(100vw - 16px);
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: 0 8px 32px var(--shadow);
+  overflow: hidden;
+}
+/* Ficha de usuario: foto, nombre, rango y barra de XP. Lleva a Ajustes. */
+.sheetUser {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  text-decoration: none;
+  border-bottom: 1px solid var(--border);
+}
+.sheetUser:hover {
+  background: var(--bg2);
+}
+.sheetAvatar {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--tx1);
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+}
+.sheetItems {
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  gap: 2px;
+}
+.sheetItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 10px;
+  font-size: 14px;
+  font-family: inherit;
+  font-weight: 500;
+  text-align: left;
+  color: var(--tx2);
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  border-radius: var(--r-md);
+  cursor: pointer;
+}
+.sheetItem:hover {
+  color: var(--tx1);
+  background: var(--bg2);
+}
+.sheetItem.danger:hover {
+  color: var(--down);
 }
 
 @media (max-width: 768px) {
