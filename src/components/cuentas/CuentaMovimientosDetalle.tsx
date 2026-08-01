@@ -4,6 +4,7 @@ import {
   useCategorias,
   useCrearCategoria,
   useCrearTransaccion,
+  useCuentas,
   useEliminarTransaccion,
   useMovimientosPaginados,
 } from '@/hooks/useFinance'
@@ -36,10 +37,19 @@ const CUR_MES = String(NOW.getMonth() + 1).padStart(2, '0')
 const CUR_ANIO = String(NOW.getFullYear())
 // Años seleccionables: el actual y los 6 anteriores.
 const ANIOS = Array.from({ length: 7 }, (_, i) => String(NOW.getFullYear() - i))
-const TIPOS: TipoMovimiento[] = ['GASTO', 'INGRESO']
-const TIPO_LABEL: Record<TipoMovimiento, string> = { GASTO: 'Gasto', INGRESO: 'Ingreso', INVERSION: 'Inversión' }
-const BADGE: Record<TipoMovimiento, string> = { GASTO: 'bGasto', INGRESO: 'bIngreso', INVERSION: 'bInversion' }
-const esNegativo = (t: TipoMovimiento) => t === 'GASTO' || t === 'INVERSION'
+const TIPOS: TipoMovimiento[] = ['GASTO', 'INGRESO', 'TRANSFERENCIA']
+const TIPO_LABEL: Record<TipoMovimiento, string> = {
+  GASTO: 'Gasto',
+  INGRESO: 'Ingreso',
+  INVERSION: 'Inversión',
+  TRANSFERENCIA: 'Transferencia',
+}
+const BADGE: Record<TipoMovimiento, string> = {
+  GASTO: 'bGasto',
+  INGRESO: 'bIngreso',
+  INVERSION: 'bInversion',
+  TRANSFERENCIA: 'bTransferencia',
+}
 
 /** Id del formulario del modal: permite que el botón de guardar viva en el footer. */
 const FORM_ID = 'form-movimiento'
@@ -50,12 +60,19 @@ const EMPTY = {
   descripcion: '',
   fecha: today(),
   origen: 'ACTIVO' as OrigenIngreso,
+  // Solo transferencias: la otra cuenta del traspaso...
+  cuentaDestino: '',
+  // ...y si el apunte que se está editando es el que recibe el dinero. Se
+  // conserva el papel del apunte para que editar desde el lado receptor no
+  // invierta el sentido de la transferencia sin avisar.
+  entrada: false,
 }
 
 interface Props { cuenta: CuentaResponse; onBack: () => void }
 
 export default function CuentaMovimientosDetalle({ cuenta, onBack }: Props) {
   const { data: categorias } = useCategorias()
+  const { data: cuentas } = useCuentas()
   const confirm = useConfirm()
   const crear = useCrearTransaccion()
   const actualizar = useActualizarTransaccion()
@@ -91,6 +108,14 @@ export default function CuentaMovimientosDetalle({ cuenta, onBack }: Props) {
     () => (categorias ?? []).filter((c) => c.tipo === form.tipo),
     [categorias, form.tipo],
   )
+
+  const esTransferencia = form.tipo === 'TRANSFERENCIA'
+  // Una transferencia necesita otra cuenta: no tiene sentido traspasar a la misma.
+  const otrasCuentas = useMemo(
+    () => (cuentas ?? []).filter((c) => c.id !== cuenta.id),
+    [cuentas, cuenta.id],
+  )
+  const labelOtraCuenta = form.entrada ? 'Cuenta de origen' : 'Cuenta de destino'
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -164,6 +189,9 @@ export default function CuentaMovimientosDetalle({ cuenta, onBack }: Props) {
       importe: m.importe != null ? String(Math.abs(m.importe)) : '',
       descripcion: m.descripcion ?? '',
       fecha: m.fechaTransaccion ?? today(),
+      cuentaDestino: m.cuentaContrapartidaId != null ? String(m.cuentaContrapartidaId) : '',
+      // En una transferencia el apunte positivo es el que recibe el dinero.
+      entrada: m.tipoMovimiento === 'TRANSFERENCIA' && Number(m.importe) > 0,
     })
     setFormOpen(true)
   }
@@ -210,13 +238,26 @@ export default function CuentaMovimientosDetalle({ cuenta, onBack }: Props) {
     setErr(null)
     const importe = num(form.importe)
     const catName = form.catName.trim()
-    if (!catName) return setErr({ field: 'catName', msg: 'Indica una categoría.' })
+    const destinoId = Number(form.cuentaDestino)
+
     if (Number.isNaN(importe) || importe <= 0)
       return setErr({ field: 'importe', msg: 'El importe debe ser mayor que 0.' })
     if (!form.fecha) return setErr({ field: 'fecha', msg: 'Indica la fecha.' })
+    if (esTransferencia) {
+      if (!form.cuentaDestino || Number.isNaN(destinoId))
+        return setErr({ field: 'cuentaDestino', msg: `Elige la ${labelOtraCuenta.toLowerCase()}.` })
+      if (destinoId === cuenta.id)
+        return setErr({ field: 'cuentaDestino', msg: 'Tiene que ser una cuenta distinta a esta.' })
+    } else if (!catName) {
+      return setErr({ field: 'catName', msg: 'Indica una categoría.' })
+    }
+
     try {
-      const categoriaId = await resolverCategoriaId(catName)
-      const dto = { tipoMovimiento: form.tipo, categoriaId, importe, descripcion: form.descripcion.trim() || undefined, fecha: form.fecha }
+      const base = { importe, descripcion: form.descripcion.trim() || undefined, fecha: form.fecha }
+      // Una transferencia no lleva categoría: no es ni ingreso ni gasto.
+      const dto = esTransferencia
+        ? { tipoMovimiento: form.tipo, cuentaDestinoId: destinoId, ...base }
+        : { tipoMovimiento: form.tipo, categoriaId: await resolverCategoriaId(catName), ...base }
       if (editId !== null) {
         await actualizar.mutateAsync({ cuentaId: cuenta.id, id: editId, ...dto })
         notifyOk('Transacción actualizada')
@@ -269,7 +310,7 @@ export default function CuentaMovimientosDetalle({ cuenta, onBack }: Props) {
         <button type="button" className={s.btnGhost} onClick={onBack}>← Cuentas</button>
       </div>
       <div className={s.kpis}>
-        <div className={s.kpi}><div className={s.kpiLabel}>Saldo actual</div><div className={s.kpiValue}>{formatEur(cuenta.importe)}</div></div>
+        <div className={s.kpi}><div className={s.kpiLabel}>Saldo actual</div><div className={s.kpiValue}>{formatEur(cuenta.saldo)}</div></div>
         <div className={s.kpi}><div className={s.kpiLabel}>Ingresos</div><div className={s.kpiValue} style={{ color: 'var(--up)' }}>{formatEur(ingresos)}</div></div>
         <div className={s.kpi}><div className={s.kpiLabel}>Gastos</div><div className={s.kpiValue} style={{ color: 'var(--down)' }}>{formatEur(gastos)}</div></div>
         <div className={s.kpi}><div className={s.kpiLabel}>Diferencia</div><div className={s.kpiValue} style={{ color: diferencia >= 0 ? 'var(--up)' : 'var(--down)' }}>{formatEur(diferencia)}</div></div>
@@ -342,15 +383,32 @@ export default function CuentaMovimientosDetalle({ cuenta, onBack }: Props) {
               </tr>
             </thead>
             <tbody>
-              {rows.map((m) => (
-                <tr key={m.id} onClick={() => abrirEditar(m)}>
-                  <td data-label="Fecha">{m.fechaTransaccion ?? '—'}</td>
-                  <td data-label="Descripción">{m.descripcion || '—'}</td>
-                  <td data-label="Categoría">{m.categoriaNombre ?? '—'}</td>
-                  <td data-label="Tipo"><span className={`${s.badge} ${s[BADGE[m.tipoMovimiento]]}`}>{TIPO_LABEL[m.tipoMovimiento]}</span></td>
-                  <td data-label="Importe" className={s.amount} style={{ color: esNegativo(m.tipoMovimiento) ? 'var(--down)' : 'var(--up)' }}>{esNegativo(m.tipoMovimiento) ? '−' : '+'}{formatEur(Math.abs(m.importe), true)}</td>
-                </tr>
-              ))}
+              {rows.map((m) => {
+                // El importe ya se guarda con signo, así que el sentido sale de
+                // ahí y no del tipo: en una transferencia depende del apunte.
+                const negativo = Number(m.importe) < 0
+                // La contraparte del traspaso va en la descripción: una
+                // transferencia no tiene categoría, y lo que interesa leer de un
+                // vistazo es hacia (o desde) qué cuenta se ha movido el dinero.
+                const descripcion =
+                  m.tipoMovimiento === 'TRANSFERENCIA'
+                    ? [
+                        `${negativo ? '→' : '←'} ${m.cuentaContrapartidaNombre ?? 'otra cuenta'}`,
+                        m.descripcion,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')
+                    : m.descripcion || '—'
+                return (
+                  <tr key={m.id} onClick={() => abrirEditar(m)}>
+                    <td data-label="Fecha">{m.fechaTransaccion ?? '—'}</td>
+                    <td data-label="Descripción">{descripcion}</td>
+                    <td data-label="Categoría">{m.categoriaNombre ?? '—'}</td>
+                    <td data-label="Tipo"><span className={`${s.badge} ${s[BADGE[m.tipoMovimiento]]}`}>{TIPO_LABEL[m.tipoMovimiento]}</span></td>
+                    <td data-label="Importe" className={s.amount} style={{ color: negativo ? 'var(--down)' : 'var(--up)' }}>{negativo ? '−' : '+'}{formatEur(Math.abs(m.importe), true)}</td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         )}
@@ -409,16 +467,39 @@ export default function CuentaMovimientosDetalle({ cuenta, onBack }: Props) {
               />
             </div>
             <div className={s.field}>
-              <label>Categoría</label>
-              <CategoriaSelect
-                value={form.catName}
-                categorias={catsDelTipo}
-                invalid={err?.field === 'catName'}
-                onChange={(v) => set('catName', v)}
-              />
-              {fieldErr('catName')}
+              {esTransferencia ? (
+                <>
+                  <label>{labelOtraCuenta}</label>
+                  <Select
+                    value={form.cuentaDestino}
+                    options={[
+                      { value: '', label: 'Elige una cuenta…' },
+                      ...otrasCuentas.map((c) => ({ value: String(c.id), label: c.nombreCuenta })),
+                    ]}
+                    onChange={(v) => set('cuentaDestino', v)}
+                    ariaLabel={labelOtraCuenta}
+                  />
+                  {fieldErr('cuentaDestino')}
+                </>
+              ) : (
+                <>
+                  <label>Categoría</label>
+                  <CategoriaSelect
+                    value={form.catName}
+                    categorias={catsDelTipo}
+                    invalid={err?.field === 'catName'}
+                    onChange={(v) => set('catName', v)}
+                  />
+                  {fieldErr('catName')}
+                </>
+              )}
             </div>
           </div>
+          {esTransferencia && otrasCuentas.length === 0 && (
+            <p className={s.hint} style={{ color: 'var(--down)' }}>
+              Necesitas al menos otra cuenta para poder hacer una transferencia.
+            </p>
+          )}
           {form.tipo === 'INGRESO' && categoriaEsNueva && (
             <div className={s.row}>
               <div className={s.field}>
@@ -471,7 +552,9 @@ export default function CuentaMovimientosDetalle({ cuenta, onBack }: Props) {
             </div>
           </div>
           <p className={s.hint}>
-            Si la categoría no existe, se crea automáticamente con el tipo elegido.
+            {esTransferencia
+              ? 'Una transferencia no cuenta como ingreso ni como gasto: solo mueve saldo entre tus cuentas. Se registra en las dos, y al editarla o borrarla se actualizan ambas.'
+              : 'Si la categoría no existe, se crea automáticamente con el tipo elegido.'}
           </p>
         </form>
       </Modal>

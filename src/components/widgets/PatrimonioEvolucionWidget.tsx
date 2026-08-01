@@ -28,11 +28,11 @@ export default function PatrimonioEvolucionWidget() {
 
   const snaps = hist.data ?? []
 
-  // Serie mensual continua sobre TODO el rango elegido: rellenamos a cero los
-  // meses sin snapshot para que la línea cubra el rango y no se corte. (Los
-  // snapshots vienen ordenados por mes asc, con mes = 'YYYY-MM-DD'.)
+  // (Los snapshots vienen ordenados por mes asc, con mes = 'YYYY-MM-DD'.)
   const now = new Date()
   const monthKey = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}`
+  const mesDe = (iso: string) =>
+    new Date(Number(iso.slice(0, 4)), Number(iso.slice(5, 7)) - 1, 1)
   const snapMap = new Map(snaps.map((s) => [s.mes.slice(0, 7), s]))
   const end = new Date(now.getFullYear(), now.getMonth(), 1)
   let start: Date
@@ -41,18 +41,25 @@ export default function PatrimonioEvolucionWidget() {
   else if (range === '5A') start = new Date(now.getFullYear(), now.getMonth() - 59, 1)
   else {
     // Máx: desde el primer snapshot registrado hasta hoy.
-    const first = snaps[0]
-    start = first
-      ? new Date(Number(first.mes.slice(0, 4)), Number(first.mes.slice(5, 7)) - 1, 1)
-      : end
+    start = snaps[0] ? mesDe(snaps[0].mes) : end
   }
+
   const filtered: typeof snaps = []
+  let ultimo: (typeof snaps)[number] | null = null
   const cur = new Date(start)
   while (cur <= end) {
     const k = monthKey(cur)
     const found = snapMap.get(k)
+    if (found) ultimo = found
+    // El patrimonio es un saldo, no un flujo: un mes sin foto no vale cero,
+    // vale lo mismo que el último mes conocido. Si se rellenara con ceros la
+    // curva caería a plomo cada vez que empieza un mes nuevo.
+    // Antes del primer snapshot no hay nada que arrastrar, así que esos meses
+    // siguen yendo a cero.
     filtered.push(
-      found ?? { mes: `${k}-01`, patrimonioNeto: 0, cuentas: 0, inversiones: 0, deudas: 0 },
+      ultimo
+        ? { ...ultimo, mes: `${k}-01` }
+        : { mes: `${k}-01`, patrimonioNeto: 0, cuentas: 0, inversiones: 0, deudas: 0 },
     )
     cur.setMonth(cur.getMonth() + 1)
   }
