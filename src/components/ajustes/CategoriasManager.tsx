@@ -87,6 +87,10 @@ export default function CategoriasManager() {
       GASTO: [],
       INGRESO: [],
       INVERSION: [],
+      // Una transferencia no se categoriza (es un traspaso entre cuentas
+      // propias), así que este cajón se queda siempre vacío. Está solo para
+      // cubrir el tipo; ni TIPOS ni GRUPOS lo ofrecen en la interfaz.
+      TRANSFERENCIA: [],
     }
     for (const c of categorias ?? []) map[c.tipo]?.push(c)
     return map
