@@ -102,6 +102,13 @@ export default function PatrimonioEvolucionWidget() {
 
   const t = chartTheme()
   const hover = puntoHover()
+  // Interpolación monótona en vez de `tension`: la curva de Bézier suavizada se
+  // pasa de largo entre dos puntos, así que en una serie con un escalón seguido
+  // de un tramo plano dibuja una joroba por encima del valor real y luego baja.
+  // Se veía como si el patrimonio cayera cuando en realidad se mantenía. Con
+  // 'monotone' la curva nunca sale del rango de los puntos que une, y la altura
+  // de la línea siempre coincide con la cifra del tooltip.
+  const curva = { cubicInterpolationMode: 'monotone' as const }
   const data = {
     labels,
     datasets: [
@@ -111,7 +118,7 @@ export default function PatrimonioEvolucionWidget() {
         borderColor: '#2f81f7',
         backgroundColor: 'rgba(47, 129, 247, 0.12)',
         fill: true,
-        tension: 0.25,
+        ...curva,
         pointRadius: puntos,
         pointBackgroundColor: '#2f81f7',
         borderWidth: 2,
@@ -123,7 +130,7 @@ export default function PatrimonioEvolucionWidget() {
         borderColor: '#1d9e75',
         backgroundColor: '#1d9e75',
         fill: false,
-        tension: 0.25,
+        ...curva,
         pointRadius: puntos,
         pointBackgroundColor: '#1d9e75',
         borderWidth: 2,
@@ -135,7 +142,7 @@ export default function PatrimonioEvolucionWidget() {
         borderColor: '#d29922',
         backgroundColor: '#d29922',
         fill: false,
-        tension: 0.25,
+        ...curva,
         pointRadius: puntos,
         pointBackgroundColor: '#d29922',
         borderWidth: 2,
