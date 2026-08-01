@@ -106,22 +106,26 @@ export default function Ingresos() {
 
   const t = chartTheme()
 
-  // Serie mensual continua sobre TODO el rango elegido: rellenamos a cero los
-  // meses sin ingresos para que la línea no se quede en un punto suelto.
+  // Serie mensual continua dentro del rango elegido: los meses SIN ingresos
+  // entre dos meses con ingresos sí se rellenan a cero (ahí el cero es un dato
+  // real). Lo que no se hace es prolongar la serie hasta hoy: los ceros del
+  // final hundían la curva en cuanto empezaba un mes nuevo, cuando lo único
+  // que pasa es que todavía no se ha registrado nada.
   const monthKey = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}`
-  const evoMap = new Map((evolucion.data ?? []).map((e) => [e.mes.slice(0, 7), e]))
-  const evoEnd = new Date(NOW.getFullYear(), NOW.getMonth(), 1)
+  const mesDe = (iso: string) => new Date(Number(iso.slice(0, 4)), Number(iso.slice(5, 7)) - 1, 1)
+  const evoDatos = evolucion.data ?? []
+  const evoMap = new Map(evoDatos.map((e) => [e.mes.slice(0, 7), e]))
+  const primerMes = evoDatos[0] ? mesDe(evoDatos[0].mes) : null
+  const ultimoMes = evoDatos.length > 0 ? mesDe(evoDatos[evoDatos.length - 1].mes) : null
+  const hoyMes = new Date(NOW.getFullYear(), NOW.getMonth(), 1)
+
+  const evoEnd = ultimoMes ?? hoyMes
   let evoStart: Date
   if (range === 'YTD') evoStart = new Date(NOW.getFullYear(), 0, 1)
   else if (range === '1A') evoStart = new Date(NOW.getFullYear(), NOW.getMonth() - 11, 1)
   else if (range === '5A') evoStart = new Date(NOW.getFullYear(), NOW.getMonth() - 59, 1)
-  else {
-    // Máx: desde el primer mes con ingresos hasta hoy.
-    const first = evolucion.data?.[0]
-    evoStart = first
-      ? new Date(Number(first.mes.slice(0, 4)), Number(first.mes.slice(5, 7)) - 1, 1)
-      : evoEnd
-  }
+  // Máx: desde el primer mes con ingresos.
+  else evoStart = primerMes ?? evoEnd
   const evoVacio = { total: 0, activo: 0, pasivo: 0, inversion: 0, sinClasificar: 0 }
   const evoFiltrada: (typeof evoVacio & { mes: string })[] = []
   const evoCur = new Date(evoStart)
@@ -181,14 +185,11 @@ export default function Ingresos() {
             <Skeleton key={i} width="100%" height={72} radius="var(--r-lg)" />
           ))}
         </div>
-      ) : total === 0 ? (
-        <div className="card">
-          <p style={{ color: 'var(--tx2)', fontSize: 14 }}>
-            No hay ingresos en el periodo seleccionado. Cambia el mes o el año, o añade
-            transacciones de tipo Ingreso y asigna una familia a sus categorías.
-          </p>
-        </div>
       ) : (
+        // Aunque el mes no tenga ingresos se siguen mostrando los KPIs (un
+        // total a cero también es información) y la evolución, que tiene su
+        // propio selector de rango y no depende del filtro de mes/año. Los dos
+        // bloques de abajo sí dependen del periodo y avisan por su cuenta.
         <>
           <StatGrid>
             <StatCard label="Total ingresos" value={formatEur(total)} color="var(--up)" />
@@ -302,17 +303,24 @@ export default function Ingresos() {
           <div className={s.charts}>
             <div className="card">
               <div className="sec-title">Reparto por familia</div>
-              <div className={s.chartBox}>
-                <DonutChart
-                  labels={donutFamilias.map((f) => f.label)}
-                  values={donutFamilias.map((f) => f.total ?? 0)}
-                  colors={donutFamilias.map((f) => f.color)}
-                  tooltipLabel={(c) => {
-                    const pct = total ? (Number(c.parsed) / total) * 100 : 0
-                    return ` ${c.label}: ${formatEur(Number(c.parsed))} · ${formatPct(pct)}`
-                  }}
-                />
-              </div>
+              {donutFamilias.length === 0 ? (
+                <p style={{ color: 'var(--tx2)', fontSize: 14 }}>
+                  Sin ingresos en el periodo. Añade transacciones de tipo Ingreso y asigna
+                  una familia a sus categorías.
+                </p>
+              ) : (
+                <div className={s.chartBox}>
+                  <DonutChart
+                    labels={donutFamilias.map((f) => f.label)}
+                    values={donutFamilias.map((f) => f.total ?? 0)}
+                    colors={donutFamilias.map((f) => f.color)}
+                    tooltipLabel={(c) => {
+                      const pct = total ? (Number(c.parsed) / total) * 100 : 0
+                      return ` ${c.label}: ${formatEur(Number(c.parsed))} · ${formatPct(pct)}`
+                    }}
+                  />
+                </div>
+              )}
             </div>
 
             <div className="card">

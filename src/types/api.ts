@@ -1,6 +1,9 @@
 // Tipos espejo de los DTOs del backend Spring (com.example.finanzas.dto.*)
 
-export type TipoMovimiento = 'GASTO' | 'INGRESO' | 'INVERSION'
+// TRANSFERENCIA es un traspaso entre dos cuentas propias. No es ingreso ni
+// gasto: el backend lo guarda como dos apuntes (salida negativa en origen,
+// entrada positiva en destino) con el mismo transferenciaId.
+export type TipoMovimiento = 'GASTO' | 'INGRESO' | 'INVERSION' | 'TRANSFERENCIA'
 // Familia de un ingreso según el esfuerzo (solo aplica a categorías de tipo INGRESO).
 export type OrigenIngreso = 'ACTIVO' | 'PASIVO' | 'INVERSION'
 export type Frecuencia = 'MENSUAL' | 'ANUAL'
@@ -55,12 +58,16 @@ export interface LoginResponse {
 export interface CuentaResponse {
   id: number
   nombreCuenta: string
-  importe: number
+  // Saldo de partida introducido al crear la cuenta.
+  saldoInicial: number
+  // Saldo actual = saldoInicial + suma de movimientos. Lo calcula el backend en
+  // cada lectura; no existe como columna, así que no puede desincronizarse.
+  saldo: number
 }
 
 export interface CuentaDTO {
   nombreCuenta: string
-  importe: number
+  saldoInicial: number
 }
 
 export interface TransaccionResponse {
@@ -72,11 +79,19 @@ export interface TransaccionResponse {
   importe: number
   descripcion: string
   fechaTransaccion: string // ISO date (yyyy-MM-dd)
+  // Solo en transferencias: identifica el par de apuntes.
+  transferenciaId: string | null
+  // La otra cuenta del traspaso (destino si importe < 0, origen si importe > 0).
+  cuentaContrapartidaId: number | null
+  cuentaContrapartidaNombre: string | null
 }
 
 export interface TransaccionDTO {
   tipoMovimiento: TipoMovimiento
-  categoriaId: number
+  // Obligatorio salvo en TRANSFERENCIA, donde debe omitirse.
+  categoriaId?: number
+  // Obligatorio solo en TRANSFERENCIA: la otra cuenta implicada.
+  cuentaDestinoId?: number
   importe: number
   descripcion?: string
   fecha: string

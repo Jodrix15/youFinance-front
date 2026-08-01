@@ -35,6 +35,8 @@
 .bGasto { color: var(--coral); background: rgba(216, 90, 48, 0.15); }
 .bIngreso { color: var(--teal); background: rgba(29, 158, 117, 0.15); }
 .bInversion { color: var(--blue); background: rgba(47, 129, 247, 0.15); }
+/* Traspaso entre cuentas propias: ni ingreso ni gasto, de ahí el color neutro. */
+.bTransferencia { color: var(--purple); background: rgba(139, 126, 200, 0.15); }
 .empty { color: var(--tx3); font-size: 13px; padding: 6px 0; }
 
 .sortable { cursor: pointer; user-select: none; }

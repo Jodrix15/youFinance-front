@@ -11,7 +11,7 @@ export default function CuentasWidget() {
   if (isError) return <WidgetError />
   if (!data || data.length === 0) return <WidgetEmpty message="Sin cuentas registradas." />
 
-  const total = sum(data.map((c) => c.importe))
+  const total = sum(data.map((c) => c.saldo))
 
   return (
     <>
@@ -26,7 +26,7 @@ export default function CuentasWidget() {
           {data.map((c) => (
             <tr key={c.id}>
               <td data-label="Cuenta">{c.nombreCuenta}</td>
-              <td data-label="Saldo" style={{ textAlign: 'right' }}>{formatEur(c.importe, true)}</td>
+              <td data-label="Saldo" style={{ textAlign: 'right' }}>{formatEur(c.saldo, true)}</td>
             </tr>
           ))}
         </tbody>
