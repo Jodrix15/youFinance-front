@@ -1,4 +1,4 @@
-import { Suspense, useEffect } from 'react'
+import { Suspense, useCallback, useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
@@ -6,6 +6,7 @@ import { financeApi } from '@/lib/finance'
 import { useLogros } from '@/hooks/useFinance'
 import { notifyOk } from '@/lib/notify'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
+import PullToRefresh from '@/components/ui/PullToRefresh'
 import Topbar from './Topbar'
 import s from './AppShell.module.css'
 
@@ -112,8 +113,14 @@ export default function AppShell() {
     }
   }, [queryClient])
 
+  // Tirar hacia abajo en móvil: marca todo como obsoleto, con lo que las
+  // consultas de la pantalla actual se vuelven a pedir y el resto se refrescará
+  // al entrar. No recarga la página, así que no se pierde el estado de la vista.
+  const refrescar = useCallback(() => queryClient.invalidateQueries(), [queryClient])
+
   return (
     <div className={s.shell}>
+      <PullToRefresh onRefresh={refrescar} />
       <Topbar />
       <main className={s.main}>
         {meta && (
