@@ -22,6 +22,8 @@ import { apiErrorMessage } from '@/lib/api'
 import Select from '@/components/ui/Select'
 import MoneyInput from '@/components/ui/MoneyInput'
 import CategoriaSelect from '@/components/ui/CategoriaSelect'
+import Toggle from '@/components/ui/Toggle'
+import { Tabs } from '@/components/ui/Tabs'
 import type { Frecuencia, GastoRecurrenteResponse } from '@/types/api'
 import { StatCard, StatGrid } from '@/components/ui/StatCard'
 import s from './Suscripciones.module.css'
@@ -38,7 +40,6 @@ const EMPTY = {
   frecuencia: 'MENSUAL' as Frecuencia,
   importe: '',
   fechaPrimerPago: today(),
-  active: true,
 }
 
 export default function Suscripciones() {
@@ -67,6 +68,7 @@ export default function Suscripciones() {
   const fieldErr = (f: string) =>
     err?.field === f ? <div className={s.fieldError}>{err.msg}</div> : null
   const [detailSub, setDetailSub] = useState<GastoRecurrenteResponse | null>(null)
+  const [detailTab, setDetailTab] = useState<'precio' | 'periodos'>('precio')
 
   if (isLoading || resumenLoading) {
     return (
@@ -114,6 +116,12 @@ export default function Suscripciones() {
     setFormOpen(true)
   }
 
+  /** El detalle siempre se abre por la pestaña de precios. */
+  function abrirDetalle(sub: GastoRecurrenteResponse) {
+    setDetailTab('precio')
+    setDetailSub(sub)
+  }
+
   function abrirEditar(sub: GastoRecurrenteResponse) {
     setEditId(sub.id)
     setForm({
@@ -122,7 +130,6 @@ export default function Suscripciones() {
       frecuencia: sub.frecuencia,
       importe: sub.importeActual != null ? String(sub.importeActual) : '',
       fechaPrimerPago: sub.fechaPrimerPago ?? today(),
-      active: sub.active,
     })
     setErr(null)
     setFormOpen(true)
@@ -164,8 +171,6 @@ export default function Suscripciones() {
           tipoPago: 'SUSCRIPCION',
           frecuencia: form.frecuencia,
           fechaPrimerPago: form.fechaPrimerPago,
-          fechaUltimoPago: form.fechaPrimerPago,
-          active: form.active,
           importeInicial: importe,
         })
       } else {
@@ -177,8 +182,8 @@ export default function Suscripciones() {
           tipoPago: 'SUSCRIPCION',
           frecuencia: form.frecuencia,
           fechaPrimerPago: form.fechaPrimerPago,
-          fechaUltimoPago: sub?.fechaUltimoPago ?? form.fechaPrimerPago,
-          active: form.active,
+          // El alta/baja se maneja con el interruptor de la tarjeta, no aquí.
+          active: sub?.active ?? true,
         })
         if (sub && Number(sub.importeActual || 0) !== importe) {
           await nuevoPrecio.mutateAsync({
@@ -190,6 +195,28 @@ export default function Suscripciones() {
       }
       notifyOk(editId === null ? 'Suscripción creada' : 'Suscripción actualizada')
       cerrarForm()
+    } catch (error) {
+      notifyError(error)
+    }
+  }
+
+  /**
+   * Alta/baja desde la tarjeta. El backend es quien sella la fecha de baja al
+   * desactivar y reinicia la de primer pago al reactivar; aquí solo se manda el
+   * resto de campos sin tocar.
+   */
+  async function toggleActiva(sub: GastoRecurrenteResponse, active: boolean) {
+    try {
+      await actualizarRecurrente.mutateAsync({
+        id: sub.id,
+        nombre: sub.nombre,
+        categoriaId: sub.categoriaId!,
+        tipoPago: 'SUSCRIPCION',
+        frecuencia: sub.frecuencia,
+        fechaPrimerPago: sub.fechaPrimerPago ?? today(),
+        active,
+      })
+      notifyOk(active ? 'Suscripción activada' : 'Suscripción dada de baja')
     } catch (error) {
       notifyError(error)
     }
@@ -227,6 +254,8 @@ export default function Suscripciones() {
   // ── Modal de historial ──
   const t = chartTheme()
   const hist = detailSub?.historial ?? []
+  // Del más reciente al más antiguo: la última alta es la que suele interesar.
+  const periodos = [...(detailSub?.periodos ?? [])].reverse()
   // Cada cambio de precio: valor anterior, valor nuevo y diferencia.
   const changes = hist.slice(1).map((h, i) => {
     const antes = Number(hist[i].importe || 0)
@@ -278,25 +307,35 @@ export default function Suscripciones() {
               <div
                 key={r.id}
                 className={`${s.subCard} ${r.active ? '' : s.inactive}`}
-                onClick={() => setDetailSub(r)}
+                onClick={() => abrirDetalle(r)}
                 role="button"
                 tabIndex={0}
-                onKeyDown={(e) => e.key === 'Enter' && setDetailSub(r)}
+                onKeyDown={(e) => e.key === 'Enter' && abrirDetalle(r)}
               >
                 <div className={s.subTop}>
                   <div>
                     <div className={s.subName}>{r.nombre}</div>
                     <div className={s.subCat}>{r.categoriaNombre ?? '—'}</div>
                   </div>
-                  <span className={r.active ? s.badgeOn : s.badgeOff}>
-                    {r.active ? 'Activa' : 'Inactiva'}
-                  </span>
+                  <Toggle
+                    checked={r.active}
+                    label={r.active ? 'Activa' : 'Inactiva'}
+                    ariaLabel={`Suscripción ${r.nombre}: activa o inactiva`}
+                    disabled={saving}
+                    onChange={(v) => toggleActiva(r, v)}
+                  />
                 </div>
                 <div className={s.subPrice}>
                   {formatEur(r.importeActual, true)}{' '}
                   <span>/{r.frecuencia === 'ANUAL' ? 'año' : 'mes'}</span>
                 </div>
-                <div className={s.subMeta}>Próximo pago: {r.fechaProximoPago ?? '—'}</div>
+                <div className={s.subMeta}>
+                  {r.active
+                    ? `Próximo pago: ${r.fechaProximoPago ?? '—'}`
+                    : r.fechaFin
+                      ? `Baja: ${r.fechaFin}`
+                      : 'Sin fecha de baja registrada'}
+                </div>
                 <div className={s.clickHint}>Clic para ver el historial de precios →</div>
                 <div className="card-actions">
                   <button
@@ -405,18 +444,11 @@ export default function Suscripciones() {
               />
               {fieldErr('fechaPrimerPago')}
             </div>
-            <label className={s.check}>
-              <input
-                type="checkbox"
-                checked={form.active}
-                onChange={(e) => set('active', e.target.checked)}
-              />
-              Activa
-            </label>
           </div>
           <p className={s.hint}>
             Si la categoría no existe, se crea automáticamente (tipo Gasto). Al
             actualizar, si cambias el importe se registra como nueva variación de precio.
+            El alta y la baja se gestionan con el interruptor de cada tarjeta.
           </p>
         </form>
       </Modal>
@@ -436,68 +468,100 @@ export default function Suscripciones() {
                 ×
               </button>
             </div>
-            <div className={s.modalSub}>
-              Historial de precios · {detailSub.categoriaNombre ?? 'Sin categoría'}
-            </div>
+            <div className={s.modalSub}>{detailSub.categoriaNombre ?? 'Sin categoría'}</div>
 
-            {hist.length === 0 ? (
+            {hist.length > 0 && (
+              <div className={s.histChart}>
+                <Line
+                  key={`line-${theme}-${detailSub.id}`}
+                  data={lineData}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: { display: false },
+                      tooltip: {
+                        callbacks: {
+                          label: (c) => ` ${formatEur(Number(c.parsed.y), true)}`,
+                        },
+                      },
+                    },
+                    scales: {
+                      x: { grid: { display: false }, ticks: { color: t.tick, font: { size: 11 } } },
+                      y: { grid: { color: t.grid }, ticks: { color: t.tick, font: { size: 11 } } },
+                    },
+                  }}
+                />
+              </div>
+            )}
+
+            <Tabs
+              className={s.detailTabs}
+              value={detailTab}
+              onChange={setDetailTab}
+              options={[
+                { value: 'precio', label: 'Variación de precio' },
+                { value: 'periodos', label: 'Altas y bajas' },
+              ]}
+            />
+
+            {detailTab === 'periodos' ? (
+              periodos.length === 0 ? (
+                <p style={{ color: 'var(--tx3)', fontSize: 13 }}>
+                  No hay altas ni bajas registradas para esta suscripción todavía.
+                </p>
+              ) : (
+                <table className={s.histTable}>
+                  <thead>
+                    <tr>
+                      <th>Alta</th>
+                      <th>Baja</th>
+                      <th>Último pago</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {periodos.map((p) => (
+                      <tr key={`${p.id}-${p.fechaInicio}`}>
+                        <td>{p.fechaInicio}</td>
+                        <td>{p.fechaFin ?? 'En curso'}</td>
+                        <td>{p.fechaUltimoPago ?? '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )
+            ) : hist.length === 0 ? (
               <p style={{ color: 'var(--tx3)', fontSize: 13 }}>
                 No hay historial de precios para esta suscripción todavía.
               </p>
+            ) : changes.length === 0 ? (
+              <p className={s.hint}>
+                Precio inicial {formatEur(hist[0].importe, true)} · sin subidas registradas.
+              </p>
             ) : (
-              <>
-                <div className={s.histChart}>
-                  <Line
-                    key={`line-${theme}-${detailSub.id}`}
-                    data={lineData}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                          callbacks: {
-                            label: (c) => ` ${formatEur(Number(c.parsed.y), true)}`,
-                          },
-                        },
-                      },
-                      scales: {
-                        x: { grid: { display: false }, ticks: { color: t.tick, font: { size: 11 } } },
-                        y: { grid: { color: t.grid }, ticks: { color: t.tick, font: { size: 11 } } },
-                      },
-                    }}
-                  />
-                </div>
-                {changes.length === 0 ? (
-                  <p className={s.hint}>
-                    Precio inicial {formatEur(hist[0].importe, true)} · sin subidas registradas.
-                  </p>
-                ) : (
-                  <table className={s.histTable}>
-                    <thead>
-                      <tr>
-                        <th>Fecha</th>
-                        <th>Valor anterior</th>
-                        <th>Valor nuevo</th>
-                        <th>Diferencia</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {changes.map((c, i) => (
-                        <tr key={i}>
-                          <td>{c.fecha}</td>
-                          <td>{formatEur(c.antes, true)}</td>
-                          <td>{formatEur(c.despues, true)}</td>
-                          <td style={{ color: c.diff >= 0 ? 'var(--down)' : 'var(--up)' }}>
-                            {c.diff >= 0 ? '+' : '−'}
-                            {formatEur(Math.abs(c.diff), true)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </>
+              <table className={s.histTable}>
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Valor anterior</th>
+                    <th>Valor nuevo</th>
+                    <th>Diferencia</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {changes.map((c, i) => (
+                    <tr key={i}>
+                      <td>{c.fecha}</td>
+                      <td>{formatEur(c.antes, true)}</td>
+                      <td>{formatEur(c.despues, true)}</td>
+                      <td style={{ color: c.diff >= 0 ? 'var(--down)' : 'var(--up)' }}>
+                        {c.diff >= 0 ? '+' : '−'}
+                        {formatEur(Math.abs(c.diff), true)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             )}
           </>
         )}

@@ -149,8 +149,6 @@ export const financeApi = {
     api
       .patch<RecurrentePrecioResponse>(`/api/recurrente/${id}/precio`, body)
       .then((r) => r.data),
-  registrarPagoRecurrente: (id: number) =>
-    api.post<GastoRecurrenteResponse>(`/api/recurrente/${id}/pago`).then((r) => r.data),
   removeRecurrente: (id: number) =>
     api.delete<void>(`/api/recurrente/${id}`).then((r) => r.data),
   categorias: () => api.get<CategoriaResponse[]>('/api/categoria').then((r) => r.data),
