@@ -14,6 +14,13 @@ body,
   min-height: 100vh;
 }
 
+/* El tirón hacia abajo lo gestiona PullToRefresh, así que se desactiva la
+   recarga nativa del navegador (que además recargaría la página entera). */
+html,
+body {
+  overscroll-behavior-y: contain;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background: var(--bg0);

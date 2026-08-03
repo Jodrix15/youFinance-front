@@ -1,0 +1,59 @@
+.wrap {
+  position: fixed;
+  /* Empieza justo por encima del borde: entra en pantalla al tirar. */
+  top: -38px;
+  left: 50%;
+  z-index: 900;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  margin-left: -17px;
+  border-radius: 50%;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  box-shadow: 0 4px 14px var(--shadow);
+  color: var(--tx2);
+}
+
+/* Al soltar, el indicador vuelve a su sitio acompañando al dedo. */
+.suelto {
+  transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+}
+
+.arrow {
+  transition: transform 0.1s linear;
+}
+
+/* Listo para soltar: el mismo acento que usa el resto de la app. */
+.listo {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: girar 0.7s linear infinite;
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2s;
+  }
+  .arrow,
+  .suelto {
+    transition: none;
+  }
+}

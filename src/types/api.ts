@@ -187,6 +187,15 @@ export interface RecurrentePrecioResponse {
   importe: number
 }
 
+/** Tramo de alta/baja de un recurrente. `fechaFin` null = sigue abierto. */
+export interface RecurrentePeriodoResponse {
+  id: number
+  fechaInicio: string
+  fechaFin: string | null
+  /** Último cobro vencido en el tramo; derivado del día de alta. */
+  fechaUltimoPago: string | null
+}
+
 export interface GastoRecurrenteResponse {
   id: number
   nombre: string
@@ -197,19 +206,22 @@ export interface GastoRecurrenteResponse {
   fechaPrimerPago: string | null
   fechaUltimoPago: string | null
   fechaProximoPago: string | null
+  /** Fecha de baja del último periodo. Null mientras esté activo. */
+  fechaFin: string | null
   active: boolean
   importeActual: number | null
   historial: RecurrentePrecioResponse[]
+  /** Todos los tramos de alta/baja, del más antiguo al más reciente. */
+  periodos: RecurrentePeriodoResponse[]
 }
 
+/** El alta siempre nace activa; la baja se hace luego con ActualizarGasto. */
 export interface CrearGasto {
   nombre: string
   categoriaId: number
   tipoPago: TipoPago
   frecuencia: Frecuencia
   fechaPrimerPago: string
-  fechaUltimoPago: string
-  active: boolean
   importeInicial: number
 }
 
@@ -219,7 +231,6 @@ export interface ActualizarGasto {
   tipoPago: TipoPago
   frecuencia: Frecuencia
   fechaPrimerPago: string
-  fechaUltimoPago: string
   active: boolean
 }
 

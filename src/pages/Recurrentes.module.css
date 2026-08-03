@@ -19,8 +19,6 @@
 .field input[aria-invalid='true'] { border-color: var(--down); }
 .field input[aria-invalid='true']:focus { box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15); }
 .fieldError { margin-top: 5px; font-size: 12px; color: var(--down); }
-.check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--tx1); margin-top: 26px; }
-.check input { width: 16px; height: 16px; accent-color: var(--accent); }
 
 .btn { padding: 9px 16px; font-size: 14px; font-weight: 600; background: var(--accent); color: #fff; border: none; border-radius: var(--r-md); cursor: pointer; transition: opacity 0.15s; }
 .btn:hover { opacity: 0.88; }
@@ -39,8 +37,6 @@
 .recTop { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 .recName { font-size: 15px; font-weight: 700; color: var(--tx1); }
 .recCat { font-size: 12px; color: var(--tx2); margin-top: 2px; }
-.badgeOn { flex-shrink: 0; font-size: 11px; font-weight: 600; color: var(--teal); background: rgba(29, 158, 117, 0.15); border: 1px solid rgba(29, 158, 117, 0.35); padding: 3px 9px; border-radius: 999px; }
-.badgeOff { flex-shrink: 0; font-size: 11px; font-weight: 600; color: var(--gray); background: var(--bg3); border: 1px solid var(--border2); padding: 3px 9px; border-radius: 999px; }
 .recPrice { font-size: 22px; font-weight: 700; color: var(--tx1); letter-spacing: -0.4px; }
 .recPrice span { font-size: 13px; font-weight: 500; color: var(--tx2); }
 .recMeta { font-size: 12px; color: var(--tx2); margin-top: 6px; }
@@ -54,6 +50,7 @@
 .closeBtn { flex-shrink: 0; width: 30px; height: 30px; border: none; background: var(--bg2); color: var(--tx2); border-radius: var(--r-md); cursor: pointer; font-size: 18px; line-height: 1; }
 .closeBtn:hover { background: var(--bg3); color: var(--tx1); }
 .histChart { height: 200px; margin-bottom: 14px; }
+.detailTabs { margin: 4px 0 14px; }
 .histTable { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 4px; }
 .histTable th { text-align: center; font-weight: 500; color: var(--tx2); padding: 7px 10px; border-bottom: 1px solid var(--border); }
 .histTable td { text-align: center; padding: 8px 10px; border-bottom: 1px solid var(--border); color: var(--tx1); }

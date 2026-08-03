@@ -22,6 +22,8 @@ import { apiErrorMessage } from '@/lib/api'
 import Select from '@/components/ui/Select'
 import MoneyInput from '@/components/ui/MoneyInput'
 import CategoriaSelect from '@/components/ui/CategoriaSelect'
+import Toggle from '@/components/ui/Toggle'
+import { Tabs } from '@/components/ui/Tabs'
 import type { Frecuencia, GastoRecurrenteResponse } from '@/types/api'
 import { StatCard, StatGrid } from '@/components/ui/StatCard'
 import s from './Recurrentes.module.css'
@@ -38,7 +40,6 @@ const EMPTY = {
   frecuencia: 'MENSUAL' as Frecuencia,
   importe: '',
   fechaPrimerPago: today(),
-  active: true,
 }
 
 export default function Recurrentes() {
@@ -67,6 +68,7 @@ export default function Recurrentes() {
   const fieldErr = (f: string) =>
     err?.field === f ? <div className={s.fieldError}>{err.msg}</div> : null
   const [detail, setDetail] = useState<GastoRecurrenteResponse | null>(null)
+  const [detailTab, setDetailTab] = useState<'precio' | 'periodos'>('precio')
 
   if (isLoading || resumenLoading) {
     return (
@@ -134,6 +136,8 @@ export default function Recurrentes() {
   }
 
   const hist = detail?.historial ?? []
+  // Del más reciente al más antiguo: la última alta es la que suele interesar.
+  const periodos = [...(detail?.periodos ?? [])].reverse()
   const changes = hist.slice(1).map((h, i) => {
     const antes = Number(hist[i].importe || 0)
     const despues = Number(h.importe || 0)
@@ -167,6 +171,12 @@ export default function Recurrentes() {
     setFormOpen(true)
   }
 
+  /** El detalle siempre se abre por la pestaña de precios. */
+  function abrirDetalle(rec: GastoRecurrenteResponse) {
+    setDetailTab('precio')
+    setDetail(rec)
+  }
+
   function abrirEditar(rec: GastoRecurrenteResponse) {
     setEditId(rec.id)
     setForm({
@@ -175,7 +185,6 @@ export default function Recurrentes() {
       frecuencia: rec.frecuencia,
       importe: rec.importeActual != null ? String(rec.importeActual) : '',
       fechaPrimerPago: rec.fechaPrimerPago ?? today(),
-      active: rec.active,
     })
     setErr(null)
     setFormOpen(true)
@@ -217,8 +226,6 @@ export default function Recurrentes() {
           tipoPago: 'RECURRENTE',
           frecuencia: form.frecuencia,
           fechaPrimerPago: form.fechaPrimerPago,
-          fechaUltimoPago: form.fechaPrimerPago,
-          active: form.active,
           importeInicial: importe,
         })
       } else {
@@ -230,8 +237,8 @@ export default function Recurrentes() {
           tipoPago: 'RECURRENTE',
           frecuencia: form.frecuencia,
           fechaPrimerPago: form.fechaPrimerPago,
-          fechaUltimoPago: rec?.fechaUltimoPago ?? form.fechaPrimerPago,
-          active: form.active,
+          // El alta/baja se maneja con el interruptor de la tarjeta, no aquí.
+          active: rec?.active ?? true,
         })
         if (rec && Number(rec.importeActual || 0) !== importe) {
           await nuevoPrecio.mutateAsync({
@@ -243,6 +250,28 @@ export default function Recurrentes() {
       }
       notifyOk(editId === null ? 'Gasto recurrente creado' : 'Gasto recurrente actualizado')
       cerrarForm()
+    } catch (error) {
+      notifyError(error)
+    }
+  }
+
+  /**
+   * Alta/baja desde la tarjeta. El backend es quien sella la fecha de baja al
+   * desactivar y reinicia la de primer pago al reactivar; aquí solo se manda el
+   * resto de campos sin tocar.
+   */
+  async function toggleActivo(rec: GastoRecurrenteResponse, active: boolean) {
+    try {
+      await actualizarRecurrente.mutateAsync({
+        id: rec.id,
+        nombre: rec.nombre,
+        categoriaId: rec.categoriaId!,
+        tipoPago: 'RECURRENTE',
+        frecuencia: rec.frecuencia,
+        fechaPrimerPago: rec.fechaPrimerPago ?? today(),
+        active,
+      })
+      notifyOk(active ? 'Gasto recurrente activado' : 'Gasto recurrente dado de baja')
     } catch (error) {
       notifyError(error)
     }
@@ -350,25 +379,35 @@ export default function Recurrentes() {
               <div
                 key={r.id}
                 className={`${s.recCard} ${r.active ? '' : s.inactive}`}
-                onClick={() => setDetail(r)}
+                onClick={() => abrirDetalle(r)}
                 role="button"
                 tabIndex={0}
-                onKeyDown={(e) => e.key === 'Enter' && setDetail(r)}
+                onKeyDown={(e) => e.key === 'Enter' && abrirDetalle(r)}
               >
                 <div className={s.recTop}>
                   <div>
                     <div className={s.recName}>{r.nombre}</div>
                     <div className={s.recCat}>{r.categoriaNombre ?? '—'}</div>
                   </div>
-                  <span className={r.active ? s.badgeOn : s.badgeOff}>
-                    {r.active ? 'Activo' : 'Inactivo'}
-                  </span>
+                  <Toggle
+                    checked={r.active}
+                    label={r.active ? 'Activo' : 'Inactivo'}
+                    ariaLabel={`Gasto recurrente ${r.nombre}: activo o inactivo`}
+                    disabled={saving}
+                    onChange={(v) => toggleActivo(r, v)}
+                  />
                 </div>
                 <div className={s.recPrice}>
                   {formatEur(r.importeActual, true)}{' '}
                   <span>/{r.frecuencia === 'ANUAL' ? 'año' : 'mes'}</span>
                 </div>
-                <div className={s.recMeta}>Próximo pago: {r.fechaProximoPago ?? '—'}</div>
+                <div className={s.recMeta}>
+                  {r.active
+                    ? `Próximo pago: ${r.fechaProximoPago ?? '—'}`
+                    : r.fechaFin
+                      ? `Baja: ${r.fechaFin}`
+                      : 'Sin fecha de baja registrada'}
+                </div>
                 <div className={s.clickHint}>Clic para ver el historial de precios →</div>
                 <div className="card-actions">
                   <button
@@ -477,18 +516,11 @@ export default function Recurrentes() {
               />
               {fieldErr('fechaPrimerPago')}
             </div>
-            <label className={s.check}>
-              <input
-                type="checkbox"
-                checked={form.active}
-                onChange={(e) => set('active', e.target.checked)}
-              />
-              Activo
-            </label>
           </div>
           <p className={s.hint}>
             Si la categoría no existe, se crea automáticamente (tipo Gasto). Al
             actualizar, si cambias el importe se registra como nueva variación de precio.
+            El alta y la baja se gestionan con el interruptor de cada tarjeta.
           </p>
         </form>
       </Modal>
@@ -504,68 +536,100 @@ export default function Recurrentes() {
                 ×
               </button>
             </div>
-            <div className={s.modalSub}>
-              Historial de precios · {detail.categoriaNombre ?? 'Sin categoría'}
-            </div>
+            <div className={s.modalSub}>{detail.categoriaNombre ?? 'Sin categoría'}</div>
 
-            {hist.length === 0 ? (
+            {hist.length > 0 && (
+              <div className={s.histChart}>
+                <Line
+                  key={`line-${theme}-${detail.id}`}
+                  data={lineData}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: { display: false },
+                      tooltip: {
+                        callbacks: {
+                          label: (c) => ` ${formatEur(Number(c.parsed.y), true)}`,
+                        },
+                      },
+                    },
+                    scales: {
+                      x: { grid: { display: false }, ticks: { color: t.tick, font: { size: 11 } } },
+                      y: { grid: { color: t.grid }, ticks: { color: t.tick, font: { size: 11 } } },
+                    },
+                  }}
+                />
+              </div>
+            )}
+
+            <Tabs
+              className={s.detailTabs}
+              value={detailTab}
+              onChange={setDetailTab}
+              options={[
+                { value: 'precio', label: 'Variación de precio' },
+                { value: 'periodos', label: 'Altas y bajas' },
+              ]}
+            />
+
+            {detailTab === 'periodos' ? (
+              periodos.length === 0 ? (
+                <p style={{ color: 'var(--tx3)', fontSize: 13 }}>
+                  No hay altas ni bajas registradas para este gasto todavía.
+                </p>
+              ) : (
+                <table className={s.histTable}>
+                  <thead>
+                    <tr>
+                      <th>Alta</th>
+                      <th>Baja</th>
+                      <th>Último pago</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {periodos.map((p) => (
+                      <tr key={`${p.id}-${p.fechaInicio}`}>
+                        <td>{p.fechaInicio}</td>
+                        <td>{p.fechaFin ?? 'En curso'}</td>
+                        <td>{p.fechaUltimoPago ?? '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )
+            ) : hist.length === 0 ? (
               <p style={{ color: 'var(--tx3)', fontSize: 13 }}>
                 No hay historial de precios para este gasto todavía.
               </p>
+            ) : changes.length === 0 ? (
+              <p className={s.hint}>
+                Precio inicial {formatEur(hist[0].importe, true)} · sin cambios registrados.
+              </p>
             ) : (
-              <>
-                <div className={s.histChart}>
-                  <Line
-                    key={`line-${theme}-${detail.id}`}
-                    data={lineData}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                          callbacks: {
-                            label: (c) => ` ${formatEur(Number(c.parsed.y), true)}`,
-                          },
-                        },
-                      },
-                      scales: {
-                        x: { grid: { display: false }, ticks: { color: t.tick, font: { size: 11 } } },
-                        y: { grid: { color: t.grid }, ticks: { color: t.tick, font: { size: 11 } } },
-                      },
-                    }}
-                  />
-                </div>
-                {changes.length === 0 ? (
-                  <p className={s.hint}>
-                    Precio inicial {formatEur(hist[0].importe, true)} · sin cambios registrados.
-                  </p>
-                ) : (
-                  <table className={s.histTable}>
-                    <thead>
-                      <tr>
-                        <th>Fecha</th>
-                        <th>Valor anterior</th>
-                        <th>Valor nuevo</th>
-                        <th>Diferencia</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {changes.map((c, i) => (
-                        <tr key={i}>
-                          <td>{c.fecha}</td>
-                          <td>{formatEur(c.antes, true)}</td>
-                          <td>{formatEur(c.despues, true)}</td>
-                          <td style={{ color: c.diff >= 0 ? 'var(--down)' : 'var(--up)' }}>
-                            {c.diff >= 0 ? '+' : '−'}
-                            {formatEur(Math.abs(c.diff), true)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </>
+              <table className={s.histTable}>
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Valor anterior</th>
+                    <th>Valor nuevo</th>
+                    <th>Diferencia</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {changes.map((c, i) => (
+                    <tr key={i}>
+                      <td>{c.fecha}</td>
+                      <td>{formatEur(c.antes, true)}</td>
+                      <td>{formatEur(c.despues, true)}</td>
+                      <td style={{ color: c.diff >= 0 ? 'var(--down)' : 'var(--up)' }}>
+                        {c.diff >= 0 ? '+' : '−'}
+                        {formatEur(Math.abs(c.diff), true)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             )}
           </>
         )}
