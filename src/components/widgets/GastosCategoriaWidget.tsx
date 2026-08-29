@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { useGastosCategoria } from '@/hooks/useFinance'
 import { PALETTE } from '@/lib/chartSetup'
 import { formatEur } from '@/lib/format'
@@ -67,6 +67,8 @@ export default function GastosCategoriaWidget() {
     color: d.color ?? PALETTE[idx % PALETTE.length],
   }))
 
+  const cell: React.CSSProperties = { padding: '4px 0', whiteSpace: 'nowrap' }
+
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {header}
@@ -87,10 +89,15 @@ export default function GastosCategoriaWidget() {
             display: 'flex',
             flexWrap: 'wrap',
             alignItems: 'center',
+            justifyContent: 'center',
             gap: 12,
           }}
         >
-          <div style={{ flex: '1 1 140px', minWidth: 120, height: 150 }}>
+          {/*
+            El rosco no crece: se dibuja como círculo centrado, así que ensanchar
+            su caja solo añadiría aire muerto entre el gráfico y la leyenda.
+          */}
+          <div style={{ flex: '0 1 170px', minWidth: 140, height: '100%', minHeight: 150 }}>
             <DonutChart
               legend={false}
               labels={items.map((i) => i.name)}
@@ -102,58 +109,77 @@ export default function GastosCategoriaWidget() {
               }}
             />
           </div>
-          <div style={{ flex: '1 1 190px', minWidth: 180, maxHeight: '100%', overflow: 'auto' }}>
+          {/*
+            Rejilla en vez de una fila flex por categoría: las columnas se ajustan
+            al contenido más ancho (y no al ancho del widget), así el nombre queda
+            pegado a su importe. `width: fit-content` deja el espacio sobrante para
+            el rosco en vez de repartirlo entre columnas.
+          */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'minmax(0, 1fr) max-content max-content',
+              alignItems: 'center',
+              columnGap: 16,
+              width: 'fit-content',
+              maxWidth: '100%',
+              maxHeight: '100%',
+              overflow: 'auto',
+              paddingRight: 6,
+              fontSize: 12,
+            }}
+          >
             {items.map((i) => (
-              <div
-                key={i.name}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  padding: '4px 0',
-                  fontSize: 12,
-                }}
-              >
+              <Fragment key={i.name}>
                 <span
-                  style={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: 2,
-                    background: i.color,
-                    flexShrink: 0,
-                  }}
-                />
-                <span
-                  style={{
-                    flex: 1,
-                    color: 'var(--tx1)',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
+                  style={{ ...cell, display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}
                   title={i.name}
                 >
-                  {i.name}
+                  <span
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: 2,
+                      background: i.color,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span
+                    style={{
+                      color: 'var(--tx1)',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {i.name}
+                  </span>
                 </span>
-                <span style={{ fontWeight: 600, color: 'var(--tx1)' }}>{formatEur(i.amount)}</span>
-                <span style={{ color: 'var(--tx2)', width: 38, textAlign: 'right' }}>{i.pct}%</span>
-              </div>
+                <span style={{ ...cell, fontWeight: 600, color: 'var(--tx1)', textAlign: 'right' }}>
+                  {formatEur(i.amount)}
+                </span>
+                <span style={{ ...cell, color: 'var(--tx2)', textAlign: 'right', width: 30 }}>
+                  {i.pct}%
+                </span>
+              </Fragment>
             ))}
             <div
               style={{
+                ...cell,
+                gridColumn: '1 / -1',
                 display: 'flex',
                 justifyContent: 'space-between',
-                gap: 8,
+                gap: 16,
+                borderTop: '1px solid var(--border)',
                 paddingTop: 8,
                 marginTop: 4,
-                borderTop: '1px solid var(--border)',
-                fontSize: 12,
                 fontWeight: 700,
                 color: 'var(--tx1)',
               }}
             >
               <span>Total</span>
-              <span>{formatEur(total)}</span>
+              {/* El hueco de la derecha alinea el importe con su columna (30 + gap). */}
+              <span style={{ paddingRight: 46 }}>{formatEur(total)}</span>
             </div>
           </div>
         </div>
