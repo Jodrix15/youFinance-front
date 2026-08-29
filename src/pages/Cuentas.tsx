@@ -6,7 +6,7 @@ import Skeleton from '@/components/ui/Skeleton'
 import EmptyState from '@/components/ui/EmptyState'
 import { useConfirm } from '@/components/ui/ConfirmProvider'
 import { notifyOk, notifyError } from '@/lib/notify'
-import { formatEur } from '@/lib/format'
+import { formatEur, formatPct } from '@/lib/format'
 import { apiErrorMessage } from '@/lib/api'
 import Select from '@/components/ui/Select'
 import MoneyInput from '@/components/ui/MoneyInput'
@@ -89,7 +89,9 @@ export default function Cuentas() {
   const ingresos = resumen?.ingresos ?? 0
   const gastos = resumen?.gastos ?? 0
   const diferencia = resumen?.diferencia ?? 0
-  const numeroCuentas = resumen?.numeroCuentas ?? list.length
+  // Tasa de ahorro del periodo: qué parte de los ingresos no se ha gastado.
+  // Sin ingresos no es calculable (dividir por 0), así que se muestra un guion.
+  const tasaAhorro = ingresos > 0 ? (diferencia / ingresos) * 100 : null
 
   async function submit(e: FormEvent) {
     e.preventDefault()
@@ -166,7 +168,11 @@ export default function Cuentas() {
           value={formatEur(diferencia)}
           color={diferencia >= 0 ? 'var(--up)' : 'var(--down)'}
         />
-        <StatCard label="Nº de cuentas" value={numeroCuentas} />
+        <StatCard
+          label="Tasa de ahorro"
+          value={formatPct(tasaAhorro)}
+          color={tasaAhorro == null ? undefined : tasaAhorro >= 0 ? 'var(--up)' : 'var(--down)'}
+        />
       </StatGrid>
 
       <div className={`card ${s.cardBlock}`}>

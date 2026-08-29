@@ -282,7 +282,7 @@ export default function Suscripciones() {
     <div>
 
       <StatGrid>
-        <StatCard label="Gasto mensual" value={formatEur(gastoMensual, true)} />
+        <StatCard label="Gasto de este mes" value={formatEur(gastoMensual, true)} />
         <StatCard label="Gasto anual" value={formatEur(gastoAnual)} />
         <StatCard label="Activas" value={numActivas} />
         <StatCard label="Total" value={numTotal} />
@@ -332,9 +332,9 @@ export default function Suscripciones() {
                 <div className={s.subMeta}>
                   {r.active
                     ? `Próximo pago: ${r.fechaProximoPago ?? '—'}`
-                    : r.fechaFin
-                      ? `Baja: ${r.fechaFin}`
-                      : 'Sin fecha de baja registrada'}
+                    : r.fechaUltimoPago
+                      ? `Último pago: ${r.fechaUltimoPago}`
+                      : 'Dada de baja sin ningún pago'}
                 </div>
                 <div className={s.clickHint}>Clic para ver el historial de precios →</div>
                 <div className="card-actions">

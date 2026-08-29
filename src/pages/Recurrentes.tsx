@@ -310,7 +310,7 @@ export default function Recurrentes() {
     <div>
 
       <StatGrid>
-        <StatCard label="Gasto mensual" value={formatEur(gastoMensual, true)} />
+        <StatCard label="Gasto de este mes" value={formatEur(gastoMensual, true)} />
         <StatCard label="Gasto anual" value={formatEur(gastoAnual)} />
         <StatCard label="Activos" value={numActivos} />
         <StatCard label="Total" value={numTotal} />
@@ -404,9 +404,9 @@ export default function Recurrentes() {
                 <div className={s.recMeta}>
                   {r.active
                     ? `Próximo pago: ${r.fechaProximoPago ?? '—'}`
-                    : r.fechaFin
-                      ? `Baja: ${r.fechaFin}`
-                      : 'Sin fecha de baja registrada'}
+                    : r.fechaUltimoPago
+                      ? `Último pago: ${r.fechaUltimoPago}`
+                      : 'Dado de baja sin ningún pago'}
                 </div>
                 <div className={s.clickHint}>Clic para ver el historial de precios →</div>
                 <div className="card-actions">
