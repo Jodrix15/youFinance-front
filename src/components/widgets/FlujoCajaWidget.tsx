@@ -3,7 +3,7 @@ import { Bar } from 'react-chartjs-2'
 import { useFlujoCaja } from '@/hooks/useFinance'
 import { useTheme } from '@/context/ThemeContext'
 import { chartTheme } from '@/lib/chartSetup'
-import { formatEur } from '@/lib/format'
+import { formatEur, formatPct } from '@/lib/format'
 import { WidgetError, WidgetLoading } from './WidgetState'
 
 const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
@@ -25,6 +25,9 @@ export default function FlujoCajaWidget() {
   const totalIngresos = sum(ingresos)
   const totalGastos = sum(gastos)
   const neto = totalIngresos - totalGastos
+  // Tasa de ahorro del año: parte de los ingresos que no se ha gastado.
+  // Sin ingresos no es calculable (dividir por 0), así que se muestra un guion.
+  const tasaAhorro = totalIngresos > 0 ? (neto / totalIngresos) * 100 : null
 
   const t = chartTheme()
   const data = {
@@ -102,9 +105,20 @@ export default function FlujoCajaWidget() {
         <span>Ingresos <strong style={{ color: 'var(--up)' }}>{formatEur(totalIngresos, true)}</strong></span>
         <span>Gastos <strong style={{ color: 'var(--down)' }}>{formatEur(totalGastos, true)}</strong></span>
         <span>
-          Neto{' '}
+          Ahorro{' '}
           <strong style={{ color: neto >= 0 ? 'var(--up)' : 'var(--down)' }}>
             {formatEur(neto, true)}
+          </strong>
+        </span>
+        <span title="Tasa de ahorro del año: ahorro sobre ingresos">
+          Tasa{' '}
+          <strong
+            style={{
+              color:
+                tasaAhorro == null ? 'var(--tx2)' : tasaAhorro >= 0 ? 'var(--up)' : 'var(--down)',
+            }}
+          >
+            {formatPct(tasaAhorro)}
           </strong>
         </span>
       </div>

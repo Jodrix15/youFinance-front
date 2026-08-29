@@ -178,9 +178,9 @@ export const financeApi = {
     api
       .get<FlujoCajaMesResponse[]>('/api/dashboard/flujo-caja', { params: { anio } })
       .then((r) => r.data),
-  gastosCategoria: () =>
+  gastosCategoria: (params?: { anio?: number; mes?: number }) =>
     api
-      .get<GastoCategoriaResponse[]>('/api/dashboard/gastos-categoria')
+      .get<GastoCategoriaResponse[]>('/api/dashboard/gastos-categoria', { params })
       .then((r) => r.data),
   gastosFijosMes: (anio: number, mes: number) =>
     api

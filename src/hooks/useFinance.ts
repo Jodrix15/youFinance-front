@@ -194,11 +194,13 @@ export function useFlujoCaja(anio: number) {
   })
 }
 
-// Total gastado por categoría, del backend.
-export function useGastosCategoria() {
+// Total gastado por categoría del periodo, del backend. Sin año ni mes,
+// devuelve el histórico completo.
+export function useGastosCategoria(params?: { anio?: number; mes?: number }) {
   return useQuery({
-    queryKey: ['dashboard', 'gastosCategoria'],
-    queryFn: financeApi.gastosCategoria,
+    queryKey: ['dashboard', 'gastosCategoria', params?.anio ?? null, params?.mes ?? null],
+    queryFn: () => financeApi.gastosCategoria(params),
+    placeholderData: keepPreviousData,
   })
 }
 
