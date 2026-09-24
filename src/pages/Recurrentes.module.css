@@ -57,3 +57,14 @@
 .histTable tbody tr:last-child td { border-bottom: none; }
 .histTable th:first-child, .histTable td:first-child { text-align: left; padding-left: 0; }
 .histTable th:last-child, .histTable td:last-child { padding-right: 0; }
+
+/* Bloques Fijos / Variables dentro de "Mis gastos recurrentes" */
+.groupHead { display: flex; align-items: baseline; gap: 10px; margin: 18px 0 10px; }
+.groupHead:first-of-type { margin-top: 4px; }
+.groupTitle { font-size: 13px; font-weight: 700; color: var(--tx1); text-transform: uppercase; letter-spacing: 0.04em; }
+.groupSub { font-size: 12px; color: var(--tx2); }
+.groupEmpty { font-size: 13px; color: var(--tx2); margin: 0 0 4px; }
+.filters { display: flex; flex-wrap: wrap; gap: 8px 12px; margin: 4px 0 6px; }
+.filters { gap: 10px 20px; }
+.filterGroup { display: flex; align-items: center; gap: 8px; }
+.filterLabel { font-size: 12px; font-weight: 600; color: var(--tx2); text-transform: uppercase; letter-spacing: 0.04em; }

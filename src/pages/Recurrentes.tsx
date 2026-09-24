@@ -24,7 +24,7 @@ import MoneyInput from '@/components/ui/MoneyInput'
 import CategoriaSelect from '@/components/ui/CategoriaSelect'
 import Toggle from '@/components/ui/Toggle'
 import { Tabs } from '@/components/ui/Tabs'
-import type { Frecuencia, GastoRecurrenteResponse } from '@/types/api'
+import type { Frecuencia, GastoRecurrenteResponse, TipoImporte } from '@/types/api'
 import { StatCard, StatGrid } from '@/components/ui/StatCard'
 import s from './Recurrentes.module.css'
 
@@ -38,6 +38,7 @@ const EMPTY = {
   nombre: '',
   catName: '',
   frecuencia: 'MENSUAL' as Frecuencia,
+  tipoImporte: 'FIJO' as TipoImporte,
   importe: '',
   fechaPrimerPago: today(),
 }
@@ -69,6 +70,9 @@ export default function Recurrentes() {
     err?.field === f ? <div className={s.fieldError}>{err.msg}</div> : null
   const [detail, setDetail] = useState<GastoRecurrenteResponse | null>(null)
   const [detailTab, setDetailTab] = useState<'precio' | 'periodos'>('precio')
+  // Filtros de la lista: por tipo de importe y por frecuencia, combinables.
+  const [filtroTipo, setFiltroTipo] = useState<'TODOS' | TipoImporte>('TODOS')
+  const [filtroFrec, setFiltroFrec] = useState<'TODAS' | Frecuencia>('TODAS')
 
   if (isLoading || resumenLoading) {
     return (
@@ -100,7 +104,16 @@ export default function Recurrentes() {
 
   const recs = (recurrentesData ?? []).filter((r) => r.tipoPago === 'RECURRENTE')
   const activos = recs.filter((r) => r.active)
+  // Si un gasto antiguo llegara sin tipo, se trata como fijo (igual que el backend).
+  const recsFiltrados = recs.filter((r) => filtroFrec === 'TODAS' || r.frecuencia === filtroFrec)
+  const fijos = recsFiltrados.filter((r) => r.tipoImporte !== 'VARIABLE')
+  const variables = recsFiltrados.filter((r) => r.tipoImporte === 'VARIABLE')
+  const verFijos = filtroTipo !== 'VARIABLE'
+  const verVariables = filtroTipo !== 'FIJO'
+  const sufijoFrec = filtroFrec === 'MENSUAL' ? ' mensuales' : filtroFrec === 'ANUAL' ? ' anuales' : ''
   const gastoMensual = resumen?.gastoMensual ?? 0
+  const gastoMensualFijo = resumen?.gastoMensualFijo ?? 0
+  const gastoMensualVariable = resumen?.gastoMensualVariable ?? 0
   const gastoAnual = resumen?.gastoAnual ?? 0
   const numActivos = resumen?.activos ?? activos.length
   const numTotal = resumen?.total ?? recs.length
@@ -183,6 +196,7 @@ export default function Recurrentes() {
       nombre: rec.nombre,
       catName: rec.categoriaNombre ?? '',
       frecuencia: rec.frecuencia,
+      tipoImporte: rec.tipoImporte ?? 'FIJO',
       importe: rec.importeActual != null ? String(rec.importeActual) : '',
       fechaPrimerPago: rec.fechaPrimerPago ?? today(),
     })
@@ -227,6 +241,7 @@ export default function Recurrentes() {
           frecuencia: form.frecuencia,
           fechaPrimerPago: form.fechaPrimerPago,
           importeInicial: importe,
+          tipoImporte: form.tipoImporte,
         })
       } else {
         const rec = recs.find((x) => x.id === editId)
@@ -239,6 +254,7 @@ export default function Recurrentes() {
           fechaPrimerPago: form.fechaPrimerPago,
           // El alta/baja se maneja con el interruptor de la tarjeta, no aquí.
           active: rec?.active ?? true,
+          tipoImporte: form.tipoImporte,
         })
         if (rec && Number(rec.importeActual || 0) !== importe) {
           await nuevoPrecio.mutateAsync({
@@ -270,6 +286,7 @@ export default function Recurrentes() {
         frecuencia: rec.frecuencia,
         fechaPrimerPago: rec.fechaPrimerPago ?? today(),
         active,
+        tipoImporte: rec.tipoImporte,
       })
       notifyOk(active ? 'Gasto recurrente activado' : 'Gasto recurrente dado de baja')
     } catch (error) {
@@ -299,6 +316,69 @@ export default function Recurrentes() {
     }
   }
 
+  function renderCard(r: GastoRecurrenteResponse) {
+    return (
+      <div
+        key={r.id}
+        className={`${s.recCard} ${r.active ? '' : s.inactive}`}
+        onClick={() => abrirDetalle(r)}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => e.key === 'Enter' && abrirDetalle(r)}
+      >
+        <div className={s.recTop}>
+          <div>
+            <div className={s.recName}>{r.nombre}</div>
+            <div className={s.recCat}>{r.categoriaNombre ?? '—'}</div>
+          </div>
+          <Toggle
+            checked={r.active}
+            label={r.active ? 'Activo' : 'Inactivo'}
+            ariaLabel={`Gasto recurrente ${r.nombre}: activo o inactivo`}
+            disabled={saving}
+            onChange={(v) => toggleActivo(r, v)}
+          />
+        </div>
+        <div className={s.recPrice}>
+          {formatEur(r.importeActual, true)}{' '}
+          <span>/{r.frecuencia === 'ANUAL' ? 'año' : 'mes'}</span>
+        </div>
+        <div className={s.recMeta}>
+          {r.active
+            ? `Próximo pago: ${r.fechaProximoPago ?? '—'}`
+            : r.fechaUltimoPago
+              ? `Último pago: ${r.fechaUltimoPago}`
+              : 'Dado de baja sin ningún pago'}
+        </div>
+        <div className={s.clickHint}>Clic para ver el historial de precios →</div>
+        <div className="card-actions">
+          <button
+            type="button"
+            className="btn-card"
+            onClick={(e) => {
+              e.stopPropagation()
+              abrirEditar(r)
+            }}
+            disabled={saving}
+          >
+            Editar
+          </button>
+          <button
+            type="button"
+            className={s.cardDeleteBtn}
+            onClick={(e) => {
+              e.stopPropagation()
+              deleteRec(r)
+            }}
+            disabled={saving}
+          >
+            Eliminar
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   const saving =
     crearRecurrente.isPending ||
     actualizarRecurrente.isPending ||
@@ -311,6 +391,8 @@ export default function Recurrentes() {
 
       <StatGrid>
         <StatCard label="Gasto de este mes" value={formatEur(gastoMensual, true)} />
+        <StatCard label="Fijos este mes" value={formatEur(gastoMensualFijo, true)} />
+        <StatCard label="Variables este mes" value={formatEur(gastoMensualVariable, true)} />
         <StatCard label="Gasto anual" value={formatEur(gastoAnual)} />
         <StatCard label="Activos" value={numActivos} />
         <StatCard label="Total" value={numTotal} />
@@ -374,68 +456,64 @@ export default function Recurrentes() {
             onAction={abrirNueva}
           />
         ) : (
-          <div className={s.recGrid}>
-            {recs.map((r) => (
-              <div
-                key={r.id}
-                className={`${s.recCard} ${r.active ? '' : s.inactive}`}
-                onClick={() => abrirDetalle(r)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => e.key === 'Enter' && abrirDetalle(r)}
-              >
-                <div className={s.recTop}>
-                  <div>
-                    <div className={s.recName}>{r.nombre}</div>
-                    <div className={s.recCat}>{r.categoriaNombre ?? '—'}</div>
-                  </div>
-                  <Toggle
-                    checked={r.active}
-                    label={r.active ? 'Activo' : 'Inactivo'}
-                    ariaLabel={`Gasto recurrente ${r.nombre}: activo o inactivo`}
-                    disabled={saving}
-                    onChange={(v) => toggleActivo(r, v)}
-                  />
-                </div>
-                <div className={s.recPrice}>
-                  {formatEur(r.importeActual, true)}{' '}
-                  <span>/{r.frecuencia === 'ANUAL' ? 'año' : 'mes'}</span>
-                </div>
-                <div className={s.recMeta}>
-                  {r.active
-                    ? `Próximo pago: ${r.fechaProximoPago ?? '—'}`
-                    : r.fechaUltimoPago
-                      ? `Último pago: ${r.fechaUltimoPago}`
-                      : 'Dado de baja sin ningún pago'}
-                </div>
-                <div className={s.clickHint}>Clic para ver el historial de precios →</div>
-                <div className="card-actions">
-                  <button
-                    type="button"
-                    className="btn-card"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      abrirEditar(r)
-                    }}
-                    disabled={saving}
-                  >
-                    Editar
-                  </button>
-                  <button
-                    type="button"
-                    className={s.cardDeleteBtn}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      deleteRec(r)
-                    }}
-                    disabled={saving}
-                  >
-                    Eliminar
-                  </button>
-                </div>
+          <>
+            <div className={s.filters}>
+              <div className={s.filterGroup}>
+                <span className={s.filterLabel}>Gastos</span>
+                <Tabs
+                  value={filtroTipo}
+                  onChange={setFiltroTipo}
+                  options={[
+                    { value: 'TODOS', label: 'Todos' },
+                    { value: 'FIJO', label: 'Fijos' },
+                    { value: 'VARIABLE', label: 'Variables' },
+                  ]}
+                />
               </div>
-            ))}
-          </div>
+              <div className={s.filterGroup}>
+                <span className={s.filterLabel}>Periodicidad</span>
+                <Tabs
+                  value={filtroFrec}
+                  onChange={setFiltroFrec}
+                  options={[
+                    { value: 'TODAS', label: 'Todas' },
+                    { value: 'MENSUAL', label: 'Mensuales' },
+                    { value: 'ANUAL', label: 'Anuales' },
+                  ]}
+                />
+              </div>
+            </div>
+            {verFijos && (
+              <>
+                <div className={s.groupHead}>
+                  <span className={s.groupTitle}>Fijos</span>
+                  <span className={s.groupSub}>Siempre el mismo importe · {fijos.length}</span>
+                </div>
+                {fijos.length === 0 ? (
+                  <p className={s.groupEmpty}>No tienes recurrentes fijos{sufijoFrec}.</p>
+                ) : (
+                  <div className={s.recGrid}>{fijos.map(renderCard)}</div>
+                )}
+              </>
+            )}
+            {verVariables && (
+              <>
+                <div className={s.groupHead}>
+                  <span className={s.groupTitle}>Variables</span>
+                  <span className={s.groupSub}>El importe cambia en cada cobro · {variables.length}</span>
+                </div>
+                {variables.length === 0 ? (
+                  <p className={s.groupEmpty}>
+                    {filtroFrec === 'TODAS'
+                      ? 'No tienes recurrentes variables. Marca como «Variable» los que cambian de un cobro a otro (luz, agua…).'
+                      : `No tienes recurrentes variables${sufijoFrec}.`}
+                  </p>
+                ) : (
+                  <div className={s.recGrid}>{variables.map(renderCard)}</div>
+                )}
+              </>
+            )}
+          </>
         )}
       </div>
 
@@ -516,11 +594,24 @@ export default function Recurrentes() {
               />
               {fieldErr('fechaPrimerPago')}
             </div>
+            <div className={s.field}>
+              <label>Tipo de importe</label>
+              <Select
+                value={form.tipoImporte}
+                options={[
+                  { value: 'FIJO', label: 'Fijo' },
+                  { value: 'VARIABLE', label: 'Variable' },
+                ]}
+                onChange={(v) => set('tipoImporte', v as TipoImporte)}
+                ariaLabel="Tipo de importe"
+              />
+            </div>
           </div>
           <p className={s.hint}>
             Si la categoría no existe, se crea automáticamente (tipo Gasto). Al
             actualizar, si cambias el importe se registra como nueva variación de precio.
-            El alta y la baja se gestionan con el interruptor de cada tarjeta.
+            El alta y la baja se gestionan con el interruptor de cada tarjeta. En los
+            variables (luz, agua…) indica el último importe cobrado.
           </p>
         </form>
       </Modal>
