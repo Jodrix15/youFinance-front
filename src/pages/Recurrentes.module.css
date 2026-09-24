@@ -68,3 +68,25 @@
 .filters { gap: 10px 20px; }
 .filterGroup { display: flex; align-items: center; gap: 8px; }
 .filterLabel { font-size: 12px; font-weight: 600; color: var(--tx2); text-transform: uppercase; letter-spacing: 0.04em; }
+
+/* Modal «Importe del mes» (recurrentes variables) */
+.btnMes { padding: 6px 12px; font-size: 13px; font-weight: 600; background: var(--accent); color: #fff; border: none; border-radius: var(--r-md); cursor: pointer; }
+.btnMes:hover { opacity: 0.88; }
+.btnMes:disabled { opacity: 0.55; cursor: default; }
+.fieldNote { font-size: 12px; color: var(--tx2); margin: 5px 0 0; }
+.yearNav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 13px; color: var(--tx1); }
+.yearNav button { width: 28px; height: 28px; background: none; border: 1px solid var(--border2); color: var(--tx1); border-radius: 6px; cursor: pointer; }
+.yearNav button:disabled { opacity: 0.35; cursor: default; }
+.monthGrid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.monthBtn { padding: 7px 0 6px; font-size: 12px; font-family: inherit; color: var(--tx1); background: var(--bg2); border: 1px solid var(--border2); border-radius: var(--r-md); cursor: pointer; text-align: center; }
+.monthBtn span { display: block; min-height: 12px; margin-top: 2px; font-size: 10px; color: var(--tx2); }
+.monthBtn:disabled { opacity: 0.4; cursor: default; }
+.monthHas { border-color: color-mix(in srgb, var(--accent) 35%, var(--border2)); }
+.monthSel { border-color: var(--accent); background: rgba(47, 129, 247, 0.15); }
+.prevRef { padding: 9px 12px; font-size: 13px; color: var(--tx1); background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-md); }
+@media (max-width: 520px) { .monthGrid { grid-template-columns: repeat(4, 1fr); } }
+/* Meses futuros: seleccionables, pero atenuados para distinguirlos */
+.monthFut { border-style: dashed; color: var(--tx2); }
+.monthFut.monthSel { color: var(--tx1); }
+.overwriteNote { margin: 10px 0 0; padding: 7px 10px; font-size: 12px; border-radius: var(--r-md); background: rgba(210, 153, 34, 0.12); color: #d29922; }
+.monthBtn:focus-visible, .yearNav button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }

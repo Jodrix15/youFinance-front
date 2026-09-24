@@ -33,6 +33,57 @@ const today = () => new Date().toISOString().slice(0, 10)
 
 /** Id del formulario del modal: permite que el botón de guardar viva en el footer. */
 const FORM_ID = 'form-recurrente'
+const FORM_MES_ID = 'form-importe-mes'
+const FORM_PRECIO_ID = 'form-nuevo-precio'
+
+const MESES_CORTOS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
+const MESES_LARGOS = [
+  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+]
+const claveMes = (anio: number, mes: number) => `${anio}-${String(mes + 1).padStart(2, '0')}`
+
+/** Importe registrado por mes ('YYYY-MM' → importe). Si un mes tuviera varios, gana el más reciente. */
+function importesPorMes(rec: GastoRecurrenteResponse): Map<string, number> {
+  const mapa = new Map<string, number>()
+  ;[...rec.historial]
+    .sort((a, b) => a.fechaVariacionImporte.localeCompare(b.fechaVariacionImporte) || a.id - b.id)
+    .forEach((h) => mapa.set(h.fechaVariacionImporte.slice(0, 7), Number(h.importe || 0)))
+  return mapa
+}
+
+/**
+ * Importe que se cobra en un mes (mismo criterio que el back):
+ * - Fijos: el precio en vigor el día de cobro de ese mes.
+ * - Variables: solo el apuntado para ese mes; sin importe, 0.
+ * Sin historial, el importe actual.
+ */
+function importeEnMes(rec: GastoRecurrenteResponse, anio: number, mes: number): number {
+  if (rec.tipoImporte === 'VARIABLE') return importesPorMes(rec).get(claveMes(anio, mes)) ?? 0
+  const ordenado = [...rec.historial].sort(
+    (a, b) => a.fechaVariacionImporte.localeCompare(b.fechaVariacionImporte) || a.id - b.id,
+  )
+  if (ordenado.length === 0) return Number(rec.importeActual || 0)
+  const previos = ordenado.filter((h) => h.fechaVariacionImporte <= fechaCobro(rec, anio, mes))
+  const elegido = previos.length ? previos[previos.length - 1] : ordenado[0]
+  return Number(elegido.importe || 0)
+}
+
+/** Precio con el que se dio de alta: el primero del historial (por fecha, luego id). */
+function precioInicial(rec: GastoRecurrenteResponse): number | null {
+  if (rec.historial.length === 0) return rec.importeActual
+  const primero = [...rec.historial].sort(
+    (a, b) => a.fechaVariacionImporte.localeCompare(b.fechaVariacionImporte) || a.id - b.id,
+  )[0]
+  return Number(primero.importe)
+}
+
+/** Fecha del cobro de ese mes: el día ancla del primer pago, recortado a la longitud del mes. */
+function fechaCobro(rec: GastoRecurrenteResponse, anio: number, mes: number) {
+  const dia = rec.fechaPrimerPago ? Number(rec.fechaPrimerPago.slice(8, 10)) : 1
+  const ultimo = new Date(anio, mes + 1, 0).getDate()
+  return `${claveMes(anio, mes)}-${String(Math.min(dia, ultimo)).padStart(2, '0')}`
+}
 
 const EMPTY = {
   nombre: '',
@@ -73,6 +124,18 @@ export default function Recurrentes() {
   // Filtros de la lista: por tipo de importe y por frecuencia, combinables.
   const [filtroTipo, setFiltroTipo] = useState<'TODOS' | TipoImporte>('TODOS')
   const [filtroFrec, setFiltroFrec] = useState<'TODAS' | Frecuencia>('TODAS')
+  // Modal «Importe del mes» (solo variables): mes elegido + importe.
+  const hoy = new Date()
+  const [mesRec, setMesRec] = useState<GastoRecurrenteResponse | null>(null)
+  const [mesAnio, setMesAnio] = useState(hoy.getFullYear())
+  const [mesSel, setMesSel] = useState({ anio: hoy.getFullYear(), mes: hoy.getMonth() })
+  const [mesImporte, setMesImporte] = useState('')
+  const [mesErr, setMesErr] = useState<string | null>(null)
+  // Modal «Nuevo precio» (solo fijos): importe nuevo + fecha del cambio.
+  const [precioRec, setPrecioRec] = useState<GastoRecurrenteResponse | null>(null)
+  const [precioImporte, setPrecioImporte] = useState('')
+  const [precioFecha, setPrecioFecha] = useState(today())
+  const [precioErr, setPrecioErr] = useState<{ field: string; msg: string } | null>(null)
 
   if (isLoading || resumenLoading) {
     return (
@@ -123,16 +186,17 @@ export default function Recurrentes() {
   const porMesMensual: number[] = new Array(12).fill(0)
   const porMesAnual: number[] = new Array(12).fill(0)
   const anualesPorMes: string[][] = Array.from({ length: 12 }, () => [])
+  // Cada mes con su propio importe (en los variables puede cambiar mes a mes).
+  const anioGrafica = new Date().getFullYear()
   activos.forEach((r) => {
-    const imp = Number(r.importeActual || 0)
     if (r.frecuencia === 'MENSUAL') {
-      for (let m = 0; m < 12; m++) porMesMensual[m] += imp
+      for (let m = 0; m < 12; m++) porMesMensual[m] += importeEnMes(r, anioGrafica, m)
     } else {
       const fecha = r.fechaProximoPago ?? r.fechaPrimerPago
       if (fecha) {
         const m = Number(fecha.slice(5, 7)) - 1
         if (m >= 0 && m < 12) {
-          porMesAnual[m] += imp
+          porMesAnual[m] += importeEnMes(r, anioGrafica, m)
           anualesPorMes[m].push(r.nombre)
         }
       }
@@ -197,7 +261,8 @@ export default function Recurrentes() {
       catName: rec.categoriaNombre ?? '',
       frecuencia: rec.frecuencia,
       tipoImporte: rec.tipoImporte ?? 'FIJO',
-      importe: rec.importeActual != null ? String(rec.importeActual) : '',
+      // Al editar, el campo es el precio del ALTA (primero del historial), para corregirlo.
+      importe: String(precioInicial(rec) ?? ''),
       fechaPrimerPago: rec.fechaPrimerPago ?? today(),
     })
     setErr(null)
@@ -255,14 +320,9 @@ export default function Recurrentes() {
           // El alta/baja se maneja con el interruptor de la tarjeta, no aquí.
           active: rec?.active ?? true,
           tipoImporte: form.tipoImporte,
+          // Solo se manda si cambia: corrige el precio del alta, no crea un cambio de precio.
+          importeInicial: rec && precioInicial(rec) !== importe ? importe : undefined,
         })
-        if (rec && Number(rec.importeActual || 0) !== importe) {
-          await nuevoPrecio.mutateAsync({
-            id: editId,
-            importe,
-            fechaVariacionImporte: today(),
-          })
-        }
       }
       notifyOk(editId === null ? 'Gasto recurrente creado' : 'Gasto recurrente actualizado')
       cerrarForm()
@@ -316,6 +376,72 @@ export default function Recurrentes() {
     }
   }
 
+  function abrirImporteMes(rec: GastoRecurrenteResponse) {
+    const anio = hoy.getFullYear()
+    const mes = hoy.getMonth()
+    setMesRec(rec)
+    setMesAnio(anio)
+    elegirMes(rec, anio, mes)
+  }
+
+  function elegirMes(rec: GastoRecurrenteResponse, anio: number, mes: number) {
+    setMesSel({ anio, mes })
+    const actual = importesPorMes(rec).get(claveMes(anio, mes))
+    setMesImporte(actual != null ? String(actual) : '')
+    setMesErr(null)
+  }
+
+  function cerrarImporteMes() {
+    setMesRec(null)
+    setMesErr(null)
+  }
+
+  async function guardarImporteMes(e: FormEvent) {
+    e.preventDefault()
+    if (!mesRec) return
+    const importe = num(mesImporte)
+    if (Number.isNaN(importe) || importe <= 0) return setMesErr('El importe debe ser mayor que 0.')
+    try {
+      await nuevoPrecio.mutateAsync({
+        id: mesRec.id,
+        importe,
+        fechaVariacionImporte: fechaCobro(mesRec, mesSel.anio, mesSel.mes),
+      })
+      notifyOk(`Importe de ${MESES_LARGOS[mesSel.mes]} guardado`)
+      cerrarImporteMes()
+    } catch (error) {
+      notifyError(error)
+    }
+  }
+
+  function abrirNuevoPrecio(rec: GastoRecurrenteResponse) {
+    setPrecioRec(rec)
+    setPrecioImporte('')
+    setPrecioFecha(today())
+    setPrecioErr(null)
+  }
+
+  function cerrarNuevoPrecio() {
+    setPrecioRec(null)
+    setPrecioErr(null)
+  }
+
+  async function guardarNuevoPrecio(e: FormEvent) {
+    e.preventDefault()
+    if (!precioRec) return
+    const importe = num(precioImporte)
+    if (Number.isNaN(importe) || importe <= 0)
+      return setPrecioErr({ field: 'importe', msg: 'El importe debe ser mayor que 0.' })
+    if (!precioFecha) return setPrecioErr({ field: 'fecha', msg: 'Indica la fecha del cambio.' })
+    try {
+      await nuevoPrecio.mutateAsync({ id: precioRec.id, importe, fechaVariacionImporte: precioFecha })
+      notifyOk('Nuevo precio guardado')
+      cerrarNuevoPrecio()
+    } catch (error) {
+      notifyError(error)
+    }
+  }
+
   function renderCard(r: GastoRecurrenteResponse) {
     return (
       <div
@@ -352,6 +478,31 @@ export default function Recurrentes() {
         </div>
         <div className={s.clickHint}>Clic para ver el historial de precios →</div>
         <div className="card-actions">
+          {r.tipoImporte === 'VARIABLE' ? (
+            <button
+              type="button"
+              className={s.btnMes}
+              onClick={(e) => {
+                e.stopPropagation()
+                abrirImporteMes(r)
+              }}
+              disabled={saving}
+            >
+              Importe del mes
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={s.btnMes}
+              onClick={(e) => {
+                e.stopPropagation()
+                abrirNuevoPrecio(r)
+              }}
+              disabled={saving}
+            >
+              Nuevo precio
+            </button>
+          )}
           <button
             type="button"
             className="btn-card"
@@ -393,7 +544,7 @@ export default function Recurrentes() {
         <StatCard label="Gasto de este mes" value={formatEur(gastoMensual, true)} />
         <StatCard label="Fijos este mes" value={formatEur(gastoMensualFijo, true)} />
         <StatCard label="Variables este mes" value={formatEur(gastoMensualVariable, true)} />
-        <StatCard label="Gasto anual" value={formatEur(gastoAnual)} />
+        <StatCard label={`Gasto anual ${new Date().getFullYear()}`} value={formatEur(gastoAnual)} />
         <StatCard label="Activos" value={numActivos} />
         <StatCard label="Total" value={numTotal} />
       </StatGrid>
@@ -571,7 +722,7 @@ export default function Recurrentes() {
               />
             </div>
             <div className={s.field}>
-              <label>Importe</label>
+              <label>{editId !== null ? 'Precio inicial' : 'Importe'}</label>
               <MoneyInput
                 step="0.01"
                 min="0"
@@ -581,6 +732,12 @@ export default function Recurrentes() {
                 onChange={(e) => set('importe', e.target.value)}
               />
               {fieldErr('importe')}
+              {editId !== null && (
+                <div className={s.fieldNote}>
+                  Solo para corregir el precio del alta. Para un cambio de precio usa «
+                  {form.tipoImporte === 'VARIABLE' ? 'Importe del mes' : 'Nuevo precio'}».
+                </div>
+              )}
             </div>
           </div>
           <div className={s.row}>
@@ -610,10 +767,225 @@ export default function Recurrentes() {
           <p className={s.hint}>
             Si la categoría no existe, se crea automáticamente (tipo Gasto). Al
             actualizar, si cambias el importe se registra como nueva variación de precio.
-            El alta y la baja se gestionan con el interruptor de cada tarjeta. En los
-            variables (luz, agua…) indica el último importe cobrado.
+            El alta y la baja se gestionan con el interruptor de cada tarjeta. Los cambios
+            de importe se hacen desde la tarjeta: «Nuevo precio» en los fijos e «Importe del
+            mes» en los variables.
           </p>
         </form>
+      </Modal>
+
+      <Modal
+        open={mesRec !== null}
+        onClose={cerrarImporteMes}
+        maxWidth={520}
+        title={mesRec ? `Importe del mes · ${mesRec.nombre}` : ''}
+        footer={
+          <>
+            <button type="button" className="btn-ghost" onClick={cerrarImporteMes} disabled={saving}>
+              Cancelar
+            </button>
+            <button className={s.btn} type="submit" form={FORM_MES_ID} disabled={saving}>
+              {nuevoPrecio.isPending ? 'Guardando…' : 'Guardar'}
+            </button>
+          </>
+        }
+      >
+        {mesRec && (() => {
+          const porMes = importesPorMes(mesRec)
+          const existente = porMes.get(claveMes(mesSel.anio, mesSel.mes))
+          const prev = mesSel.mes === 0
+            ? { anio: mesSel.anio - 1, mes: 11 }
+            : { anio: mesSel.anio, mes: mesSel.mes - 1 }
+          const importePrev = porMes.get(claveMes(prev.anio, prev.mes))
+          const valor = num(mesImporte)
+          const diff = importePrev != null && !Number.isNaN(valor) ? valor - importePrev : null
+          const anioActual = hoy.getFullYear()
+          const mesActual = hoy.getMonth()
+          return (
+            <form id={FORM_MES_ID} onSubmit={guardarImporteMes} noValidate>
+              <div className={s.field}>
+                <label>Mes</label>
+                <div className={s.yearNav}>
+                  <button type="button" onClick={() => setMesAnio((a) => a - 1)} aria-label="Año anterior">‹</button>
+                  <strong>{mesAnio}</strong>
+                  <button
+                    type="button"
+                    onClick={() => setMesAnio((a) => Math.min(anioActual + 1, a + 1))}
+                    disabled={mesAnio >= anioActual + 1}
+                    aria-label="Año siguiente"
+                  >
+                    ›
+                  </button>
+                </div>
+                <div className={s.monthGrid}>
+                  {MESES_CORTOS.map((nombre, m) => {
+                    // Se pueden apuntar meses futuros: el importe entra en vigor al llegar ese mes.
+                    const futuro = mesAnio > anioActual || (mesAnio === anioActual && m > mesActual)
+                    const v = porMes.get(claveMes(mesAnio, m))
+                    const sel = mesSel.anio === mesAnio && mesSel.mes === m
+                    return (
+                      <button
+                        key={m}
+                        type="button"
+                        aria-pressed={sel}
+                        className={`${s.monthBtn} ${v != null ? s.monthHas : ''} ${sel ? s.monthSel : ''} ${futuro ? s.monthFut : ''}`}
+                        onClick={() => elegirMes(mesRec, mesAnio, m)}
+                      >
+                        {nombre}
+                        <span>{v != null ? `${Math.round(v)} ${currencySymbol()}` : ''}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+              <div className={s.row} style={{ marginTop: 16 }}>
+                <div className={s.field}>
+                  <label>
+                    Importe de {MESES_LARGOS[mesSel.mes]} {mesSel.anio}
+                  </label>
+                  <MoneyInput
+                    key={claveMes(mesSel.anio, mesSel.mes)}
+                    autoFocus
+                    step="0.01"
+                    min="0"
+                    placeholder="0,00"
+                    value={mesImporte}
+                    aria-invalid={mesErr !== null}
+                    onChange={(e) => {
+                      setMesImporte(e.target.value)
+                      setMesErr(null)
+                    }}
+                  />
+                  {mesErr && <div className={s.fieldError}>{mesErr}</div>}
+                </div>
+                <div className={s.field}>
+                  <label>Mes anterior</label>
+                  <div className={s.prevRef}>
+                    {importePrev == null ? (
+                      `Sin importe en ${MESES_CORTOS[prev.mes]}`
+                    ) : (
+                      <>
+                        {MESES_CORTOS[prev.mes]}: {formatEur(importePrev, true)}
+                        {diff !== null && (
+                          <strong style={{ color: diff > 0 ? 'var(--down)' : 'var(--up)' }}>
+                            {' · '}
+                            {diff >= 0 ? '+' : '−'}
+                            {formatEur(Math.abs(diff), true)}
+                            {importePrev > 0 && ` (${diff >= 0 ? '+' : '−'}${Math.abs((diff / importePrev) * 100).toFixed(0)}%)`}
+                          </strong>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+              {existente != null && (
+                <p className={s.overwriteNote}>
+                  {MESES_LARGOS[mesSel.mes][0].toUpperCase() + MESES_LARGOS[mesSel.mes].slice(1)} ya tiene{' '}
+                  {formatEur(existente, true)}: al guardar se sustituye.
+                </p>
+              )}
+              <p className={s.hint}>
+                Se guarda como el cobro del {fechaCobro(mesRec, mesSel.anio, mesSel.mes)}.
+                {(mesSel.anio > anioActual || (mesSel.anio === anioActual && mesSel.mes > mesActual)) &&
+                  ` Es un mes futuro: este importe pasará a ser el vigente el 1 de ${MESES_LARGOS[mesSel.mes]}.`}
+              </p>
+            </form>
+          )
+        })()}
+      </Modal>
+
+      <Modal
+        open={precioRec !== null}
+        onClose={cerrarNuevoPrecio}
+        maxWidth={480}
+        title={precioRec ? `Nuevo precio · ${precioRec.nombre}` : ''}
+        footer={
+          <>
+            <button type="button" className="btn-ghost" onClick={cerrarNuevoPrecio} disabled={saving}>
+              Cancelar
+            </button>
+            <button className={s.btn} type="submit" form={FORM_PRECIO_ID} disabled={saving}>
+              {nuevoPrecio.isPending ? 'Guardando…' : 'Guardar'}
+            </button>
+          </>
+        }
+      >
+        {precioRec && (() => {
+          const actual = Number(precioRec.importeActual ?? 0)
+          const valor = num(precioImporte)
+          const diff = !Number.isNaN(valor) && actual > 0 ? valor - actual : null
+          // A qué cobro afecta: el del mes de la fecha si el cambio llega antes
+          // (o el mismo día) que el cobro; si no, el del mes siguiente.
+          let aviso = ''
+          if (precioFecha && precioRec.frecuencia === 'MENSUAL') {
+            const anio = Number(precioFecha.slice(0, 4))
+            const mes = Number(precioFecha.slice(5, 7)) - 1
+            const cobro = fechaCobro(precioRec, anio, mes)
+            if (precioFecha <= cobro) {
+              aviso = `Se aplica ya al cobro del ${cobro}.`
+            } else {
+              const sig = mes === 11 ? { anio: anio + 1, mes: 0 } : { anio, mes: mes + 1 }
+              aviso = `El cobro del ${cobro} va con el precio anterior; el nuevo empieza en el del ${fechaCobro(precioRec, sig.anio, sig.mes)}.`
+            }
+          } else if (precioFecha) {
+            aviso = 'Se aplicará al primer cobro anual a partir de esa fecha.'
+          }
+          if (precioFecha > today()) {
+            aviso += ` La tarjeta seguirá mostrando ${formatEur(actual, true)} hasta el ${precioFecha}.`
+          }
+          return (
+            <form id={FORM_PRECIO_ID} onSubmit={guardarNuevoPrecio} noValidate>
+              <div className={s.row}>
+                <div className={s.field}>
+                  <label>Nuevo importe</label>
+                  <MoneyInput
+                    autoFocus
+                    step="0.01"
+                    min="0"
+                    placeholder="0,00"
+                    value={precioImporte}
+                    aria-invalid={precioErr?.field === 'importe'}
+                    onChange={(e) => {
+                      setPrecioImporte(e.target.value)
+                      setPrecioErr(null)
+                    }}
+                  />
+                  {precioErr?.field === 'importe' && <div className={s.fieldError}>{precioErr.msg}</div>}
+                </div>
+                <div className={s.field}>
+                  <label>Precio actual</label>
+                  <div className={s.prevRef}>
+                    {formatEur(actual, true)}
+                    {diff !== null && (
+                      <strong style={{ color: diff > 0 ? 'var(--down)' : 'var(--up)' }}>
+                        {' · '}
+                        {diff >= 0 ? '+' : '−'}
+                        {formatEur(Math.abs(diff), true)}
+                      </strong>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className={s.row}>
+                <div className={s.field}>
+                  <label>Fecha del cambio</label>
+                  <input
+                    type="date"
+                    value={precioFecha}
+                    aria-invalid={precioErr?.field === 'fecha'}
+                    onChange={(e) => {
+                      setPrecioFecha(e.target.value)
+                      setPrecioErr(null)
+                    }}
+                  />
+                  {precioErr?.field === 'fecha' && <div className={s.fieldError}>{precioErr.msg}</div>}
+                </div>
+              </div>
+              {aviso && <p className={s.hint}>{aviso}</p>}
+            </form>
+          )
+        })()}
       </Modal>
 
       <Modal open={detail !== null} onClose={() => setDetail(null)} maxWidth={560}>
