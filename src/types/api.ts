@@ -8,6 +8,8 @@ export type TipoMovimiento = 'GASTO' | 'INGRESO' | 'INVERSION' | 'TRANSFERENCIA'
 export type OrigenIngreso = 'ACTIVO' | 'PASIVO' | 'INVERSION'
 export type Frecuencia = 'MENSUAL' | 'ANUAL'
 export type TipoPago = 'RECURRENTE' | 'SUSCRIPCION'
+/** Fijo: siempre el mismo importe. Variable: cambia en cada cobro (luz, agua...). */
+export type TipoImporte = 'FIJO' | 'VARIABLE'
 export type Role = 'ROLE_ADMIN' | 'ROLE_USER'
 export type Moneda = 'EUR' | 'USD' | 'GBP'
 
@@ -132,6 +134,9 @@ export interface ResumenDeuda {
 
 export interface ResumenRecurrente {
   gastoMensual: number
+  /** Desglose de gastoMensual por tipo de importe. */
+  gastoMensualFijo: number
+  gastoMensualVariable: number
   gastoAnual: number
   activos: number
   total: number
@@ -203,6 +208,7 @@ export interface GastoRecurrenteResponse {
   categoriaNombre: string | null
   tipoPago: TipoPago
   frecuencia: Frecuencia
+  tipoImporte: TipoImporte
   fechaPrimerPago: string | null
   fechaUltimoPago: string | null
   fechaProximoPago: string | null
@@ -223,6 +229,8 @@ export interface CrearGasto {
   frecuencia: Frecuencia
   fechaPrimerPago: string
   importeInicial: number
+  /** Opcional: si no se manda, el backend lo da de alta como FIJO. */
+  tipoImporte?: TipoImporte
 }
 
 export interface ActualizarGasto {
@@ -232,6 +240,8 @@ export interface ActualizarGasto {
   frecuencia: Frecuencia
   fechaPrimerPago: string
   active: boolean
+  /** Opcional: si no se manda, el backend conserva el actual. */
+  tipoImporte?: TipoImporte
 }
 
 export interface NuevoPrecioRequest {
