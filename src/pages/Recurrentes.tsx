@@ -189,13 +189,18 @@ export default function Recurrentes() {
   // Cada mes con su propio importe (en los variables puede cambiar mes a mes).
   const anioGrafica = new Date().getFullYear()
   activos.forEach((r) => {
+    // Nada antes del primer pago (mismo criterio que el back).
+    const inicio = r.fechaPrimerPago ? r.fechaPrimerPago.slice(0, 7) : null
+    const antesDelAlta = (m: number) => inicio !== null && claveMes(anioGrafica, m) < inicio
     if (r.frecuencia === 'MENSUAL') {
-      for (let m = 0; m < 12; m++) porMesMensual[m] += importeEnMes(r, anioGrafica, m)
+      for (let m = 0; m < 12; m++) {
+        if (!antesDelAlta(m)) porMesMensual[m] += importeEnMes(r, anioGrafica, m)
+      }
     } else {
       const fecha = r.fechaProximoPago ?? r.fechaPrimerPago
       if (fecha) {
         const m = Number(fecha.slice(5, 7)) - 1
-        if (m >= 0 && m < 12) {
+        if (m >= 0 && m < 12 && !antesDelAlta(m)) {
           porMesAnual[m] += importeEnMes(r, anioGrafica, m)
           anualesPorMes[m].push(r.nombre)
         }
