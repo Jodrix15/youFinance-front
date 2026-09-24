@@ -242,6 +242,8 @@ export interface ActualizarGasto {
   active: boolean
   /** Opcional: si no se manda, el backend conserva el actual. */
   tipoImporte?: TipoImporte
+  /** Opcional: corrige el precio del alta (primer precio del historial). */
+  importeInicial?: number
 }
 
 export interface NuevoPrecioRequest {
