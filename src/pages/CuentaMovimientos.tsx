@@ -36,5 +36,8 @@ export default function CuentaMovimientos() {
     )
   }
 
-  return <CuentaMovimientosDetalle cuenta={cuenta} onBack={() => navigate('/cuentas')} />
+  // Una cuenta de inversión vuelve a su detalle en Inversiones.
+  const volver =
+    cuenta.tipo === 'INVERSION' ? `/inversiones/cuentas/${cuenta.id}` : '/cuentas'
+  return <CuentaMovimientosDetalle cuenta={cuenta} onBack={() => navigate(volver)} />
 }

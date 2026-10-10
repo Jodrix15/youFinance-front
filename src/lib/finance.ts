@@ -7,6 +7,9 @@ import type {
   CrearGasto,
   CuentaDTO,
   CuentaResponse,
+  CuentaInversionResponse,
+  RendimientoMes,
+  RetiradaDTO,
   DistribucionPatrimonioResponse,
   FlujoCajaMesResponse,
   GastoCategoriaResponse,
@@ -127,6 +130,18 @@ export const financeApi = {
     api.put<InversionResponse>(`/api/inversion/${id}`, body).then((r) => r.data),
   eliminarInversion: (id: number) =>
     api.delete<void>(`/api/inversion/${id}`).then((r) => r.data),
+  asignarCuentaInversion: (id: number, cuentaId: number | null) =>
+    api.put<InversionResponse>(`/api/inversion/${id}/cuenta`, { cuentaId }).then((r) => r.data),
+  cuentasInversion: () =>
+    api.get<CuentaInversionResponse[]>('/api/inversion/cuentas').then((r) => r.data),
+  cuentaInversion: (cuentaId: number) =>
+    api.get<CuentaInversionResponse>(`/api/inversion/cuentas/${cuentaId}`).then((r) => r.data),
+  rendimientosCuenta: (cuentaId: number) =>
+    api
+      .get<RendimientoMes[]>(`/api/inversion/cuentas/${cuentaId}/rendimientos`)
+      .then((r) => r.data),
+  retirarDeCuenta: (cuentaId: number, body: RetiradaDTO) =>
+    api.post<void>(`/api/inversion/cuentas/${cuentaId}/retirada`, body).then((r) => r.data),
   deudas: () => api.get<DeudaResponse[]>('/api/deuda').then((r) => r.data),
   deudaResumen: () => api.get<ResumenDeuda>('/api/deuda/resumen').then((r) => r.data),
   crearDeuda: (body: DeudaDTO) =>

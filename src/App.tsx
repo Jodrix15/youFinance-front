@@ -10,6 +10,7 @@ import Dashboard from '@/pages/Dashboard'
 // Páginas secundarias cargadas bajo demanda (code-splitting): reducen el bundle
 // inicial; el Suspense/ErrorBoundary del AppShell cubre su carga.
 const Inversiones = lazy(() => import('@/pages/Inversiones'))
+const InversionCuentaDetalle = lazy(() => import('@/pages/InversionCuentaDetalle'))
 const Deudas = lazy(() => import('@/pages/Deudas'))
 const Suscripciones = lazy(() => import('@/pages/Suscripciones'))
 const Recurrentes = lazy(() => import('@/pages/Recurrentes'))
@@ -65,6 +66,7 @@ export default function App() {
         <Route path="/suscripciones" element={<Suscripciones />} />
         <Route path="/deudas" element={<Deudas />} />
         <Route path="/inversiones" element={<Inversiones />} />
+        <Route path="/inversiones/cuentas/:id" element={<InversionCuentaDetalle />} />
         <Route path="/presupuestos" element={<Presupuestos />} />
         <Route path="/ajustes" element={<Ajustes />} />
         <Route path="/logros" element={<Logros />} />

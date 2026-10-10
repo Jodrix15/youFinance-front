@@ -19,6 +19,7 @@ import MoneyInput from '@/components/ui/MoneyInput'
 import CategoriaSelect from '@/components/ui/CategoriaSelect'
 import { FAMILIA_OPTIONS } from '@/lib/familias'
 import type { CuentaResponse, Movimiento, OrigenIngreso, TipoMovimiento } from '@/types/api'
+import PosicionesCuentaEditable from '@/components/inversiones/PosicionesCuentaEditable'
 import s from '@/pages/Movimientos.module.css'
 
 const num = (v: string) => (v.trim() === '' ? NaN : Number(v.replace(',', '.')))
@@ -307,7 +308,7 @@ export default function CuentaMovimientosDetalle({ cuenta, onBack }: Props) {
     <div>
       <div className={s.header} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
         <div><h1 style={{ marginBottom: 0 }}>{cuenta.nombreCuenta}</h1><p style={{ marginTop: 2 }}>Movimientos de esta cuenta</p></div>
-        <button type="button" className={s.btnGhost} onClick={onBack}>← Cuentas</button>
+        <button type="button" className={s.btnGhost} onClick={onBack}>← {cuenta.tipo === 'INVERSION' ? cuenta.nombreCuenta : 'Cuentas'}</button>
       </div>
       <div className={s.kpis}>
         <div className={s.kpi}><div className={s.kpiLabel}>Saldo actual</div><div className={s.kpiValue}>{formatEur(cuenta.saldo)}</div></div>
@@ -315,6 +316,7 @@ export default function CuentaMovimientosDetalle({ cuenta, onBack }: Props) {
         <div className={s.kpi}><div className={s.kpiLabel}>Gastos</div><div className={s.kpiValue} style={{ color: 'var(--down)' }}>{formatEur(gastos)}</div></div>
         <div className={s.kpi}><div className={s.kpiLabel}>Diferencia</div><div className={s.kpiValue} style={{ color: diferencia >= 0 ? 'var(--up)' : 'var(--down)' }}>{formatEur(diferencia)}</div></div>
       </div>
+      {cuenta.tipo === 'INVERSION' && <PosicionesCuentaEditable cuentaId={cuenta.id} />}
       <div className={`card ${s.cardBlock}`}>
         <div className={s.cardHead}>
           <div className="sec-title" style={{ marginBottom: 0 }}>Historial ({totalElementos})</div>

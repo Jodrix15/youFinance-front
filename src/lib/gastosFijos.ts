@@ -39,7 +39,14 @@ export function calcularGastosFijos(
   const recurrentesMensuales = sum(
     activos.filter((r) => r.tipoPago === 'RECURRENTE').map(mensualRecurrente),
   )
-  const cuotasDeuda = sum((deudas ?? []).map(mensualDeuda))
+  // Solo deudas ya iniciadas y no vencidas (fechas ISO: se comparan como string).
+  const hoy = new Date().toISOString().slice(0, 10)
+  const cuotasDeuda = sum(
+    (deudas ?? [])
+      .filter((d) => !d.fechaInicio || d.fechaInicio <= hoy)
+      .filter((d) => !d.fechaVencimiento || d.fechaVencimiento >= hoy)
+      .map(mensualDeuda),
+  )
   return {
     suscripciones,
     recurrentesMensuales,

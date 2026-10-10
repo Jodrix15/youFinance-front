@@ -6,15 +6,20 @@ export function StatGrid({ children }: { children: ReactNode }) {
   return <div className={s.grid}>{children}</div>
 }
 
-/** Tarjeta KPI: etiqueta + valor destacado. `color` tiñe solo el valor. */
+/**
+ * Tarjeta KPI: etiqueta + valor destacado. `color` tiñe solo el valor.
+ * `hint` es una línea secundaria opcional bajo el valor.
+ */
 export function StatCard({
   label,
   value,
   color,
+  hint,
 }: {
   label: string
   value: ReactNode
   color?: string
+  hint?: ReactNode
 }) {
   return (
     <div className={s.card}>
@@ -22,6 +27,7 @@ export function StatCard({
       <div className={s.value} style={color ? { color } : undefined}>
         {value}
       </div>
+      {hint != null && <div className={s.hint}>{hint}</div>}
     </div>
   )
 }

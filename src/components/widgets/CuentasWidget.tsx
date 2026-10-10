@@ -5,7 +5,9 @@ import { WidgetEmpty, WidgetError, WidgetLoading } from './WidgetState'
 const sum = (arr: number[]) => arr.reduce((a, b) => a + Number(b || 0), 0)
 
 export default function CuentasWidget() {
-  const { data, isLoading, isError } = useCuentas()
+  const { data: todas, isLoading, isError } = useCuentas()
+  // Solo corrientes: el efectivo de las cuentas de inversión está en Inversiones.
+  const data = todas?.filter((c) => c.tipo !== 'INVERSION')
 
   if (isLoading) return <WidgetLoading />
   if (isError) return <WidgetError />

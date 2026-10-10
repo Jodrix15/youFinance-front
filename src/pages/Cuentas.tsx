@@ -84,7 +84,8 @@ export default function Cuentas() {
   }
   if (isError) return <p style={{ color: 'var(--down)' }}>{apiErrorMessage(error)}</p>
 
-  const list = cuentas ?? []
+  // Las cuentas de inversión se gestionan desde Inversiones.
+  const list = (cuentas ?? []).filter((c) => c.tipo !== 'INVERSION')
   const total = resumen?.totalCuentas ?? 0
   const ingresos = resumen?.ingresos ?? 0
   const gastos = resumen?.gastos ?? 0
