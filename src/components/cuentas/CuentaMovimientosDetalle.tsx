@@ -105,9 +105,17 @@ export default function CuentaMovimientosDetalle({ cuenta, onBack }: Props) {
     return n !== '' && !(categorias ?? []).some((c) => c.tipo === form.tipo && c.nombre.toLowerCase() === n)
   }, [categorias, form.catName, form.tipo])
 
+  // En una cuenta de inversión los ingresos (intereses, dividendos…) son
+  // siempre de la familia Inversión: solo se ofrecen esas categorías y las
+  // nuevas se crean con esa familia.
+  const ingresoDeInversion = cuenta.tipo === 'INVERSION' && form.tipo === 'INGRESO'
+
   const catsDelTipo = useMemo(
-    () => (categorias ?? []).filter((c) => c.tipo === form.tipo),
-    [categorias, form.tipo],
+    () =>
+      (categorias ?? []).filter(
+        (c) => c.tipo === form.tipo && (!ingresoDeInversion || c.origenIngreso === 'INVERSION'),
+      ),
+    [categorias, form.tipo, ingresoDeInversion],
   )
 
   const esTransferencia = form.tipo === 'TRANSFERENCIA'
@@ -174,7 +182,7 @@ export default function CuentaMovimientosDetalle({ cuenta, onBack }: Props) {
 
   function abrirNueva() {
     setEditId(null)
-    setForm({ ...EMPTY })
+    setForm({ ...EMPTY, tipo: cuenta.tipo === 'INVERSION' ? 'INGRESO' : EMPTY.tipo })
     setErr(null)
     setFormOpen(true)
   }
@@ -229,7 +237,8 @@ export default function CuentaMovimientosDetalle({ cuenta, onBack }: Props) {
     const created = await crearCategoria.mutateAsync({
       nombre: name.trim(),
       tipo: form.tipo,
-      origenIngreso: form.tipo === 'INGRESO' ? form.origen : undefined,
+      origenIngreso:
+        form.tipo !== 'INGRESO' ? undefined : ingresoDeInversion ? 'INVERSION' : form.origen,
     })
     return created.id
   }
@@ -251,6 +260,19 @@ export default function CuentaMovimientosDetalle({ cuenta, onBack }: Props) {
         return setErr({ field: 'cuentaDestino', msg: 'Tiene que ser una cuenta distinta a esta.' })
     } else if (!catName) {
       return setErr({ field: 'catName', msg: 'Indica una categoría.' })
+    } else if (ingresoDeInversion) {
+      // Una categoría de ingreso de otra familia con ese nombre no se puede reutilizar aquí.
+      const otraFamilia = (categorias ?? []).find(
+        (c) =>
+          c.tipo === 'INGRESO' &&
+          c.origenIngreso !== 'INVERSION' &&
+          c.nombre.toLowerCase() === catName.toLowerCase(),
+      )
+      if (otraFamilia)
+        return setErr({
+          field: 'catName',
+          msg: `«${otraFamilia.nombre}» no es de la familia Inversión. En una cuenta de inversión usa una categoría de Inversión o crea una nueva.`,
+        })
     }
 
     try {
@@ -273,7 +295,14 @@ export default function CuentaMovimientosDetalle({ cuenta, onBack }: Props) {
   }
 
   const saving = crear.isPending || actualizar.isPending || crearCategoria.isPending || eliminar.isPending
-  const tipoOptions: TipoMovimiento[] = form.tipo === 'INVERSION' ? [...TIPOS, 'INVERSION'] : TIPOS
+  // En cuentas de inversión solo ingresos y transferencias: el "gasto" ahí es
+  // aportar a una posición (se hace desde Posiciones). Al editar un apunte
+  // antiguo de otro tipo se mantiene su tipo en la lista para no perderlo.
+  const tiposBase: TipoMovimiento[] =
+    cuenta.tipo === 'INVERSION' ? ['INGRESO', 'TRANSFERENCIA'] : TIPOS
+  const tipoOptions: TipoMovimiento[] = tiposBase.includes(form.tipo)
+    ? tiposBase
+    : [...tiposBase, form.tipo]
 
   if (query.isLoading && !data) {
     return (
@@ -502,7 +531,7 @@ export default function CuentaMovimientosDetalle({ cuenta, onBack }: Props) {
               Necesitas al menos otra cuenta para poder hacer una transferencia.
             </p>
           )}
-          {form.tipo === 'INGRESO' && categoriaEsNueva && (
+          {form.tipo === 'INGRESO' && categoriaEsNueva && !ingresoDeInversion && (
             <div className={s.row}>
               <div className={s.field}>
                 <label>Familia del ingreso</label>
