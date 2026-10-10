@@ -4,6 +4,7 @@ import EmptyState from '@/components/ui/EmptyState'
 import type { InversionResponse } from '@/types/api'
 import PosicionesTabla from './PosicionesTabla'
 import { EditarInversionModal, NuevaInversionModal, useBorrarPosicion } from './InversionModals'
+import { RepartirInversionModal } from './RepartirInversionModal'
 import s from '@/pages/Inversiones.module.css'
 
 /**
@@ -16,6 +17,7 @@ export default function PosicionesCuentaEditable({ cuentaId }: { cuentaId: numbe
   const { borrar, isPending } = useBorrarPosicion()
   const [editando, setEditando] = useState<InversionResponse | null>(null)
   const [nuevaOpen, setNuevaOpen] = useState(false)
+  const [separando, setSeparando] = useState<InversionResponse | null>(null)
 
   const posiciones = useMemo(
     () => (inversiones ?? []).filter((i) => i.cuentaId === cuentaId),
@@ -46,7 +48,15 @@ export default function PosicionesCuentaEditable({ cuentaId }: { cuentaId: numbe
         />
       )}
       <NuevaInversionModal open={nuevaOpen} onClose={() => setNuevaOpen(false)} cuentaIdInicial={cuentaId} />
-      <EditarInversionModal inversion={editando} onClose={() => setEditando(null)} />
+      <EditarInversionModal
+        inversion={editando}
+        onClose={() => setEditando(null)}
+        onSeparar={(i) => {
+          setEditando(null)
+          setSeparando(i)
+        }}
+      />
+      <RepartirInversionModal inversion={separando} onClose={() => setSeparando(null)} />
     </div>
   )
 }

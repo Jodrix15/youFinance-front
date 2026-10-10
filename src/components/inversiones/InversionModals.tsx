@@ -72,11 +72,14 @@ export function NuevaInversionModal({
   open,
   onClose,
   cuentaIdInicial,
+  categoriaInicial,
 }: {
   open: boolean
   onClose: () => void
   /** Cuenta preseleccionada (al abrir desde el detalle de una cuenta). */
   cuentaIdInicial?: number | null
+  /** Categoría preseleccionada (al añadir desde un grupo de la vista por categoría). */
+  categoriaInicial?: string | null
 }) {
   const { data: categorias } = useCategorias()
   const crearInversion = useCrearInversion()
@@ -101,13 +104,13 @@ export function NuevaInversionModal({
     const inicial = cuentaIdInicial ? String(cuentaIdInicial) : SIN_CUENTA
     setCuentaId(inicial)
     setDesdeEfectivo(inicial !== SIN_CUENTA && efectivoDe(inicial) > 0)
-    setCatName('')
+    setCatName(categoriaInicial ?? '')
     setActivo('')
     setAportado('')
     setTotal('')
     setErr(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, cuentaIdInicial])
+  }, [open, cuentaIdInicial, categoriaInicial])
 
   const saving = crearInversion.isPending || crearCategoria.isPending
   const fieldErr = (f: string) =>
@@ -262,10 +265,13 @@ export function NuevaInversionModal({
 export function EditarInversionModal({
   inversion,
   onClose,
+  onSeparar,
 }: {
   /** Posición a editar; null = cerrado. */
   inversion: InversionResponse | null
   onClose: () => void
+  /** Abre el reparto de la posición en varias cuentas/activos. */
+  onSeparar?: (i: InversionResponse) => void
 }) {
   const actualizarInversion = useActualizarInversion()
   const asignarCuenta = useAsignarCuentaInversion()
@@ -355,16 +361,28 @@ export function EditarInversionModal({
       title={`Actualizar ${inversion ? nombreActivo(inversion) : 'inversión'}`}
       footer={
         <div className={s.footSplit}>
-          <button
-            type="button"
-            className={s.btnDanger}
-            disabled={saving}
-            onClick={async () => {
-              if (inversion && (await borrar(inversion))) onClose()
-            }}
-          >
-            Eliminar
-          </button>
+          <div className={s.headActions}>
+            <button
+              type="button"
+              className={s.btnDanger}
+              disabled={saving}
+              onClick={async () => {
+                if (inversion && (await borrar(inversion))) onClose()
+              }}
+            >
+              Eliminar
+            </button>
+            {onSeparar && inversion && Number(inversion.capitalTotal) > 0 && (
+              <button
+                type="button"
+                className={s.btnGhost}
+                disabled={saving}
+                onClick={() => onSeparar(inversion)}
+              >
+                Separar…
+              </button>
+            )}
+          </div>
           <div className={s.headActions}>
             <button type="button" className="btn-ghost" onClick={onClose} disabled={saving}>
               Cancelar

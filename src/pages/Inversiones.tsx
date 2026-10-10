@@ -16,9 +16,14 @@ import { apiErrorMessage } from '@/lib/api'
 import { StatCard, StatGrid } from '@/components/ui/StatCard'
 import CuentaInversionModal from '@/components/inversiones/CuentaInversionModal'
 import {
+  EditarInversionModal,
   NuevaInversionModal,
 } from '@/components/inversiones/InversionModals'
-import PosicionesAgrupadas from '@/components/inversiones/PosicionesAgrupadas'
+import PosicionesAgrupadas, { type GrupoPosiciones } from '@/components/inversiones/PosicionesAgrupadas'
+import {
+  RepartirInversionModal,
+  SinCuentaModal,
+} from '@/components/inversiones/RepartirInversionModal'
 import { colorCuenta, nombreActivo, plataformaLabel } from '@/components/inversiones/common'
 import type { CuentaInversionResponse, InversionResponse } from '@/types/api'
 import s from './Inversiones.module.css'
@@ -66,6 +71,23 @@ export default function Inversiones() {
 
   const [nuevaCuentaOpen, setNuevaCuentaOpen] = useState(false)
   const [nuevaOpen, setNuevaOpen] = useState(false)
+  const [sinCuentaOpen, setSinCuentaOpen] = useState(false)
+  // Edición desde la vista de posiciones (por categoría o por cuenta).
+  const [editando, setEditando] = useState<InversionResponse | null>(null)
+  const [separando, setSeparando] = useState<InversionResponse | null>(null)
+  const [nuevaPreset, setNuevaPreset] = useState<{ cuentaId?: number; categoria?: string }>({})
+
+  function abrirNueva(preset: { cuentaId?: number; categoria?: string } = {}) {
+    setNuevaPreset(preset)
+    setNuevaOpen(true)
+  }
+
+  /** "+ Añadir a …" de un grupo: preselecciona su categoría o su cuenta. */
+  function anadirAGrupo(g: GrupoPosiciones) {
+    if (agrupacion === 'clase') abrirNueva({ categoria: g.items[0]?.categoriaNombre ?? undefined })
+    else if (g.key.startsWith('c-')) abrirNueva({ cuentaId: Number(g.key.slice(2)) })
+    else abrirNueva()
+  }
 
   const list = useMemo(() => inversiones ?? [], [inversiones])
   const cuentasList = useMemo(() => cuentas ?? [], [cuentas])
@@ -332,7 +354,7 @@ export default function Inversiones() {
                 + Nueva cuenta
               </button>
             ) : (
-              <button type="button" className={`${s.btn} ${s.btnCompact}`} onClick={() => setNuevaOpen(true)}>
+              <button type="button" className={`${s.btn} ${s.btnCompact}`} onClick={() => abrirNueva()}>
                 + Añadir inversión
               </button>
             )}
@@ -379,10 +401,7 @@ export default function Inversiones() {
                     type="button"
                     className={s.acc}
                     style={{ ['--c' as string]: 'var(--gray)' }}
-                    onClick={() => {
-                      setAgrupacion('cuenta')
-                      setPestana('posiciones')
-                    }}
+                    onClick={() => setSinCuentaOpen(true)}
                   >
                     <div className={s.accHead}>
                       <div className={s.accName}>Sin cuenta</div>
@@ -394,7 +413,7 @@ export default function Inversiones() {
                     </div>
                     <div className={s.accFoot}>
                       {sinCuenta.length} {sinCuenta.length === 1 ? 'posición' : 'posiciones'} sin
-                      asignar · edítalas para elegir su cuenta
+                      asignar · pulsa para pasarlas a una cuenta o repartirlas
                     </div>
                   </button>
                 )}
@@ -414,13 +433,15 @@ export default function Inversiones() {
               <EmptyState
                 message="Aún no tienes inversiones. Crea la primera para seguir su rentabilidad."
                 actionLabel="Añadir tu primera inversión"
-                onAction={() => setNuevaOpen(true)}
+                onAction={() => abrirNueva()}
               />
             ) : (
               <PosicionesAgrupadas
                 key={agrupacion}
                 grupos={grupos}
                 segunda={agrupacion === 'clase' ? 'cuenta' : 'categoria'}
+                onEdit={setEditando}
+                onAdd={anadirAGrupo}
               />
             )}
           </>
@@ -428,7 +449,22 @@ export default function Inversiones() {
       </div>
 
       <CuentaInversionModal open={nuevaCuentaOpen} onClose={() => setNuevaCuentaOpen(false)} />
-      <NuevaInversionModal open={nuevaOpen} onClose={() => setNuevaOpen(false)} />
+      <NuevaInversionModal
+        open={nuevaOpen}
+        onClose={() => setNuevaOpen(false)}
+        cuentaIdInicial={nuevaPreset.cuentaId}
+        categoriaInicial={nuevaPreset.categoria}
+      />
+      <EditarInversionModal
+        inversion={editando}
+        onClose={() => setEditando(null)}
+        onSeparar={(i) => {
+          setEditando(null)
+          setSeparando(i)
+        }}
+      />
+      <RepartirInversionModal inversion={separando} onClose={() => setSeparando(null)} />
+      <SinCuentaModal open={sinCuentaOpen} onClose={() => setSinCuentaOpen(false)} />
     </div>
   )
 }

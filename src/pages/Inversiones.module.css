@@ -583,3 +583,14 @@
 .childRow {
   cursor: default;
 }
+
+/* Posiciones editables en la vista agrupada. */
+.childRow.editable {
+  cursor: pointer;
+}
+.table tbody tr.childRow.editable:hover td {
+  background: var(--bg2);
+}
+.addRow td {
+  padding-left: 38px;
+}
