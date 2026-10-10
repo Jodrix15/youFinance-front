@@ -12,6 +12,10 @@ export type TipoPago = 'RECURRENTE' | 'SUSCRIPCION'
 export type TipoImporte = 'FIJO' | 'VARIABLE'
 export type Role = 'ROLE_ADMIN' | 'ROLE_USER'
 export type Moneda = 'EUR' | 'USD' | 'GBP'
+/** Corriente (banco) o de inversión (Mintos, broker…). */
+export type TipoCuenta = 'CORRIENTE' | 'INVERSION'
+/** Clase de plataforma de una cuenta de inversión (solo etiqueta). */
+export type PlataformaInversion = 'BROKER' | 'FONDOS' | 'P2P' | 'ROBOADVISOR' | 'CRIPTO' | 'OTRO'
 
 // ── Perfil / ajustes de usuario ──
 export interface UserProfile {
@@ -64,12 +68,24 @@ export interface CuentaResponse {
   saldoInicial: number
   // Saldo actual = saldoInicial + suma de movimientos. Lo calcula el backend en
   // cada lectura; no existe como columna, así que no puede desincronizarse.
+  // En una cuenta de inversión es el efectivo sin invertir.
   saldo: number
+  tipo: TipoCuenta
+  plataforma: PlataformaInversion | null
+  color: string | null
+  cuentaVinculadaId: number | null
+  cuentaVinculadaNombre: string | null
 }
 
 export interface CuentaDTO {
   nombreCuenta: string
   saldoInicial: number
+  // Opcional: al crear, sin tipo = CORRIENTE; al editar, sin tipo = no se tocan
+  // ni el tipo ni los campos de inversión.
+  tipo?: TipoCuenta
+  plataforma?: PlataformaInversion | null
+  color?: string | null
+  cuentaVinculadaId?: number | null
 }
 
 export interface TransaccionResponse {
@@ -122,6 +138,46 @@ export interface ResumenInversion {
   capitalAportadoTotal: number
   plusvaliaTotal: number
   porcentajeTotal: number
+  /** Efectivo sin invertir en cuentas de inversión. */
+  efectivoTotal: number
+  /** importeTotal + efectivoTotal. */
+  valorTotal: number
+  /** Ingresos cobrados en cuentas de inversión en los últimos 12 meses. */
+  rendimientos12m: number
+}
+
+/** Cuenta de inversión con los totales de sus posiciones. */
+export interface CuentaInversionResponse {
+  id: number
+  nombre: string
+  plataforma: PlataformaInversion | null
+  color: string | null
+  cuentaVinculadaId: number | null
+  cuentaVinculadaNombre: string | null
+  saldoInicial: number
+  efectivo: number
+  capitalAportado: number
+  valorPosiciones: number
+  valorTotal: number
+  plusvalia: number
+  porcentajePlusvalia: number
+  rendimientos12m: number
+  numPosiciones: number
+}
+
+export interface RendimientoMes {
+  anio: number
+  mes: number
+  importe: number
+}
+
+export interface RetiradaDTO {
+  /** Posición de la que sale el dinero; sin ella sale del efectivo. */
+  inversionId?: number
+  cuentaDestinoId: number
+  importe: number
+  fecha: string
+  descripcion?: string
 }
 
 export interface ResumenDeuda {
@@ -152,9 +208,14 @@ export interface ResumenCuenta {
 
 export interface InversionResponse {
   id: number
+  /** Activo concreto (p. ej. "MSCI World"); null = usar categoriaNombre. */
+  nombre: string | null
   categoriaId: number | null
   categoriaNombre: string | null
   categoriaColor: string | null
+  // Cuenta de inversión; null en posiciones anteriores a las cuentas ("sin cuenta").
+  cuentaId: number | null
+  cuentaNombre: string | null
   capitalAportado: number
   capitalTotal: number
   plusvalia: number
@@ -172,6 +233,7 @@ export interface DeudaResponse {
   cuota: number
   frecuencia: Frecuencia
   interes: number
+  fechaInicio: string | null
   fechaVencimiento: string | null
 }
 
@@ -183,6 +245,7 @@ export interface DeudaDTO {
   cuota: number
   frecuencia: Frecuencia
   interes?: number
+  fechaInicio?: string | null
   fechaVencimiento?: string | null
 }
 
@@ -265,13 +328,21 @@ export interface CategoriaResponse {
 // ── Cuerpos de petición ──
 export interface InversionDTO {
   categoriaId: number
+  nombre?: string | null
   capitalAportado: number
   capitalTotal: number
+  cuentaId?: number | null
+  /** Descontar el capital aportado del efectivo de la cuenta. */
+  desdeEfectivo?: boolean
 }
 
 export interface ActualizarInversionDTO {
   aportacion?: number
   valorActual?: number
+  /** Descontar la aportación del efectivo de la cuenta de la posición. */
+  desdeEfectivo?: boolean
+  /** Nuevo nombre del activo; vacío lo quita. */
+  nombre?: string
 }
 
 export interface CrearCategoria {

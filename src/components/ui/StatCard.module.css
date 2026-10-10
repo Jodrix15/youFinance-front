@@ -21,3 +21,8 @@
   font-size: 22px;
   font-weight: 700;
 }
+.hint {
+  font-size: 11px;
+  color: var(--tx3);
+  margin-top: 3px;
+}

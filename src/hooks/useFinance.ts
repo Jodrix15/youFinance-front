@@ -21,6 +21,7 @@ import type {
   GastoRecurrenteResponse,
   InversionDTO,
   InversionResponse,
+  RetiradaDTO,
   NuevoPrecioRequest,
   PresupuestoDTO,
   TipoPago,
@@ -30,6 +31,81 @@ import type {
 
 export function useCuentas() {
   return useQuery({ queryKey: ['cuentas'], queryFn: financeApi.cuentas })
+}
+
+type QC = ReturnType<typeof useQueryClient>
+
+/**
+ * Lo que cambia cuando se mueve efectivo de una cuenta de inversión
+ * (aportar desde efectivo, retirar): saldos, movimientos y tarjetas.
+ */
+function invalidarEfectivo(qc: QC) {
+  qc.invalidateQueries({ queryKey: ['cuentasInversion'] })
+  qc.invalidateQueries({ queryKey: ['cuentas'] })
+  qc.invalidateQueries({ queryKey: ['cuentaResumen'] })
+  qc.invalidateQueries({ queryKey: ['transacciones'] })
+  qc.invalidateQueries({ queryKey: ['movimientos'] })
+  qc.invalidateQueries({ queryKey: ['movimientosPaginados'] })
+}
+
+// Cuentas de inversión con los totales de sus posiciones (tarjetas).
+export function useCuentasInversion() {
+  return useQuery({ queryKey: ['cuentasInversion'], queryFn: financeApi.cuentasInversion })
+}
+
+export function useCuentaInversion(cuentaId: number) {
+  return useQuery({
+    queryKey: ['cuentasInversion', cuentaId],
+    queryFn: () => financeApi.cuentaInversion(cuentaId),
+    enabled: !!cuentaId,
+  })
+}
+
+// Ingresos de la cuenta por mes (últimos 12, huecos a cero).
+export function useRendimientosCuenta(cuentaId: number) {
+  return useQuery({
+    queryKey: ['cuentasInversion', cuentaId, 'rendimientos'],
+    queryFn: () => financeApi.rendimientosCuenta(cuentaId),
+    enabled: !!cuentaId,
+  })
+}
+
+export function useActualizarCuenta() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...body }: { id: number } & CuentaDTO) => financeApi.actualizarCuenta(id, body),
+    onSuccess: () => {
+      invalidarEfectivo(qc)
+      qc.invalidateQueries({ queryKey: ['inversiones'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+  })
+}
+
+export function useAsignarCuentaInversion() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, cuentaId }: { id: number; cuentaId: number | null }) =>
+      financeApi.asignarCuentaInversion(id, cuentaId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['inversiones'] })
+      qc.invalidateQueries({ queryKey: ['cuentasInversion'] })
+    },
+  })
+}
+
+export function useRetirarDeCuenta() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ cuentaId, ...body }: { cuentaId: number } & RetiradaDTO) =>
+      financeApi.retirarDeCuenta(cuentaId, body),
+    onSuccess: () => {
+      invalidarEfectivo(qc)
+      qc.invalidateQueries({ queryKey: ['inversiones'] })
+      qc.invalidateQueries({ queryKey: ['inversionResumen'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+  })
 }
 
 export function useInversiones() {
@@ -47,6 +123,9 @@ export function useInversionTotales() {
     aportadoTotal: q.data?.capitalAportadoTotal ?? 0,
     plusvaliaTotal: q.data?.plusvaliaTotal ?? 0,
     porcentajeTotal: q.data?.porcentajeTotal ?? 0,
+    efectivoTotal: q.data?.efectivoTotal ?? 0,
+    valorTotal: q.data?.valorTotal ?? 0,
+    rendimientos12m: q.data?.rendimientos12m ?? 0,
     isLoading: q.isLoading,
   }
 }
@@ -314,6 +393,8 @@ export function useCrearCuenta() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['cuentas'] })
       qc.invalidateQueries({ queryKey: ['cuentaResumen'] })
+      qc.invalidateQueries({ queryKey: ['cuentasInversion'] })
+      qc.invalidateQueries({ queryKey: ['inversionResumen'] })
       qc.invalidateQueries({ queryKey: ['dashboard'] })
       qc.invalidateQueries({ queryKey: ['logros'] })
     },
@@ -327,6 +408,8 @@ export function useEliminarCuenta() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['cuentas'] })
       qc.invalidateQueries({ queryKey: ['cuentaResumen'] })
+      qc.invalidateQueries({ queryKey: ['cuentasInversion'] })
+      qc.invalidateQueries({ queryKey: ['inversionResumen'] })
       qc.invalidateQueries({ queryKey: ['dashboard'] })
       qc.invalidateQueries({ queryKey: ['logros'] })
     },
@@ -345,6 +428,8 @@ export function useCrearTransaccion() {
       qc.invalidateQueries({ queryKey: ['transacciones'] })
       qc.invalidateQueries({ queryKey: ['cuentas'] })
       qc.invalidateQueries({ queryKey: ['cuentaResumen'] })
+      qc.invalidateQueries({ queryKey: ['cuentasInversion'] })
+      qc.invalidateQueries({ queryKey: ['inversionResumen'] })
       qc.invalidateQueries({ queryKey: ['dashboard'] })
       qc.invalidateQueries({ queryKey: ['logros'] })
     },
@@ -362,6 +447,8 @@ export function useEliminarTransaccion() {
       qc.invalidateQueries({ queryKey: ['transacciones'] })
       qc.invalidateQueries({ queryKey: ['cuentas'] })
       qc.invalidateQueries({ queryKey: ['cuentaResumen'] })
+      qc.invalidateQueries({ queryKey: ['cuentasInversion'] })
+      qc.invalidateQueries({ queryKey: ['inversionResumen'] })
       qc.invalidateQueries({ queryKey: ['dashboard'] })
       qc.invalidateQueries({ queryKey: ['logros'] })
     },
@@ -379,6 +466,8 @@ export function useActualizarTransaccion() {
       qc.invalidateQueries({ queryKey: ['transacciones'] })
       qc.invalidateQueries({ queryKey: ['cuentas'] })
       qc.invalidateQueries({ queryKey: ['cuentaResumen'] })
+      qc.invalidateQueries({ queryKey: ['cuentasInversion'] })
+      qc.invalidateQueries({ queryKey: ['inversionResumen'] })
       qc.invalidateQueries({ queryKey: ['dashboard'] })
       qc.invalidateQueries({ queryKey: ['logros'] })
     },
@@ -391,6 +480,7 @@ export function useCrearInversion() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['inversiones'] })
       qc.invalidateQueries({ queryKey: ['inversionResumen'] })
+      invalidarEfectivo(qc)
       qc.invalidateQueries({ queryKey: ['dashboard'] })
       qc.invalidateQueries({ queryKey: ['logros'] })
     },
@@ -405,6 +495,7 @@ export function useActualizarInversion() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['inversiones'] })
       qc.invalidateQueries({ queryKey: ['inversionResumen'] })
+      invalidarEfectivo(qc)
       qc.invalidateQueries({ queryKey: ['dashboard'] })
       qc.invalidateQueries({ queryKey: ['logros'] })
     },
@@ -431,6 +522,7 @@ export function useEliminarInversion() {
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ['inversiones'] })
       qc.invalidateQueries({ queryKey: ['inversionResumen'] })
+      invalidarEfectivo(qc)
       qc.invalidateQueries({ queryKey: ['dashboard'] })
       qc.invalidateQueries({ queryKey: ['logros'] })
     },

@@ -40,6 +40,7 @@ const EMPTY = {
   pagada: '',
   cuota: '',
   frecuencia: 'MENSUAL',
+  inicio: '',
   vencimiento: '',
 }
 
@@ -77,6 +78,7 @@ export default function Deudas() {
       pagada: String(d.cantidadPagada ?? ''),
       cuota: d.cuota != null ? String(d.cuota) : '',
       frecuencia: d.frecuencia ?? 'MENSUAL',
+      inicio: d.fechaInicio ?? '',
       vencimiento: d.fechaVencimiento ?? '',
     })
     setErr(null)
@@ -176,6 +178,12 @@ export default function Deudas() {
     if (!acreedor) return setErr({ field: 'acreedor', msg: 'Indica el acreedor.' })
     if (Number.isNaN(importe) || importe <= 0)
       return setErr({ field: 'importe', msg: 'El importe debe ser mayor que 0.' })
+    // Fechas ISO (yyyy-mm-dd): la comparación de strings equivale a la de fechas.
+    if (form.inicio && form.vencimiento && form.inicio > form.vencimiento)
+      return setErr({
+        field: 'inicio',
+        msg: 'La fecha de inicio no puede ser posterior al vencimiento.',
+      })
 
     const interesPct = num(form.interesPct)
     const pagada = num(form.pagada)
@@ -190,6 +198,7 @@ export default function Deudas() {
       frecuencia: form.frecuencia as Frecuencia,
       // El interés se guarda como porcentaje (4,5 = 4,5%), se envía tal cual.
       interes: Number.isNaN(interesPct) ? undefined : interesPct,
+      fechaInicio: form.inicio || null,
       fechaVencimiento: form.vencimiento || null,
     }
 
@@ -429,6 +438,18 @@ export default function Deudas() {
                 value={form.pagada}
                 onChange={(e) => set('pagada', e.target.value)}
               />
+            </div>
+          </div>
+          <div className={s.row}>
+            <div className={s.field}>
+              <label>Fecha de inicio</label>
+              <input
+                type="date"
+                value={form.inicio}
+                aria-invalid={err?.field === 'inicio'}
+                onChange={(e) => set('inicio', e.target.value)}
+              />
+              {fieldErr('inicio')}
             </div>
             <div className={s.field}>
               <label>Vencimiento</label>
