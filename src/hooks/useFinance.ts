@@ -82,6 +82,20 @@ export function useActualizarCuenta() {
   })
 }
 
+/** Reparte una posición entre cuentas de inversión (no mueve efectivo). */
+export function useRepartirInversion() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, tramos }: { id: number; tramos: { cuentaId: number; nombre?: string; importe: number }[] }) =>
+      financeApi.repartirInversion(id, tramos),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['inversiones'] })
+      qc.invalidateQueries({ queryKey: ['cuentasInversion'] })
+      qc.invalidateQueries({ queryKey: ['inversionResumen'] })
+    },
+  })
+}
+
 export function useAsignarCuentaInversion() {
   const qc = useQueryClient()
   return useMutation({

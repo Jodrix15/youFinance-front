@@ -28,8 +28,14 @@ const colorSigno = (n: number) => (n >= 0 ? 'var(--up)' : 'var(--down)')
 export default function PosicionesAgrupadas({
   grupos,
   segunda,
+  onEdit,
+  onAdd,
 }: {
   grupos: GrupoPosiciones[]
+  /** Clic en una posición (sin él, las filas son solo informativas). */
+  onEdit?: (i: InversionResponse) => void
+  /** "+ Añadir" al final de cada grupo desplegado. */
+  onAdd?: (g: GrupoPosiciones) => void
   /**
    * Qué muestra la segunda columna: la cuenta (al agrupar por categoría) o la
    * categoría (al agrupar por cuenta). La primera siempre es el activo.
@@ -179,7 +185,7 @@ export default function PosicionesAgrupadas({
                   {formatPct(g.pct)}
                 </td>
               </tr>
-              {abierto && items.length === 0 && (
+              {abierto && items.length === 0 && !onAdd && (
                 <tr className={s.childRow}>
                   <td colSpan={6} className={s.muted} style={{ paddingLeft: 38 }}>
                     Sin posiciones todavía.
@@ -190,7 +196,19 @@ export default function PosicionesAgrupadas({
                 items.map((i) => {
                   const nombre = nombreActivo(i)
                   return (
-                    <tr key={i.id} className={s.childRow}>
+                    <tr
+                      key={i.id}
+                      className={`${s.childRow} ${onEdit ? s.editable : ''}`}
+                      onClick={onEdit ? () => onEdit(i) : undefined}
+                      tabIndex={onEdit ? 0 : undefined}
+                      onKeyDown={
+                        onEdit
+                          ? (e) => {
+                              if (e.key === 'Enter') onEdit(i)
+                            }
+                          : undefined
+                      }
+                    >
                       <td data-label="Activo">
                         <span className={s.childName}>
                           <span
@@ -227,6 +245,15 @@ export default function PosicionesAgrupadas({
                     </tr>
                   )
                 })}
+              {abierto && onAdd && (
+                <tr className={`${s.childRow} ${s.addRow}`}>
+                  <td colSpan={6}>
+                    <button type="button" className={s.linkBtn} onClick={() => onAdd(g)}>
+                      + Añadir a {g.nombre}
+                    </button>
+                  </td>
+                </tr>
+              )}
             </Fragment>
           )
         })}

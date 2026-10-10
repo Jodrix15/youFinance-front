@@ -132,6 +132,10 @@ export const financeApi = {
     api.delete<void>(`/api/inversion/${id}`).then((r) => r.data),
   asignarCuentaInversion: (id: number, cuentaId: number | null) =>
     api.put<InversionResponse>(`/api/inversion/${id}/cuenta`, { cuentaId }).then((r) => r.data),
+  repartirInversion: (id: number, tramos: { cuentaId: number; nombre?: string; importe: number }[]) =>
+    api
+      .post<InversionResponse[]>(`/api/inversion/${id}/reparto`, { tramos })
+      .then((r) => r.data),
   cuentasInversion: () =>
     api.get<CuentaInversionResponse[]>('/api/inversion/cuentas').then((r) => r.data),
   cuentaInversion: (cuentaId: number) =>
